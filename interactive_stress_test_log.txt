@@ -1,6 +1,6 @@
 ╔════════════════════════════════════════════════════════════════════════════╗
-║            INTERACTIVE STRESS TEST - USER SIMULATION PLAN                   ║
-║                     Generated: 2026-09-22T23:40:38.756Z         ║
+║               INTERACTIVE STRESS TEST - USER SIMULATION PLAN               ║
+║                    Generated: 2026-09-27T17:38:10.322Z                     ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 
 OPERATIONAL PLAN
@@ -9,17 +9,17 @@ Total Operations Planned: 50
 
 OPERATIONS BY CATEGORY
 ────────────────────────────────────────────────────────────────────────────────
-Vertex Movement               : 8 operations
-Lock/Unlock                   : 11 operations
-Rotation                      : 4 operations
+Vertex Movement               : 3 operations
+Lock/Unlock                   : 7 operations
+Rotation                      : 3 operations
 Flipping                      : 4 operations
-Scaling                       : 3 operations
-Units                         : 4 operations
-View                          : 4 operations
-Precision                     : 4 operations
-Undo/Redo                     : 1 operations
-Combination                   : 0 operations
-Edge Cases                    : 4 operations
+Scaling                       : 4 operations
+Units                         : 6 operations
+View                          : 5 operations
+Precision                     : 3 operations
+Undo/Redo                     : 3 operations
+Combination                   : 5 operations
+Edge Cases                    : 7 operations
 
 
 DETAILED OPERATIONS
@@ -36,13 +36,14 @@ DETAILED OPERATIONS
   Action: Click vertex B, drag right 100px
   Math Verifications:
     • Side a should decrease (B moves toward C); side b (CA) is unchanged
-    • Angle at C should change
+    • Angle at C is unchanged (B slides along line BC); angles A and B change
     • Angle sum must equal 180°
 
 [OP 3] Drag vertex C left
   Action: Click vertex C, drag left 75px
   Math Verifications:
     • Sides a and b change; side c (AB) does not involve C and stays fixed
+    • Angle at B is unchanged (C slides along line BC)
     • Angles must remain valid
 
 [OP 4] Lock side a, then drag vertex B
@@ -95,14 +96,14 @@ DETAILED OPERATIONS
     • No mathematical discontinuity
 
 [OP 11] Rotate triangle left 45°
-  Action: Click rotate-left button twice
+  Action: Click rotate-left button three times (15° per click)
   Math Verifications:
     • All sides unchanged
     • Angle values unchanged
     • Area unchanged
 
 [OP 12] Rotate triangle right 45°
-  Action: Click rotate-right button twice
+  Action: Click rotate-right button three times (15° per click)
   Math Verifications:
     • Cancels previous rotation
     • Returns to ~original orientation
@@ -118,14 +119,14 @@ DETAILED OPERATIONS
 [OP 14] Flip horizontal
   Action: Click horizontal flip button
   Math Verifications:
-    • Triangle mirrors across Y axis
+    • Triangle mirrors across the vertical line through its centroid
     • All sides unchanged
     • Angles unchanged (magnitude)
 
 [OP 15] Flip vertical
   Action: Click vertical flip button
   Math Verifications:
-    • Triangle mirrors across X axis
+    • Triangle mirrors across the horizontal line through its centroid
     • Sides and angles preserved
     • Orientation reversed
 
@@ -167,9 +168,9 @@ DETAILED OPERATIONS
 [OP 21] Scale after locking
   Action: Lock side a, scale up
   Math Verifications:
-    • Locked constraint applies to scaled triangle
-    • Side a in new scale units
-    • Other sides scale with unit change
+    • Side a's locked value scales along with the triangle
+    • Every side scales by the same factor; angles unchanged
+    • No lock conflict is shown afterwards
 
 [OP 22] Change to cm
   Action: Click length unit, select cm
@@ -332,12 +333,12 @@ DETAILED OPERATIONS
     • Math handles extreme angles
     • No division by zero
 
-[OP 45] Drag to invalid triangle, release
-  Action: Attempt drag that would break triangle inequality
+[OP 45] Drag vertex onto the opposite side, release
+  Action: With nothing locked, drag A onto side BC
   Math Verifications:
-    • System prevents invalid state
-    • Triangle snaps to valid
-    • Constraint enforcement visible
+    • Three points can never break the triangle inequality, only reach equality (a flat triangle)
+    • The app accepts the flat triangle (A = 180°, B = C = 0°, area 0) — it is NOT prevented
+    • No NaN, errors or crashes appear
 
 [OP 46] Lock side equal to sum of others
   Action: Manipulate to nearly degenerate, lock
@@ -367,11 +368,11 @@ DETAILED OPERATIONS
     • Formulas still valid
     • New precision applied
 
-[OP 50] Clear history button
-  Action: Click reset/clear button
+[OP 50] Reset button
+  Action: Click the reset (trash can) button
   Math Verifications:
     • Triangle resets to default (3-4-5)
-    • History cleared
+    • All locks cleared; history is kept, so Ctrl+Z undoes the reset
     • All math verified for fresh state
 
 

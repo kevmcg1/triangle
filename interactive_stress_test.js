@@ -12,11 +12,17 @@ const LOG_FILE = path.join(__dirname, "interactive_stress_test_log.txt");
 
 const operations = [];
 let opCount = 0;
+/* every operation is filed under the section it is declared in — guessing
+   from keywords in its name left 3 operations in no category at all and
+   put others under the wrong one ("Drag, undo, redo" under Vertex Movement) */
+let currentCategory = null;
+function category(name) { currentCategory = name; }
 
 function logOp(name, action, verification) {
   opCount++;
   operations.push({
     id: opCount,
+    category: currentCategory,
     name,
     action,
     verification,
@@ -33,6 +39,7 @@ function logOp(name, action, verification) {
 // ============================================================================
 
 // Basic vertex movements
+category("Vertex Movement");
 logOp("Drag vertex A down", "Click vertex A, drag down 50px", [
   "Angle at A should increase (A moves toward side BC)",
   "Sides b and c both shrink; side a (BC) is unchanged",
@@ -41,16 +48,18 @@ logOp("Drag vertex A down", "Click vertex A, drag down 50px", [
 
 logOp("Drag vertex B right", "Click vertex B, drag right 100px", [
   "Side a should decrease (B moves toward C); side b (CA) is unchanged",
-  "Angle at C should change",
+  "Angle at C is unchanged (B slides along line BC); angles A and B change",
   "Angle sum must equal 180°"
 ]);
 
 logOp("Drag vertex C left", "Click vertex C, drag left 75px", [
   "Sides a and b change; side c (AB) does not involve C and stays fixed",
+  "Angle at B is unchanged (C slides along line BC)",
   "Angles must remain valid"
 ]);
 
 // Lock/unlock sequences
+category("Lock/Unlock");
 logOp("Lock side a, then drag vertex B", "Lock side a, attempt to move B", [
   "Side a must remain constant",
   "Other sides adjust to maintain constraint",
@@ -96,13 +105,14 @@ logOp("Lock side a, unlock it mid-drag", "Lock a, then unlock", [
 ]);
 
 // Rotate operations
-logOp("Rotate triangle left 45°", "Click rotate-left button twice", [
+category("Rotation");
+logOp("Rotate triangle left 45°", "Click rotate-left button three times (15° per click)", [
   "All sides unchanged",
   "Angle values unchanged",
   "Area unchanged"
 ]);
 
-logOp("Rotate triangle right 45°", "Click rotate-right button twice", [
+logOp("Rotate triangle right 45°", "Click rotate-right button three times (15° per click)", [
   "Cancels previous rotation",
   "Returns to ~original orientation",
   "Math unchanged"
@@ -115,14 +125,15 @@ logOp("Rotate then drag vertex", "Rotate 15°, then drag B", [
 ]);
 
 // Flip operations
+category("Flipping");
 logOp("Flip horizontal", "Click horizontal flip button", [
-  "Triangle mirrors across Y axis",
+  "Triangle mirrors across the vertical line through its centroid",
   "All sides unchanged",
   "Angles unchanged (magnitude)"
 ]);
 
 logOp("Flip vertical", "Click vertical flip button", [
-  "Triangle mirrors across X axis",
+  "Triangle mirrors across the horizontal line through its centroid",
   "Sides and angles preserved",
   "Orientation reversed"
 ]);
@@ -140,6 +151,7 @@ logOp("Flip, then lock and drag", "Flip vertical, lock side a, drag B", [
 ]);
 
 // Scale operations
+category("Scaling");
 logOp("Scale up", "Click scale-up button several times", [
   "All sides scale proportionally",
   "All angles unchanged",
@@ -159,12 +171,13 @@ logOp("Scale then drag", "Scale up 2x, drag vertex C", [
 ]);
 
 logOp("Scale after locking", "Lock side a, scale up", [
-  "Locked constraint applies to scaled triangle",
-  "Side a in new scale units",
-  "Other sides scale with unit change"
+  "Side a's locked value scales along with the triangle",
+  "Every side scales by the same factor; angles unchanged",
+  "No lock conflict is shown afterwards"
 ]);
 
 // Unit conversions
+category("Units");
 logOp("Change to cm", "Click length unit, select cm", [
   "All displayed values convert",
   "Internal calculations unchanged",
@@ -203,6 +216,7 @@ logOp("Drag vertex in radian mode", "Drag vertex A in radian mode", [
 ]);
 
 // Grid and view operations
+category("View");
 logOp("Toggle grid", "Click grid button", [
   "Grid appears/disappears",
   "Triangle unaffected",
@@ -234,6 +248,7 @@ logOp("Fit after custom zoom", "Zoom custom, click fit", [
 ]);
 
 // Precision operations
+category("Precision");
 logOp("Set decimals to 8", "Click decimal stepper increase", [
   "Display shows more precision",
   "Internal math unchanged",
@@ -253,6 +268,7 @@ logOp("Toggle exact mode", "Click Approx/Exact toggle", [
 ]);
 
 // Undo/redo operations
+category("Undo/Redo");
 logOp("Drag, undo, redo", "Drag vertex, Ctrl+Z, Ctrl+Y", [
   "Undo restores exact previous state",
   "Redo replays drag",
@@ -272,6 +288,7 @@ logOp("Lock/unlock in undo sequence", "Lock, drag, unlock, drag, undo twice", [
 ]);
 
 // Combination stress tests
+category("Combination");
 logOp("Rotate, scale, flip, drag, lock", "Combo: rotate 30°, scale 1.5x, flip H, drag A, lock b", [
   "Each operation applies in sequence",
   "Final state is mathematically valid",
@@ -303,16 +320,17 @@ logOp("Rapid vertex dragging", "Click/drag vertices rapidly in sequence", [
 ]);
 
 // Edge case operations
+category("Edge Cases");
 logOp("Drag vertex to near-degenerate state", "Drag to make triangle very flat", [
   "Angle approaches 0 or 180°",
   "Math handles extreme angles",
   "No division by zero"
 ]);
 
-logOp("Drag to invalid triangle, release", "Attempt drag that would break triangle inequality", [
-  "System prevents invalid state",
-  "Triangle snaps to valid",
-  "Constraint enforcement visible"
+logOp("Drag vertex onto the opposite side, release", "With nothing locked, drag A onto side BC", [
+  "Three points can never break the triangle inequality, only reach equality (a flat triangle)",
+  "The app accepts the flat triangle (A = 180°, B = C = 0°, area 0) — it is NOT prevented",
+  "No NaN, errors or crashes appear"
 ]);
 
 logOp("Lock side equal to sum of others", "Manipulate to nearly degenerate, lock", [
@@ -339,9 +357,9 @@ logOp("Change precision during explanation", "Open panel, change decimals", [
   "New precision applied"
 ]);
 
-logOp("Clear history button", "Click reset/clear button", [
+logOp("Reset button", "Click the reset (trash can) button", [
   "Triangle resets to default (3-4-5)",
-  "History cleared",
+  "All locks cleared; history is kept, so Ctrl+Z undoes the reset",
   "All math verified for fresh state"
 ]);
 
@@ -351,40 +369,18 @@ logOp("Clear history button", "Click reset/clear button", [
 
 function writeReport() {
   let report = "╔════════════════════════════════════════════════════════════════════════════╗\n";
-  report += "║            INTERACTIVE STRESS TEST - USER SIMULATION PLAN                   ║\n";
-  report += "║                     Generated: " + new Date().toISOString() + "         ║\n";
+  const center = s => s.padStart(s.length + Math.floor((76 - s.length) / 2)).padEnd(76);
+  report += "║" + center("INTERACTIVE STRESS TEST - USER SIMULATION PLAN") + "║\n";
+  report += "║" + center("Generated: " + new Date().toISOString()) + "║\n";
   report += "╚════════════════════════════════════════════════════════════════════════════╝\n\n";
 
   report += "OPERATIONAL PLAN\n";
   report += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
   report += "Total Operations Planned: " + operations.length + "\n\n";
 
-  let categories = {
-    "Vertex Movement": ["Drag vertex"],
-    "Lock/Unlock": ["Lock", "unlock"],
-    "Rotation": ["Rotate"],
-    "Flipping": ["Flip"],
-    "Scaling": ["Scale"],
-    "Units": ["unit", "Unit"],
-    "View": ["view", "View", "Grid", "Fit", "Zoom", "Pan"],
-    "Precision": ["decimal", "Exact"],
-    "Undo/Redo": ["Undo", "undo", "redo"],
-    "Combination": ["Combo"],
-    "Edge Cases": ["Extreme", "degenerate", "invalid", "Search", "explanation", "Clear"]
-  };
-
   let catCounts = {};
-  Object.keys(categories).forEach(cat => {
-    catCounts[cat] = 0;
-  });
-
   operations.forEach(op => {
-    for (const [cat, keywords] of Object.entries(categories)) {
-      if (keywords.some(kw => op.name.includes(kw) || op.action.includes(kw))) {
-        catCounts[cat]++;
-        break;
-      }
-    }
+    catCounts[op.category] = (catCounts[op.category] || 0) + 1;
   });
 
   report += "OPERATIONS BY CATEGORY\n";
