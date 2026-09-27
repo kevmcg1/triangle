@@ -21,7 +21,8 @@ function log(msg) {
 function writeLog() {
   let summary = "╔════════════════════════════════════════════════════════════════════════════╗\n";
   summary += "║                     TRIANGLE.HTML STRESS TEST REPORT                       ║\n";
-  summary += "║                     Generated: " + TIMESTAMP + "         ║\n";
+  const gen = "Generated: " + TIMESTAMP;
+  summary += "║" + gen.padStart(gen.length + Math.floor((76 - gen.length) / 2)).padEnd(76) + "║\n";
   summary += "╚════════════════════════════════════════════════════════════════════════════╝\n\n";
   summary += "SUMMARY\n";
   summary += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -78,7 +79,9 @@ function test(category, name, fn) {
   testStats.total++;
   try {
     const result = fn();
-    if (result === false) throw new Error("Assertion failed");
+    /* only an explicit `true` passes — a test whose guard short-circuits
+       (`x && ...` with x null) must fail, not slip through as a pass */
+    if (result !== true) throw new Error("Assertion failed (returned " + result + ")");
     testStats.passed++;
     testStats.tests.push({
       category,
@@ -192,7 +195,7 @@ test("Format", "fmtExact: exact formatting", () => {
 
 test("Format", "fmtExact: trailing zeros trimmed", () => {
   const result = extractedFunctions.fmtExact(3.14);
-  return !result.includes("0000");
+  return result === "3.14";
 });
 
 test("Format", "groupExact: aligned decimals", () => {
@@ -205,7 +208,7 @@ log("─".repeat(40));
 
 test("Fractions", "niceRatio: simple fraction", () => {
   const ratio = extractedFunctions.niceRatio(0.5, 10);
-  return ratio && ratio.num === 1 && ratio.den === 2;
+  return !!ratio && ratio.num === 1 && ratio.den === 2;
 });
 
 test("Fractions", "niceRatio: null for irrational", () => {
@@ -233,22 +236,22 @@ log("─".repeat(40));
 
 test("Parse", "parseMeasure: numeric inches", () => {
   const result = extractedFunctions.parseMeasure("3.5", "side", "in");
-  return result && result.value === 3.5;
+  return !!result && result.value === 3.5;
 });
 
 test("Parse", "parseMeasure: feet", () => {
   const result = extractedFunctions.parseMeasure("5 ft", "side", "in");
-  return result && result.value === 60 && result.unit === "ft";
+  return !!result && result.value === 60 && result.unit === "ft";
 });
 
 test("Parse", "parseMeasure: centimeters", () => {
   const result = extractedFunctions.parseMeasure("100 cm", "side", "cm");
-  return result && result.unit === "cm";
+  return !!result && result.unit === "cm" && Math.abs(result.value - 100 / 2.54) < 1e-9;
 });
 
 test("Parse", "parseMeasure: feet and inches", () => {
   const result = extractedFunctions.parseMeasure("5'6\"", "side", "ft");
-  return result && Math.abs(result.value - 66) < 0.01;
+  return !!result && Math.abs(result.value - 66) < 0.01;
 });
 
 test("Parse", "parseMeasure: invalid input", () => {
@@ -258,7 +261,7 @@ test("Parse", "parseMeasure: invalid input", () => {
 
 test("Parse", "parseMeasure: degrees", () => {
   const result = extractedFunctions.parseMeasure("45°", "angle", "deg");
-  return result && result.value > 0;
+  return !!result && Math.abs(result.value - Math.PI / 4) < 1e-12;
 });
 
 log("\nTriangle Solving");
@@ -279,7 +282,7 @@ test("Solve", "anglesFromSides: sum to pi", () => {
 test("Solve", "solveN: 3x3 system needing a pivot swap", () => {
   /* 0·x + 2y + z = 7, x + y + z = 6, 2x + y + 3z = 13  →  (1, 2, 3) */
   const x = extractedFunctions.solveN([[0, 2, 1], [1, 1, 1], [2, 1, 3]], [7, 6, 13]);
-  return x && Math.abs(x[0] - 1) < 1e-12 && Math.abs(x[1] - 2) < 1e-12 && Math.abs(x[2] - 3) < 1e-12;
+  return !!x && Math.abs(x[0] - 1) < 1e-12 && Math.abs(x[1] - 2) < 1e-12 && Math.abs(x[2] - 3) < 1e-12;
 });
 
 test("Solve", "solveN: 6x6 system (the drag solver's size)", () => {
@@ -287,7 +290,7 @@ test("Solve", "solveN: 6x6 system (the drag solver's size)", () => {
   const A = [...Array(n)].map((_, i) => [...Array(n)].map((_, j) => (i === j ? 10 : 0) + Math.sin(i * 7 + j * 3)));
   const b = A.map(row => row.reduce((acc, v, j) => acc + v * xTrue[j], 0));
   const x = extractedFunctions.solveN(A, b);
-  return x && x.every((v, i) => Math.abs(v - xTrue[i]) < 1e-10);
+  return !!x && x.every((v, i) => Math.abs(v - xTrue[i]) < 1e-10);
 });
 
 test("Solve", "canonical: sides come out exactly a, b, c", () => {
@@ -410,12 +413,12 @@ test("Edge Case", "Right triangle", () => {
 
 test("Edge Case", "Parse with whitespace", () => {
   const result = extractedFunctions.parseMeasure("  3.5  in  ", "side", "in");
-  return result !== null;
+  return !!result && result.value === 3.5;
 });
 
 test("Edge Case", "Parse with comma decimal", () => {
   const result = extractedFunctions.parseMeasure("3,5 cm", "side", "cm");
-  return result !== null;
+  return !!result && Math.abs(result.value - 3.5 / 2.54) < 1e-9;
 });
 
 log("\nNumerical Stability");
@@ -442,14 +445,16 @@ test("Numerical", "Formatting preserves magnitude", () => {
 log("\nUnit Conversions");
 log("─".repeat(40));
 
-test("Units", "Inches to feet", () => {
-  const result = extractedFunctions.parseMeasure("12 in", "side", "in");
-  return result && result.value === 12;
+test("Units", "1 ft equals 12 in", () => {
+  const ft = extractedFunctions.parseMeasure("1 ft", "side", "in");
+  const inch = extractedFunctions.parseMeasure("12 in", "side", "in");
+  return !!ft && !!inch && ft.value === 12 && inch.value === 12;
 });
 
-test("Units", "Millimeters to centimeters", () => {
-  const result = extractedFunctions.parseMeasure("100 mm", "side", "mm");
-  return result && result.value > 0;
+test("Units", "100 mm equals 10 cm", () => {
+  const mm = extractedFunctions.parseMeasure("100 mm", "side", "mm");
+  const cm = extractedFunctions.parseMeasure("10 cm", "side", "cm");
+  return !!mm && !!cm && Math.abs(mm.value - cm.value) < 1e-12;
 });
 
 log("\nLoop & Recursion Tests");
