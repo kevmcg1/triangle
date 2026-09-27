@@ -1,0 +1,243 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     TRIANGLE.HTML STRESS TEST REPORT                       ║
+║                     Generated: 2026-09-23T02:55:31.852Z         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Tests:    55
+Passed:         55 ✓
+Failed:         0 ✗
+Success Rate:   100.00%
+
+DETAILED TEST RESULTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSED TESTS (55)
+────────────────────────────────────────────────────────────────────────────────
+1. [Math] clamp: value within range
+   Status: PASS
+   Details: Test executed successfully
+
+2. [Math] clamp: value below min
+   Status: PASS
+   Details: Test executed successfully
+
+3. [Math] clamp: value above max
+   Status: PASS
+   Details: Test executed successfully
+
+4. [Math] dist: distance calculation
+   Status: PASS
+   Details: Test executed successfully
+
+5. [Math] deg: radians to degrees
+   Status: PASS
+   Details: Test executed successfully
+
+6. [Math] radOf: degrees to radians
+   Status: PASS
+   Details: Test executed successfully
+
+7. [Format] fmt: normal positive number
+   Status: PASS
+   Details: Test executed successfully
+
+8. [Format] fmt: null value
+   Status: PASS
+   Details: Test executed successfully
+
+9. [Format] fmt: infinity
+   Status: PASS
+   Details: Test executed successfully
+
+10. [Format] fmt: very small number
+   Status: PASS
+   Details: Test executed successfully
+
+11. [Format] fmtExact: exact formatting
+   Status: PASS
+   Details: Test executed successfully
+
+12. [Format] fmtExact: trailing zeros trimmed
+   Status: PASS
+   Details: Test executed successfully
+
+13. [Format] groupExact: aligned decimals
+   Status: PASS
+   Details: Test executed successfully
+
+14. [Fractions] niceRatio: simple fraction
+   Status: PASS
+   Details: Test executed successfully
+
+15. [Fractions] niceRatio: null for irrational
+   Status: PASS
+   Details: Test executed successfully
+
+16. [Fractions] fractionStr: outputs string
+   Status: PASS
+   Details: Test executed successfully
+
+17. [Fractions] piStr: pi multiple
+   Status: PASS
+   Details: Test executed successfully
+
+18. [Fractions] piStr: pi fraction
+   Status: PASS
+   Details: Test executed successfully
+
+19. [Parse] parseMeasure: numeric inches
+   Status: PASS
+   Details: Test executed successfully
+
+20. [Parse] parseMeasure: feet
+   Status: PASS
+   Details: Test executed successfully
+
+21. [Parse] parseMeasure: centimeters
+   Status: PASS
+   Details: Test executed successfully
+
+22. [Parse] parseMeasure: feet and inches
+   Status: PASS
+   Details: Test executed successfully
+
+23. [Parse] parseMeasure: invalid input
+   Status: PASS
+   Details: Test executed successfully
+
+24. [Parse] parseMeasure: degrees
+   Status: PASS
+   Details: Test executed successfully
+
+25. [Solve] anglesFromSides: 3-4-5 triangle
+   Status: PASS
+   Details: Test executed successfully
+
+26. [Solve] anglesFromSides: sum to pi
+   Status: PASS
+   Details: Test executed successfully
+
+27. [Solve] solveN: 3x3 system needing a pivot swap
+   Status: PASS
+   Details: Test executed successfully
+
+28. [Solve] solveN: 6x6 system (the drag solver's size)
+   Status: PASS
+   Details: Test executed successfully
+
+29. [Solve] canonical: sides come out exactly a, b, c
+   Status: PASS
+   Details: Test executed successfully
+
+30. [Solve] angleAt: matches the Law of Cosines and sums to π
+   Status: PASS
+   Details: Test executed successfully
+
+31. [Solve] solvePositions: no locks → corners stay exactly where put
+   Status: PASS
+   Details: Test executed successfully
+
+32. [Solve] solvePositions: locked side held when the others must GROW (regression)
+   Status: PASS
+   Details: Test executed successfully
+
+33. [Solve] solvePositions: locked angle held while a corner is dragged
+   Status: PASS
+   Details: Test executed successfully
+
+34. [Solve] solvePositions: pinned corner lands exactly, locks still hold
+   Status: PASS
+   Details: Test executed successfully
+
+35. [Solve] solvePositions: dragging B with side a locked puts B on the circle about C
+   Status: PASS
+   Details: Test executed successfully
+
+36. [Geometry] signedArea2: positive area
+   Status: PASS
+   Details: Test executed successfully
+
+37. [Geometry] sidesOf: computes side lengths
+   Status: PASS
+   Details: Test executed successfully
+
+38. [Geometry] solvePositions: 3 locked sides → drag only moves the shape rigidly
+   Status: PASS
+   Details: Test executed successfully
+
+39. [Edge Case] Very large numbers
+   Status: PASS
+   Details: Test executed successfully
+
+40. [Edge Case] Very small numbers
+   Status: PASS
+   Details: Test executed successfully
+
+41. [Edge Case] Negative numbers
+   Status: PASS
+   Details: Test executed successfully
+
+42. [Edge Case] Zero handling in fractions
+   Status: PASS
+   Details: Test executed successfully
+
+43. [Edge Case] Degenerate triangle (collinear)
+   Status: PASS
+   Details: Test executed successfully
+
+44. [Edge Case] Nearly degenerate triangle
+   Status: PASS
+   Details: Test executed successfully
+
+45. [Edge Case] Right triangle
+   Status: PASS
+   Details: Test executed successfully
+
+46. [Edge Case] Parse with whitespace
+   Status: PASS
+   Details: Test executed successfully
+
+47. [Edge Case] Parse with comma decimal
+   Status: PASS
+   Details: Test executed successfully
+
+48. [Numerical] Angle sum precision
+   Status: PASS
+   Details: Test executed successfully
+
+49. [Numerical] Distance calculation consistency
+   Status: PASS
+   Details: Test executed successfully
+
+50. [Numerical] Formatting preserves magnitude
+   Status: PASS
+   Details: Test executed successfully
+
+51. [Units] Inches to feet
+   Status: PASS
+   Details: Test executed successfully
+
+52. [Units] Millimeters to centimeters
+   Status: PASS
+   Details: Test executed successfully
+
+53. [Loops] GCD calculation
+   Status: PASS
+   Details: Test executed successfully
+
+54. [Loops] GCD with large numbers
+   Status: PASS
+   Details: Test executed successfully
+
+55. [Loops] groupExact with many values
+   Status: PASS
+   Details: Test executed successfully
+
+
+FAILED TESTS (0)
+────────────────────────────────────────────────────────────────────────────────
+
+════════════════════════════════════════════════════════════════════════════════
+END OF REPORT
