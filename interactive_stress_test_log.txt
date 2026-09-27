@@ -1,0 +1,395 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║            INTERACTIVE STRESS TEST - USER SIMULATION PLAN                   ║
+║                     Generated: 2026-09-22T23:40:38.756Z         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+OPERATIONAL PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Operations Planned: 50
+
+OPERATIONS BY CATEGORY
+────────────────────────────────────────────────────────────────────────────────
+Vertex Movement               : 8 operations
+Lock/Unlock                   : 11 operations
+Rotation                      : 4 operations
+Flipping                      : 4 operations
+Scaling                       : 3 operations
+Units                         : 4 operations
+View                          : 4 operations
+Precision                     : 4 operations
+Undo/Redo                     : 1 operations
+Combination                   : 0 operations
+Edge Cases                    : 4 operations
+
+
+DETAILED OPERATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[OP 1] Drag vertex A down
+  Action: Click vertex A, drag down 50px
+  Math Verifications:
+    • Angle at A should increase (A moves toward side BC)
+    • Sides b and c both shrink; side a (BC) is unchanged
+    • All angles must sum to 180°
+
+[OP 2] Drag vertex B right
+  Action: Click vertex B, drag right 100px
+  Math Verifications:
+    • Side a should decrease (B moves toward C); side b (CA) is unchanged
+    • Angle at C should change
+    • Angle sum must equal 180°
+
+[OP 3] Drag vertex C left
+  Action: Click vertex C, drag left 75px
+  Math Verifications:
+    • Sides a and b change; side c (AB) does not involve C and stays fixed
+    • Angles must remain valid
+
+[OP 4] Lock side a, then drag vertex B
+  Action: Lock side a, attempt to move B
+  Math Verifications:
+    • Side a must remain constant
+    • Other sides adjust to maintain constraint
+    • Area may change
+
+[OP 5] Lock angle A, then drag vertex B
+  Action: Lock angle A, attempt to move B
+  Math Verifications:
+    • Angle A must remain constant
+    • Other angles adjust
+    • Angle sum = 180°
+
+[OP 6] Lock side b, drag vertex C
+  Action: Lock side b, drag vertex C
+  Math Verifications:
+    • Side b stays locked
+    • Sides a and c adjust
+    • Law of cosines holds
+
+[OP 7] Lock sides a and b, drag vertex C
+  Action: Lock a and b, drag C
+  Math Verifications:
+    • Sides a and b fixed
+    • Side c forced to satisfy triangle inequality
+    • Angle C (between a and b) still varies, so side c changes with it
+
+[OP 8] Lock all three angles
+  Action: Lock A, B, C in sequence
+  Math Verifications:
+    • Shape is fixed but size is not (only 2 of the 3 angles are independent)
+    • Dragging scales/rotates the triangle but never changes its angles
+    • Angles remain constant
+
+[OP 9] Unlock all, verify reset
+  Action: Unlock all constraints
+  Math Verifications:
+    • Triangle returns to free movement
+    • No lingering constraints
+    • All math still valid
+
+[OP 10] Lock side a, unlock it mid-drag
+  Action: Lock a, then unlock
+  Math Verifications:
+    • Triangle freedom restored
+    • Current state preserved
+    • No mathematical discontinuity
+
+[OP 11] Rotate triangle left 45°
+  Action: Click rotate-left button twice
+  Math Verifications:
+    • All sides unchanged
+    • Angle values unchanged
+    • Area unchanged
+
+[OP 12] Rotate triangle right 45°
+  Action: Click rotate-right button twice
+  Math Verifications:
+    • Cancels previous rotation
+    • Returns to ~original orientation
+    • Math unchanged
+
+[OP 13] Rotate then drag vertex
+  Action: Rotate 15°, then drag B
+  Math Verifications:
+    • Rotation preserved in triangle structure
+    • Drag works after rotation
+    • No gimbal lock
+
+[OP 14] Flip horizontal
+  Action: Click horizontal flip button
+  Math Verifications:
+    • Triangle mirrors across Y axis
+    • All sides unchanged
+    • Angles unchanged (magnitude)
+
+[OP 15] Flip vertical
+  Action: Click vertical flip button
+  Math Verifications:
+    • Triangle mirrors across X axis
+    • Sides and angles preserved
+    • Orientation reversed
+
+[OP 16] Flip both ways (H then V)
+  Action: Flip H, then V
+  Math Verifications:
+    • Equivalent to 180° rotation
+    • All measurements identical to original
+    • Only position differs
+
+[OP 17] Flip, then lock and drag
+  Action: Flip vertical, lock side a, drag B
+  Math Verifications:
+    • Lock works post-flip
+    • Constraint still valid
+    • Measurements consistent
+
+[OP 18] Scale up
+  Action: Click scale-up button several times
+  Math Verifications:
+    • All sides scale proportionally
+    • All angles unchanged
+    • Area scales by square of scale factor
+
+[OP 19] Scale down
+  Action: Click scale-down multiple times
+  Math Verifications:
+    • All sides decrease proportionally
+    • Angles preserved
+    • Area shrinks predictably
+
+[OP 20] Scale then drag
+  Action: Scale up 2x, drag vertex C
+  Math Verifications:
+    • Vertex responds to drag
+    • Scaling preserved
+    • Math remains valid
+
+[OP 21] Scale after locking
+  Action: Lock side a, scale up
+  Math Verifications:
+    • Locked constraint applies to scaled triangle
+    • Side a in new scale units
+    • Other sides scale with unit change
+
+[OP 22] Change to cm
+  Action: Click length unit, select cm
+  Math Verifications:
+    • All displayed values convert
+    • Internal calculations unchanged
+    • Ratios preserved
+
+[OP 23] Drag vertex in cm mode
+  Action: Drag vertex B while in cm
+  Math Verifications:
+    • Drag units in cm
+    • Conversions display correctly
+    • Math operations unaffected
+
+[OP 24] Change to feet
+  Action: Switch to ft unit
+  Math Verifications:
+    • Values convert from cm to ft
+    • Decimal places adjust
+    • Triangle proportions unchanged
+
+[OP 25] Lock in feet, unlock in cm
+  Action: Lock in ft, switch unit, unlock
+  Math Verifications:
+    • Unit conversion doesn't break locks
+    • Constraint survives unit change
+    • Math consistent across unit systems
+
+[OP 26] Switch to radians
+  Action: Click angle unit, select rad
+  Math Verifications:
+    • Angles display in radians
+    • Every angle is strictly between 0 and π (an obtuse angle is > π/2)
+    • Angle sum ≈ π
+
+[OP 27] Drag vertex in radian mode
+  Action: Drag vertex A in radian mode
+  Math Verifications:
+    • Display updates in radians
+    • Math uses radians internally
+    • Conversion is clean
+
+[OP 28] Toggle grid
+  Action: Click grid button
+  Math Verifications:
+    • Grid appears/disappears
+    • Triangle unaffected
+    • No mathematical impact
+
+[OP 29] Fit to view
+  Action: Click fit-to-view button
+  Math Verifications:
+    • Triangle centered and scaled to viewport
+    • All measurements unchanged
+    • Only view transform changes
+
+[OP 30] Zoom with scroll wheel
+  Action: Scroll up/down on canvas
+  Math Verifications:
+    • View zooms in/out
+    • Triangle itself unchanged
+    • Interaction still works
+
+[OP 31] Pan view
+  Action: Right-drag on canvas to pan
+  Math Verifications:
+    • View translates
+    • Triangle geometry unaffected
+    • Can still drag vertices
+
+[OP 32] Fit after custom zoom
+  Action: Zoom custom, click fit
+  Math Verifications:
+    • Returns to fit-all view
+    • Triangle unchanged
+    • All vertices visible
+
+[OP 33] Set decimals to 8
+  Action: Click decimal stepper increase
+  Math Verifications:
+    • Display shows more precision
+    • Internal math unchanged
+    • Rounding artifacts may appear
+
+[OP 34] Set decimals to 0
+  Action: Click decimal down multiple times
+  Math Verifications:
+    • Displays integers only
+    • Underlying values still precise
+    • Rounding for display only
+
+[OP 35] Toggle exact mode
+  Action: Click Approx/Exact toggle
+  Math Verifications:
+    • Numbers show exact form when possible
+    • Fractions and π multiples appear
+    • Still mathematically correct
+
+[OP 36] Drag, undo, redo
+  Action: Drag vertex, Ctrl+Z, Ctrl+Y
+  Math Verifications:
+    • Undo restores exact previous state
+    • Redo replays drag
+    • No state corruption
+
+[OP 37] Multiple undo chain
+  Action: Perform 5 drags, undo all
+  Math Verifications:
+    • Each undo step is valid state
+    • Math correct at each point
+    • Returns to initial state
+
+[OP 38] Lock/unlock in undo sequence
+  Action: Lock, drag, unlock, drag, undo twice
+  Math Verifications:
+    • Lock state restored by undo
+    • Constraints reapplied correctly
+    • No math errors in state restoration
+
+[OP 39] Rotate, scale, flip, drag, lock
+  Action: Combo: rotate 30°, scale 1.5x, flip H, drag A, lock b
+  Math Verifications:
+    • Each operation applies in sequence
+    • Final state is mathematically valid
+    • Lock works after transformations
+
+[OP 40] Lock all angles, flip, try drag
+  Action: Lock A/B/C, flip, attempt drag
+  Math Verifications:
+    • Triangle effectively rigid
+    • Flip works on rigid triangle
+    • Drag has minimal/no effect
+
+[OP 41] Extreme drag attempt
+  Action: Drag vertex across entire screen
+  Math Verifications:
+    • Triangle adjusts to follow
+    • No numerical overflow
+    • Still valid triangle
+
+[OP 42] Rapid-fire unit changes
+  Action: Click unit button 5+ times rapidly
+  Math Verifications:
+    • Handles rapid input
+    • No state corruption
+    • Final unit state consistent
+
+[OP 43] Rapid vertex dragging
+  Action: Click/drag vertices rapidly in sequence
+  Math Verifications:
+    • High-frequency input handled
+    • No animation glitches
+    • Math stays valid
+
+[OP 44] Drag vertex to near-degenerate state
+  Action: Drag to make triangle very flat
+  Math Verifications:
+    • Angle approaches 0 or 180°
+    • Math handles extreme angles
+    • No division by zero
+
+[OP 45] Drag to invalid triangle, release
+  Action: Attempt drag that would break triangle inequality
+  Math Verifications:
+    • System prevents invalid state
+    • Triangle snaps to valid
+    • Constraint enforcement visible
+
+[OP 46] Lock side equal to sum of others
+  Action: Manipulate to nearly degenerate, lock
+  Math Verifications:
+    • Handles edge of triangle inequality
+    • Math doesn't break
+    • Constraint applies to edge case
+
+[OP 47] Search for a value, verify math
+  Action: Use search box to find a value
+  Math Verifications:
+    • Search highlights relevant elements
+    • Verification shows correct math
+    • Search doesn't modify state
+
+[OP 48] Open explanation panel
+  Action: Click on a displayed value
+  Math Verifications:
+    • Explanation panel opens
+    • Shows derivation of value
+    • Math breakdown is correct
+
+[OP 49] Change precision during explanation
+  Action: Open panel, change decimals
+  Math Verifications:
+    • Panel updates in real-time
+    • Formulas still valid
+    • New precision applied
+
+[OP 50] Clear history button
+  Action: Click reset/clear button
+  Math Verifications:
+    • Triangle resets to default (3-4-5)
+    • History cleared
+    • All math verified for fresh state
+
+
+EXECUTION NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Initial Triangle: 3-4-5 right triangle (sides 3, 4, 5 inches)
+Starting Angles: 90°, 53.13°, 36.87° (or π/2, arccos(3/5), arccos(4/5))
+Starting Area: 6 square inches
+
+Mathematical Verification Points:
+  1. Angle Sum: A + B + C = 180° (or π radians)
+  2. Law of Cosines: c² = a² + b² - 2ab·cos(C) (for each angle)
+  3. Area: A = (1/2)·a·b·sin(C) (should match across calculations)
+  4. Side Validity: Each side < sum of other two (triangle inequality)
+  5. Constraint Logic: Locked values remain constant through transformations
+  6. Unit Conversion: Ratios preserved across unit changes
+  7. State Consistency: Undo/redo preserves exact state
+  8. Numerical Stability: No overflow/underflow in extreme cases
+
+════════════════════════════════════════════════════════════════════════════════
+END OF PLAN
