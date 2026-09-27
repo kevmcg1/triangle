@@ -1,0 +1,3594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Triangle Thing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{
+  --bg:#0b0b0d; --header:#101013; --footer:#101013;
+  --panel:#0f0f12; --panel-2:#131317; --pill:#111115;
+  --line:#232328; --line-2:#2e2e35;
+  --txt:#f2f2f4; --txt-2:#a0a0aa; --txt-3:#6a6a74;
+  --accent:#ffffff; --accent-ink:#0b0b0d;
+  /* palette restricted to grayscale + the three primaries (red / green / blue) */
+  --red:#ff5c5c; --red-dim:#ff8a8a; --green:#46d160; --green-dim:#7ee08a; --blue:#4ea1ff; --blue-dim:#7fb8ff;
+  --lock:var(--red); --lock-ink:#2a0d0d;
+  --ease:cubic-bezier(.32,.72,.28,1);
+  --cat-0:rgba(255,92,92,.07); --cat-1:rgba(70,209,96,.07); --cat-2:rgba(78,161,255,.07);
+  --cat-3:rgba(160,160,168,.08); --cat-4:rgba(70,209,96,.12); --cat-5:rgba(78,161,255,.12); --cat-6:rgba(160,160,168,.12);
+}
+:root[data-theme="light"]{
+  --bg:#f4f4f6; --header:#ffffff; --footer:#ffffff;
+  --panel:#ffffff; --panel-2:#f0f0f3; --pill:#ffffff;
+  --line:#e4e4ea; --line-2:#d3d3db;
+  --txt:#17171a; --txt-2:#5c5c66; --txt-3:#8c8c96;
+  --accent:#17171a; --accent-ink:#ffffff;
+  --red:#c22b2b; --red-dim:#d64545; --green:#158a37; --green-dim:#2f9e46; --blue:#1d4ed8; --blue-dim:#3b82f6;
+  --lock:var(--red); --lock-ink:#2a0d0d;
+  --cat-0:rgba(194,43,43,.06); --cat-1:rgba(21,138,55,.06); --cat-2:rgba(29,78,216,.06);
+  --cat-3:rgba(110,110,120,.07); --cat-4:rgba(21,138,55,.1); --cat-5:rgba(29,78,216,.1); --cat-6:rgba(110,110,120,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--txt);font-size:13px;font-weight:400;
+  -webkit-font-smoothing:antialiased;user-select:none;
+  display:flex;flex-direction:column;
+}
+input,button,select{font-family:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--panel)}
+
+.tbtn,#navtoggle,.stepper button,.pill .lockbtn,.sec-head,.chip,.pill,.iconbtn,.menu-item,.row.clickable{
+  transition:background-color .17s var(--ease),color .17s var(--ease),border-color .17s var(--ease),
+             box-shadow .17s var(--ease),opacity .17s var(--ease),transform .12s var(--ease);
+}
+.tbtn:active:not([disabled]),#navtoggle:active,.stepper button:active,.pill .lockbtn:active,.iconbtn:active{transform:scale(.88)}
+.tbtn:focus-visible,#navtoggle:focus-visible,.stepper button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--txt-3)}
+
+/* ---------------- Header / Footer ---------------- */
+#appHeader{
+  flex:0 0 44px;height:44px;background:var(--header);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;padding:0 14px;z-index:30;
+}
+#appHeader .mark{width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--line-2);border-radius:6px;font-size:9px;color:var(--txt-2)}
+#appHeader h1{font-size:12.5px;font-weight:700;letter-spacing:.06em}
+#appHeader .flexgap{flex:1}
+#searchWrap{position:relative;width:220px}
+#searchWrap i{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--txt-3)}
+#searchBox{
+  width:100%;height:28px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:6px;
+  color:var(--txt);font-size:11.5px;padding:0 10px 0 26px;outline:0;
+}
+#searchBox:focus{border-color:var(--txt-3)}
+#searchBox::placeholder{color:var(--txt-3)}
+.iconbtn{
+  width:28px;height:28px;background:transparent;border:1px solid transparent;border-radius:6px;
+  color:var(--txt-2);cursor:pointer;font-size:12px;display:grid;place-items:center;
+}
+.iconbtn:hover{background:var(--panel-2);color:var(--txt);border-color:var(--line-2)}
+
+#appFooter{
+  flex:0 0 30px;height:30px;background:var(--footer);border-top:1px solid var(--line);
+  display:flex;align-items:center;padding:0 14px;gap:16px;z-index:30;font-size:10.5px;color:var(--txt-3);
+}
+#appFooter .fgap{flex:1}
+.foot-ico{display:flex;align-items:center;gap:6px}
+.foot-ico i{font-size:11px;color:var(--txt-3)}
+
+#appBody{flex:1;min-height:0;display:flex;overflow:hidden}
+
+/* ---------------- Sidebar ---------------- */
+#sidebar{
+  width:352px;flex:0 0 352px;height:100%;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.side-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:24px}
+
+.sec{border-bottom:1px solid var(--line);position:relative}
+.sec::before{content:"";position:absolute;inset:0;background:var(--tint);pointer-events:none;z-index:0}
+.sec.cat-0{--tint:var(--cat-0)} .sec.cat-1{--tint:var(--cat-1)} .sec.cat-2{--tint:var(--cat-2)}
+.sec.cat-3{--tint:var(--cat-3)} .sec.cat-4{--tint:var(--cat-4)} .sec.cat-5{--tint:var(--cat-5)} .sec.cat-6{--tint:var(--cat-6)}
+.sec-head,.sec-body{position:relative;z-index:1}
+.sec-head{display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;color:var(--txt-2)}
+.sec-head:hover{background:rgba(128,128,128,.06)}
+.sec-head i.ico{font-size:11px;width:13px;text-align:center;color:var(--txt-3)}
+.sec-head span{flex:1;font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase}
+.sec-head i.chev{font-size:9px;color:var(--txt-3);transition:transform .22s var(--ease)}
+.sec.collapsed i.chev{transform:rotate(-90deg)}
+/* collapse animates max-height, driven from JS with the section's real
+   measured height (see toggleSection) — grid-template-rows transitions
+   between fr tracks are unreliable across engines, so this is the
+   version that actually animates smoothly everywhere */
+.sec-collapse{overflow:hidden;max-height:2000px;transition:max-height .32s var(--ease)}
+.sec-body{padding:2px 14px 12px;display:flex;flex-direction:column;gap:2px}
+.sec.searchhide{display:none}
+
+.card{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+}
+.row{display:flex;align-items:baseline;gap:8px;padding:3.5px 2px;font-size:12px;border-radius:5px}
+.row.withicon{align-items:center}
+.row.clickable{cursor:pointer}
+.row.clickable:hover{background:rgba(128,128,128,.09)}
+.row.rowhide{display:none}
+.row .k{color:var(--txt-3);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .v{color:var(--txt);font-variant-numeric:tabular-nums;font-weight:500;letter-spacing:-.01em;text-align:right;white-space:nowrap}
+.row .v .alt{color:var(--txt-3);font-size:10.5px;font-weight:400;margin-left:3px}
+.row .v.dim{color:var(--txt-2);font-weight:400}
+.row.hl .v{color:var(--txt)}
+
+.tblock{margin-top:4px}
+.tblock .thdr{display:grid;grid-template-columns:1fr repeat(3,52px);gap:4px;padding:2px 2px 5px;border-bottom:1px solid var(--line);margin-bottom:3px}
+.tblock .thdr span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);font-weight:600;text-align:right}
+.tblock .thdr span:first-child{text-align:left}
+.trow{display:grid;grid-template-columns:1fr repeat(3,52px);gap:4px;padding:3px 2px;border-radius:5px;cursor:pointer}
+.trow:hover{background:rgba(128,128,128,.09)}
+.trow .fn{color:var(--txt-3);font-size:11px;text-align:left}
+.trow .c{color:var(--txt);font-weight:500;font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:500;padding:3px 8px;border:1px solid var(--line-2);border-radius:20px;color:var(--txt-2)}
+.chip.on{background:var(--txt);color:var(--bg);border-color:var(--txt)}
+
+.side-foot{flex:0 0 auto;border-top:1px solid var(--line);padding:9px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pf-group{display:flex;align-items:center;gap:6px}
+.pf-lbl{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-3)}
+.stepper{display:flex;align-items:center;gap:1px}
+.stepper button{width:20px;height:20px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--txt-2);cursor:pointer;font-size:9px;display:grid;place-items:center}
+.stepper button:first-child{border-radius:5px 0 0 5px}
+.stepper button:last-child{border-radius:0 5px 5px 0}
+.stepper button:hover{background:var(--line);color:var(--txt)}
+.stepper .val{width:22px;height:20px;display:grid;place-items:center;background:var(--panel-2);border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);font-size:10.5px;font-variant-numeric:tabular-nums}
+.toggle2{display:flex;border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
+.toggle2 button{height:22px;padding:0 8px;background:var(--panel-2);border:0;color:var(--txt-2);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.toggle2 button.on{background:var(--txt);color:var(--bg)}
+.toggle2 button+button{border-left:1px solid var(--line-2)}
+
+/* ---------------- Stage ---------------- */
+#stage{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+#viewport{position:relative;flex:1;min-height:0;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#overlay{position:absolute;inset:0;pointer-events:none}
+/* view-only fades the chrome out instead of display:none-ing it in one
+   frame. visibility flips only AFTER the fade-out finishes (and at once
+   on the way back in), so hidden controls can't be clicked or tabbed to,
+   yet the fade itself is still visible. The sidebar and the explanation
+   panel don't fade — they slide shut via JS (see setViewOnly), since
+   they're real layout that the canvas has to resize into. */
+#overlay,#toolbar,#navtoggle,#zoomtag{transition:opacity .3s var(--ease),visibility 0s linear 0s}
+body.view-only #overlay,body.view-only #toolbar,body.view-only #navtoggle,body.view-only #zoomtag{
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .3s var(--ease),visibility 0s linear .3s;
+}
+#appHeader,#appFooter{transition:opacity .35s var(--ease)}
+body.view-only #appHeader,body.view-only #appFooter{opacity:.35}
+body.view-only #viewport{cursor:default}
+/* the only control left reachable in view-only mode: a way back out of it */
+#exitViewOnly{
+  position:absolute;top:12px;right:12px;z-index:6;display:flex;height:29px;padding:0 12px;align-items:center;gap:7px;
+  background:var(--panel);border:1px solid var(--line-2);border-radius:7px;color:var(--txt-2);cursor:pointer;font-size:11px;
+  opacity:0;visibility:hidden;transform:translateY(-4px);
+  transition:opacity .25s var(--ease),transform .25s var(--ease),visibility 0s linear .25s,background-color .17s var(--ease),color .17s var(--ease);
+}
+#exitViewOnly:hover{background:var(--panel-2);color:var(--txt)}
+body.view-only #exitViewOnly{
+  opacity:1;visibility:visible;transform:none;
+  transition:opacity .3s var(--ease) .15s,transform .3s var(--ease) .15s,visibility 0s linear 0s,background-color .17s var(--ease),color .17s var(--ease);
+}
+
+/* ---------------- Pills ---------------- */
+.pill{position:absolute;pointer-events:auto;display:flex;align-items:stretch;background:var(--pill);border:1px solid var(--line-2);border-radius:8px;transform:translate(-50%,-50%);box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.pill:hover{border-color:var(--txt-3)}
+.pill-body{display:flex;flex-direction:column;justify-content:center;padding:4px 0 5px;min-height:36px}
+.pill-main{display:flex;align-items:center;height:16px}
+.pill .tag{padding:0 5px 0 9px;font-size:10.5px;font-weight:600;color:var(--txt-3);font-style:italic;display:flex;align-items:center;height:100%}
+.pill input{background:transparent;border:0;outline:0;color:var(--txt);font:500 12px 'Inter',sans-serif;letter-spacing:-.01em;padding:0;width:74px}
+.pill-alt{padding:1px 9px 0 22px;font-size:10px;line-height:12px;color:var(--txt-3);white-space:nowrap}
+.pill-coord{display:flex;gap:5px;padding:2px 9px 0 22px}
+.pill-coord input{width:38px;font-size:10px;color:var(--txt-2);border-bottom:1px dashed var(--line-2)}
+.pill-coord span{font-size:9px;color:var(--txt-3);align-self:center}
+.pill .lockbtn{width:27px;background:transparent;border:0;border-left:1px solid var(--line-2);border-radius:0 7px 7px 0;color:var(--txt-3);cursor:pointer;font-size:10px;display:grid;place-items:center}
+.pill .lockbtn:hover{background:var(--panel-2);color:var(--txt)}
+
+/* the locked outline draws itself as two arcs that start at opposite
+   corners (top-left, bottom-right) and race around to meet each other.
+   Sized in real pixels every frame (viewBox == the pill's own box) so
+   the rounded corners are true circles, matching the pill's own
+   border-radius exactly — no stretched/oval corners, no stray sharp
+   rectangle showing through the rounded one. */
+/* the ring sits ON the pill's 1px border, not inside it: the svg is
+   stretched over the whole border box (inset:-1px), and the stroke's
+   outer edge is placed exactly on that box's edge (see RING). Drawn
+   inside the border instead, the gray border stayed visible as a dark
+   line all the way around the red. */
+.lockring{position:absolute;top:-1px;left:-1px;width:calc(100% + 2px);height:calc(100% + 2px);pointer-events:none;overflow:visible}
+.lockring rect{fill:none;stroke:var(--lock);stroke-width:2.25}
+.lockring rect.draw{opacity:0}
+.lockring rect.rot{transform-box:fill-box;transform-origin:center;transform:rotate(180deg)}
+
+.pill.locked{box-shadow:0 4px 16px rgba(0,0,0,.35)}
+/* ring fully drawn (not mid draw-in/undraw): the border underneath goes
+   red as well, so no gray antialiasing fringe can show at the corners */
+.pill.ring-full,.pill.ring-full:hover{border-color:var(--lock)}
+.pill.locked .tag{color:var(--lock)}
+.pill.locked .lockbtn{color:var(--lock);border-left-color:var(--lock)}
+.pill.locked .lockbtn:hover{background:rgba(255,92,92,.15)}
+.pill.conflict{border-style:dashed}
+.pill .warn{display:none;padding:0 6px 0 2px;font-size:10px;color:var(--txt-2)}
+.pill.conflict .warn{display:block;color:var(--lock)}
+.pill.active{border-color:var(--txt)}
+.pill.selected{box-shadow:0 0 0 2px var(--blue),0 4px 16px rgba(0,0,0,.35)}
+
+/* ---------------- Toolbar ---------------- */
+#toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:5;flex-wrap:wrap;justify-content:flex-end;max-width:70vw}
+.tbtn{height:29px;min-width:29px;padding:0 8px;background:var(--panel);border:1px solid var(--line-2);border-radius:7px;color:var(--txt-2);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.95}
+.tbtn:hover:not([disabled]){background:var(--panel-2);color:var(--txt);border-color:var(--txt-3)}
+.tbtn.on{background:var(--txt);color:var(--bg);border-color:var(--txt)}
+.tbtn.on:hover{opacity:.85}
+.tbtn[disabled]{opacity:.3;cursor:default}
+.tbtn .t{font-size:9.5px;font-weight:600;letter-spacing:.08em}
+.tgroup{display:flex;gap:6px;background:rgba(128,128,128,.06);border:1px solid var(--line);border-radius:8px;padding:3px}
+
+#navtoggle{position:absolute;top:12px;left:12px;z-index:5;height:29px;width:29px;background:var(--panel);border:1px solid var(--line-2);border-radius:7px;color:var(--txt-2);cursor:pointer;font-size:11px;display:grid;place-items:center}
+#navtoggle:hover{background:var(--panel-2);color:var(--txt)}
+
+#cornerHints{position:absolute;right:12px;bottom:10px;z-index:4;display:flex;gap:10px;align-items:center;pointer-events:none}
+#cornerHints .h{display:flex;align-items:center;gap:5px;color:var(--txt-3);font-size:10px;background:rgba(20,20,24,.001)}
+#cornerHints i{font-size:12px}
+#zoomtag{
+  position:absolute;left:12px;bottom:10px;z-index:4;font-size:10.5px;color:var(--txt-2);font-variant-numeric:tabular-nums;pointer-events:none;
+  background:var(--panel);border:1px solid var(--line-2);border-radius:7px;padding:5px 10px;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:nowrap;
+}
+
+/* ---------------- Explanation panel ---------------- */
+/* a real docked panel — a flex child of #stage, not an overlay floating
+   on top of the canvas. Opening it actually shrinks the viewport (the
+   canvas resizes to make room), and its height is driven from JS
+   (see setPanelOpen) so the resize happens smoothly, frame by frame,
+   instead of the canvas snapping once the CSS transition finishes. */
+.modal-backdrop{
+  flex:0 0 auto;height:0;overflow:hidden;
+  display:flex;flex-direction:column;
+  background:var(--panel);border-top:1px solid var(--line-2);
+  box-shadow:0 -8px 34px rgba(0,0,0,.35);
+}
+.modal{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.modal-head{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.modal-head h3{font-size:13px;font-weight:600;flex:1}
+.modal-body{overflow-y:auto;min-height:0}
+.modal-body{padding:14px 16px;font-size:12.5px;line-height:1.7;color:var(--txt-2);user-select:text}
+.modal-body .big{display:flex;gap:14px;margin-bottom:12px}
+.modal-body .bigv{flex:1;position:relative;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+.modal-body .bigv .lbl{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-3);margin-bottom:3px}
+.modal-body .bigv .num{font-size:15px;color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums;padding-right:24px}
+.modal-body p{margin-bottom:8px;color:var(--txt-2)}
+
+/* readable, color-coded equations with real fraction bars */
+.eqn{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:13px 14px;font-size:14.5px}
+.eqn-line{display:flex;align-items:center;flex-wrap:wrap;row-gap:6px;gap:0;min-height:30px;padding:8px 0;line-height:1.9;color:var(--txt-2)}
+.eqn-line+.eqn-line{border-top:1px dashed var(--line)}
+/* the actual formula/text content, as a single flex item — see the
+   comment on EL/BOXED/NOTE for why this wrapper has to exist at all */
+.eqn-line .eqn-content{flex:1 1 auto;min-width:0}
+/* copy-to-clipboard, on every equation line and every big value */
+.copy-btn{
+  flex:0 0 auto;margin:0 0 0 auto;width:24px;height:22px;
+  border:1px solid var(--line-2);background:var(--panel);border-radius:5px;
+  color:var(--txt-3);cursor:pointer;font-size:10px;display:grid;place-items:center;
+}
+.copy-btn:hover{background:var(--panel-2);color:var(--txt);border-color:var(--txt-3)}
+.copy-btn.copied{color:var(--green);border-color:var(--green)}
+.copy-btn-bigv{position:absolute;top:7px;right:7px;margin:0;width:20px;height:20px;font-size:9px}
+/* the line that states the final, fully-resolved answer gets its own box */
+.eqn-line.eqn-final{
+  margin:10px 0 2px;padding:10px 13px;border:1.5px solid var(--txt-2);border-radius:7px;
+  background:rgba(128,128,128,.08);color:var(--txt);font-weight:600;
+}
+.eqn-line.eqn-final+.eqn-line{border-top:0}
+/* a short aside explaining WHY a unit/representation conversion is
+   happening right here (deg→rad, etc.) — reads as prose, not as a
+   formula step, so it's set apart from the eqn-line rhythm around it */
+.eqn-line.eqn-note{
+  font-style:italic;font-size:.86em;line-height:1.5;color:var(--txt-3);
+  padding:6px 0;min-height:0;gap:8px;
+}
+.eqn-line.eqn-note i{flex:0 0 auto;font-size:.95em;opacity:.8}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 5px;line-height:1.3;font-size:.92em}
+.frac .num{border-bottom:1.4px solid var(--txt-3);padding:0 4px 2px;white-space:nowrap}
+.frac .den{padding:2px 4px 0;white-space:nowrap}
+.op{color:var(--txt-3);margin:0 2px}
+.var{font-weight:700;padding:0 1px}
+/* every colored variable or number points at something on the triangle
+   when clicked — a slight lift on hover says so */
+.eqn .var[class*="var-"],.eqn .numv[class*="var-"],.bigv .var[class*="var-"]{cursor:pointer;border-radius:3px}
+.eqn .var[class*="var-"]:hover,.eqn .numv[class*="var-"]:hover,.bigv .var[class*="var-"]:hover{background:rgba(78,161,255,.22)}
+/* uncolored values that still map to something drawable (an altitude's
+   length, a trig construction's opposite/adjacent leg, a center point) */
+.eqn .hlv{cursor:pointer;border-radius:3px;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--txt-3)}
+.eqn .hlv:hover{background:rgba(78,161,255,.22)}
+/* whatever value is currently lit up on the canvas */
+.eqn .hl-on,.bigv .hl-on{background:rgba(78,161,255,.26);box-shadow:0 0 0 1px var(--blue);border-radius:3px}
+/* .numv MUST be declared before the .var-X color rules below. Every
+   substituted number carries BOTH classes ("numv var-a"), and since
+   both are single-class selectors of equal specificity, CSS breaks the
+   tie by source order — whichever is declared LAST wins. With .numv
+   declared first, the .var-X color rules (declared after) correctly
+   win and the number gets colored; get this backwards and every single
+   substituted value silently renders in plain default text with no
+   visible error anywhere — exactly the bug that was here before. */
+.numv{font-variant-numeric:tabular-nums;color:var(--txt)}
+.eqn sub{font-size:.7em;line-height:0}
+/* a/A, b/B, c/C each share one primary hue (dim for the side, full for
+   the angle). R, r, s and Area aren't tied to one particular side or
+   vertex, so they can't borrow red/green/blue — but plain gray text is
+   indistinguishable from ordinary unstyled copy, so each gets its own
+   chip (a light background + border) instead of relying on a subtle
+   text-color difference nobody can actually see. */
+.var-a{color:var(--red-dim)} .var-b{color:var(--green-dim)} .var-c{color:var(--blue-dim)}
+.var-A{color:var(--red)} .var-B{color:var(--green)} .var-C{color:var(--blue)}
+.var-R,.var-r,.var-s,.var-area{
+  color:var(--txt);border-radius:4px;padding:0 4px;margin:0 1px;
+  border:1px solid var(--chip-border);background:var(--chip-bg);
+}
+.var-R{--chip-bg:rgba(255,255,255,.16);--chip-border:rgba(255,255,255,.4)}
+.var-r{--chip-bg:rgba(255,255,255,.10);--chip-border:rgba(255,255,255,.28);border-style:dashed}
+.var-s{--chip-bg:transparent;--chip-border:var(--txt-2)}
+.var-area{--chip-bg:rgba(255,255,255,.10);--chip-border:rgba(255,255,255,.28)}
+:root[data-theme="light"] .var-R{--chip-bg:rgba(0,0,0,.09);--chip-border:rgba(0,0,0,.35)}
+:root[data-theme="light"] .var-r{--chip-bg:rgba(0,0,0,.05);--chip-border:rgba(0,0,0,.22)}
+:root[data-theme="light"] .var-s{--chip-bg:transparent;--chip-border:var(--txt-2)}
+:root[data-theme="light"] .var-area{--chip-bg:rgba(0,0,0,.05);--chip-border:rgba(0,0,0,.22)}
+.expandable{cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--txt-3)}
+.expandable:hover{text-decoration-color:var(--txt)}
+.expandable.expanded{text-decoration:none;font-size:.92em}
+
+/* small schematic icons that sit beside a row to show what it refers to */
+.row-icon{flex:0 0 auto;width:30px;height:24px;margin-right:1px;color:var(--txt-3)}
+.row-icon .hl{stroke:var(--blue)}
+.settings-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.settings-row:last-child{border-bottom:0}
+.settings-row .lbl{flex:1;font-size:12px;color:var(--txt)}
+.settings-row input[type=color]{width:32px;height:24px;border:1px solid var(--line-2);border-radius:5px;background:none;cursor:pointer;padding:0}
+.menu{position:fixed;z-index:70;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;box-shadow:0 10px 30px rgba(0,0,0,.4);padding:4px;min-width:130px}
+.menu-item{padding:7px 10px;font-size:12px;border-radius:6px;cursor:pointer;color:var(--txt-2);display:flex;align-items:center;justify-content:space-between}
+.menu-item:hover{background:var(--panel-2);color:var(--txt)}
+.menu-item.on{color:var(--txt);font-weight:600}
+
+/* ---------------- Tooltips ----------------
+   Pure CSS: the text lives in data-tip and is drawn by ::after, so it
+   matches the app's own look instead of the browser's native title
+   popup. Placement defaults to centered below the element; data-tip-pos
+   picks another side, and the -start/-end variants pin the tip to one
+   edge so controls hugging a screen edge don't push it off-screen.
+   A short show-delay (and no delay on hide) keeps a mouse just passing
+   over a row of buttons from strobing tips on and off. */
+.tbtn,.iconbtn,#cornerHints .h,.expandable,.copy-btn:not(.copy-btn-bigv){position:relative}
+#cornerHints .h{pointer-events:auto;cursor:default}
+[data-tip]::after{
+  content:attr(data-tip);position:absolute;z-index:80;pointer-events:none;
+  top:calc(100% + 7px);left:50%;transform:translate(-50%,-3px);
+  padding:5px 8px;border-radius:6px;white-space:nowrap;
+  background:var(--panel);color:var(--txt);border:1px solid var(--line-2);
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+  font:500 10.5px/1.25 'Inter',sans-serif;letter-spacing:0;text-transform:none;font-style:normal;
+  text-decoration:none;text-align:left;
+  opacity:0;visibility:hidden;
+  transition:opacity .12s var(--ease),transform .12s var(--ease),visibility 0s linear .12s;
+}
+[data-tip]:hover::after{
+  opacity:1;visibility:visible;transform:translate(-50%,0);
+  transition:opacity .15s var(--ease) .35s,transform .15s var(--ease) .35s,visibility 0s linear .35s;
+}
+/* never while pressed — a tip popping up mid-click just gets in the way */
+[data-tip]:active::after{opacity:0;visibility:hidden;transition:none}
+[data-tip-pos="bottom-end"]::after{left:auto;right:0;transform:translate(0,-3px)}
+[data-tip-pos="bottom-end"]:hover::after{transform:translate(0,0)}
+[data-tip-pos="bottom-start"]::after{left:0;transform:translate(0,-3px)}
+[data-tip-pos="bottom-start"]:hover::after{transform:translate(0,0)}
+[data-tip-pos="top"]::after{top:auto;bottom:calc(100% + 7px);transform:translate(-50%,3px)}
+[data-tip-pos="top"]:hover::after{transform:translate(-50%,0)}
+[data-tip-pos="top-end"]::after{top:auto;bottom:calc(100% + 7px);left:auto;right:0;transform:translate(0,3px)}
+[data-tip-pos="top-end"]:hover::after{transform:translate(0,0)}
+[data-tip-pos="left"]::after{top:50%;left:auto;right:calc(100% + 7px);transform:translate(3px,-50%)}
+[data-tip-pos="left"]:hover::after{transform:translate(0,-50%)}
+/* the tip's own z-index only counts inside its element's stacking context
+   (.tbtn's opacity:.95 makes one per button), so the hovered element
+   itself has to rise above its siblings — or a wrapped second toolbar
+   row, or the neighbouring pill, paints straight over the tip */
+[data-tip]:hover{z-index:90}
+/* the conflict tip is a sentence, not a label — let it wrap */
+.pill[data-tip]::after{white-space:normal;width:max-content;max-width:230px}
+
+@media (max-width:900px){
+  #sidebar{position:absolute;left:0;top:0;bottom:0;z-index:20;box-shadow:0 0 48px rgba(0,0,0,.7);width:352px}
+  #searchWrap{width:140px}
+}
+</style>
+</head>
+<body>
+
+<header id="appHeader">
+  <div class="mark"><i class="fa-solid fa-shapes"></i></div>
+  <h1>TRIANGLE THING</h1>
+  <div class="flexgap"></div>
+  <div id="searchWrap">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input id="searchBox" type="text" placeholder="Search values or terms" autocomplete="off" spellcheck="false">
+  </div>
+  <button class="iconbtn" id="btnTheme" data-tip-pos="bottom-end" data-tip="Toggle light / dark theme" aria-label="Toggle light / dark theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+  <button class="iconbtn" id="btnSettings" data-tip-pos="bottom-end" data-tip="Appearance settings" aria-label="Appearance settings"><i class="fa-solid fa-gear"></i></button>
+</header>
+
+<div id="appBody">
+  <aside id="sidebar">
+    <div class="side-scroll" id="stats"></div>
+    <div class="side-foot">
+      <div class="pf-group"><span class="pf-lbl">Decimals</span>
+        <div class="stepper">
+          <button id="precDown"><i class="fa-solid fa-minus"></i></button>
+          <div class="val" id="precVal">4</div>
+          <button id="precUp"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </div>
+      <div class="pf-group"><span class="pf-lbl">Display</span>
+        <div class="toggle2" id="exactToggle">
+          <button data-v="exact" class="on">Exact</button>
+          <button data-v="approx">Approx</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main id="stage">
+   <div id="viewport">
+    <canvas id="cv"></canvas>
+    <div id="overlay"></div>
+
+    <button id="navtoggle" data-tip-pos="bottom-start" data-tip="Toggle stats panel" aria-label="Toggle stats panel"><i class="fa-solid fa-bars"></i></button>
+
+    <div id="toolbar">
+      <div class="tgroup" id="grpUnits">
+        <button class="tbtn" id="btnLen" data-tip="Length unit" aria-label="Length unit"><span class="t" id="lenLabel">IN</span></button>
+        <button class="tbtn" id="btnAng" data-tip="Angle unit" aria-label="Angle unit"><span class="t" id="angLabel">DEG</span></button>
+      </div>
+      <div class="tgroup" id="grpTransform">
+        <button class="tbtn" id="btnRotL" data-tip="Rotate left 15°" aria-label="Rotate left 15°"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="tbtn" id="btnRotR" data-tip="Rotate right 15°" aria-label="Rotate right 15°"><i class="fa-solid fa-rotate-right"></i></button>
+        <button class="tbtn" id="btnFlipH" data-tip="Flip horizontal" aria-label="Flip horizontal"><i class="fa-solid fa-left-right"></i></button>
+        <button class="tbtn" id="btnFlipV" data-tip="Flip vertical" aria-label="Flip vertical"><i class="fa-solid fa-up-down"></i></button>
+        <button class="tbtn" id="btnScaleDown" data-tip="Scale down" aria-label="Scale down"><i class="fa-solid fa-minimize"></i></button>
+        <button class="tbtn" id="btnScaleUp" data-tip="Scale up" aria-label="Scale up"><i class="fa-solid fa-maximize"></i></button>
+      </div>
+      <div class="tgroup" id="grpView">
+        <button class="tbtn" id="btnGrid" data-tip="Toggle grid" aria-label="Toggle grid"><i class="fa-solid fa-border-all"></i></button>
+        <button class="tbtn" id="btnFit" data-tip="Fit to view" aria-label="Fit to view"><i class="fa-solid fa-expand"></i></button>
+        <button class="tbtn" id="btnCenter" data-tip="Reset view" aria-label="Reset view"><i class="fa-solid fa-crosshairs"></i></button>
+        <button class="tbtn" id="btnView" data-tip="View only (hide UI)" aria-label="View only (hide UI)"><i class="fa-solid fa-eye"></i></button>
+      </div>
+      <div class="tgroup" id="grpHist">
+        <button class="tbtn" id="btnUndo" data-tip-pos="bottom-end" data-tip="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)"><i class="fa-solid fa-arrow-rotate-left"></i></button>
+        <button class="tbtn" id="btnRedo" data-tip-pos="bottom-end" data-tip="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)"><i class="fa-solid fa-arrow-rotate-right"></i></button>
+        <button class="tbtn" id="btnClear" data-tip-pos="bottom-end" data-tip="Unlock everything" aria-label="Unlock everything"><i class="fa-solid fa-lock-open"></i></button>
+        <button class="tbtn" id="btnReset" data-tip-pos="bottom-end" data-tip="Reset triangle" aria-label="Reset triangle"><i class="fa-solid fa-trash-can"></i></button>
+      </div>
+    </div>
+
+    <div id="cornerHints">
+      <span class="h" data-tip-pos="top-end" data-tip="Drag to edit" aria-label="Drag to edit"><i class="fa-solid fa-arrow-pointer"></i></span>
+      <span class="h" data-tip-pos="top-end" data-tip="Right-drag (or middle-drag) to pan" aria-label="Right-drag (or middle-drag) to pan"><i class="fa-solid fa-hand"></i></span>
+      <span class="h" data-tip-pos="top-end" data-tip="Scroll to zoom" aria-label="Scroll to zoom"><i class="fa-solid fa-magnifying-glass"></i></span>
+    </div>
+    <div id="zoomtag">100%</div>
+    <button id="exitViewOnly" data-tip-pos="bottom-end" data-tip="Exit view-only mode" aria-label="Exit view-only mode"><i class="fa-solid fa-eye-slash"></i><span>Exit view only</span></button>
+   </div>
+  </main>
+</div>
+
+<footer id="appFooter">
+  <span class="foot-ico"><i class="fa-solid fa-arrow-pointer"></i>drag to edit</span>
+  <span class="foot-ico"><i class="fa-solid fa-hand"></i>right-drag to pan</span>
+  <span class="foot-ico"><i class="fa-solid fa-magnifying-glass"></i>scroll to zoom</span>
+  <span class="foot-ico"><i class="fa-solid fa-shuffle"></i>shift+drag: snap / multi-select</span>
+  <div class="fgap"></div>
+  <span class="foot-ico"><i class="fa-solid fa-keyboard"></i>Ctrl+Z / Ctrl+Y undo/redo</span>
+  <span class="foot-ico"><i class="fa-solid fa-ruler"></i>type "3.4 mm" in any box</span>
+</footer>
+
+<script>
+"use strict";
+
+/* =======================================================================
+   Math utilities
+   ======================================================================= */
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+const deg = r => r * 180 / Math.PI;
+const radOf = d => d * Math.PI / 180;
+
+function fmt(v, d) {
+  if (v === null || v === undefined || Number.isNaN(v)) return "—";
+  if (!isFinite(v)) return "∞";
+  const a = Math.abs(v);
+  /* a nonzero value must never print as a plain run of zeros ("0.00"
+     for 0.000001) — if it'd round away to nothing at this precision,
+     scientific notation is the only honest way to show it */
+  let s = v.toFixed(d);
+  if (a !== 0 && (a >= 1e9 || a < 1e-6 || +s === 0)) return v.toExponential(Math.max(2, d - 1));
+  if (s === "-" + (0).toFixed(d)) s = (0).toFixed(d);
+  return s;
+}
+const trim = v => String(+v.toPrecision(6));
+/* every displayed answer/derivation number: fixed at the Decimals setting
+   (4 by default), so "3" reads "3.0000" and values line up column-wise */
+const dp = v => fmt(v, S.prec);
+
+/* "Exact" formatting: full precision, but trailing zeros are trimmed —
+   a value that terminates cleanly (like the number 5) reads as "5.0",
+   not as a wall of fake precision like "5.0000000000". */
+function fmtExact(v) {
+  if (v === null || v === undefined || Number.isNaN(v)) return "—";
+  if (!isFinite(v)) return "∞";
+  const a = Math.abs(v);
+  if (a !== 0 && (a >= 1e9 || a < 1e-9)) return v.toExponential(6);
+  let s = v.toFixed(12).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, ".0");
+  if (s === "-0.0") s = "0.0";
+  return s;
+}
+/* a group of related exact values (a coordinate's x/y, or an A/B/C
+   triplet) should all carry the same number of decimals as each other,
+   rather than each being trimmed to its own independent length */
+function groupExact(nums, capDecimals) {
+  capDecimals = capDecimals === undefined ? 12 : capDecimals;
+  const finite = nums.map(v => (isFinite(v) && Math.abs(v) < 1e9) ? v : null);
+  const strs = finite.map((v, idx) => v === null ? (!isFinite(nums[idx]) ? "∞" : nums[idx].toExponential(6)) : fmtExact(v));
+  let maxDec = 0;
+  strs.forEach((s, idx) => { if (finite[idx] === null) return; const dot = s.indexOf("."); if (dot >= 0) maxDec = Math.max(maxDec, s.length - dot - 1); });
+  maxDec = Math.min(maxDec, capDecimals);
+  return finite.map((v, idx) => v === null ? strs[idx] : v.toFixed(maxDec));
+}
+/* the sidebar's Exact/Approx toggle, same meaning as the explanation
+   panel's own Exact/Approximate pair:
+   Exact (the default) — the decimal value at the Decimals setting (4 by
+     default), every value padded to that same number of places.
+   Approx — the clean closed form (3/2, 2π/3 rad) when the value genuinely
+     has one; anything without one shows the very same decimal as Exact. */
+const numFmt = (v, d) => (S.exact ? fmt(v, d) : (fractionStr(v) || fmt(v, d)));
+
+/* =======================================================================
+   Fraction / π-multiple detection — for the explanation modal's own
+   Approximate/Exact pair. A "nice" closed form (3/2, 3π) only gets
+   offered when the geometry genuinely produces one (special angles, a
+   3-4-5 triangle's ratios); an arbitrary irrational result never
+   coincidentally lands within the tolerance of a small p/q, so this
+   never fires a false positive for ordinary values.
+   ======================================================================= */
+function gcdInt(a, b) {
+  a = Math.abs(Math.round(a)); b = Math.abs(Math.round(b));
+  while (b) { const t = b; b = a % b; a = t; }
+  return a || 1;
+}
+function niceRatio(v, maxDen) {
+  if (!isFinite(v) || v === 0) return null;
+  const sign = v < 0 ? -1 : 1, av = Math.abs(v);
+  for (let den = 1; den <= maxDen; den++) {
+    const num = Math.round(av * den);
+    if (num === 0) continue;
+    if (Math.abs(av - num / den) < 1e-9 * Math.max(1, av)) {
+      const g = gcdInt(num, den);
+      return { num: sign * (num / g), den: den / g };
+    }
+  }
+  return null;
+}
+/* a plain "p/q" — null unless q > 1, since an integer isn't a fraction
+   form worth calling out separately from its own decimal */
+function fractionStr(v, maxDen) {
+  const f = niceRatio(v, maxDen === undefined ? 60 : maxDen);
+  if (!f || f.den === 1) return null;
+  return (f.num < 0 ? "-" : "") + Math.abs(f.num) + "/" + f.den;
+}
+/* "3π", "π/4", "3π/4" — a rational multiple of π, however that reduces */
+function piStr(rad, maxDen) {
+  const f = niceRatio(rad / Math.PI, maxDen === undefined ? 48 : maxDen);
+  if (!f) return null;
+  const n = Math.abs(f.num), coef = n === 1 ? "" : String(n);
+  return (f.num < 0 ? "-" : "") + coef + "π" + (f.den === 1 ? "" : "/" + f.den);
+}
+/* decimal side of the pair always reflects the CURRENT precision setting
+   (the sidebar's decimals stepper), never a fixed long dump — so "exact"
+   here means "the actual number", not "as many digits as we can print" */
+const lenDecimal   = (inches, U) => fmt(inches / LEN[U].f, S.prec) + " " + LEN[U].sym;
+const lenSymbolic  = (inches, U) => { const f = fractionStr(inches / LEN[U].f); return f ? f + " " + LEN[U].sym : null; };
+const areaDecimal  = (sqin, U) => fmt(sqin / (LEN[U].f * LEN[U].f), S.prec) + " " + LEN[U].sym + "²";
+const areaSymbolic = (sqin, U) => { const f = fractionStr(sqin / (LEN[U].f * LEN[U].f)); return f ? f + " " + LEN[U].sym + "²" : null; };
+const angDecimal   = rad => fmt(deg(rad), S.prec) + "°  /  " + fmt(rad, S.prec) + " rad";
+const angSymbolic  = rad => { const p = piStr(rad); return p ? fmt(deg(rad), S.prec) + "°  /  " + p + " rad" : null; };
+const plainDecimal  = v => fmt(v, S.prec);
+const plainSymbolic = v => fractionStr(v);
+const coordDecimal  = (x, y) => "(" + fmt(x, S.prec) + ", " + fmt(y, S.prec) + ")";
+const coordSymbolic = (x, y) => {
+  const fx = fractionStr(x), fy = fractionStr(y);
+  if (!fx && !fy) return null;
+  return "(" + (fx || fmt(x, S.prec)) + ", " + (fy || fmt(y, S.prec)) + ")";
+};
+
+/* =======================================================================
+   Units — internal length unit is the INCH, internal angle unit is the RADIAN
+   ======================================================================= */
+const LEN = {
+  mm: { f: 1 / 25.4,      sym: "mm", metric: true,  name: "Millimeters" },
+  cm: { f: 1 / 2.54,      sym: "cm", metric: true,  name: "Centimeters" },
+  m:  { f: 1 / 0.0254,    sym: "m",  metric: true,  name: "Meters" },
+  km: { f: 1000 / 0.0254, sym: "km", metric: true,  name: "Kilometers" },
+  in: { f: 1,             sym: "in", metric: false, name: "Inches" },
+  ft: { f: 12,            sym: "ft", metric: false, name: "Feet" },
+  yd: { f: 36,            sym: "yd", metric: false, name: "Yards" },
+  mi: { f: 63360,         sym: "mi", metric: false, name: "Miles" }
+};
+const ANG = {
+  deg:  { f: Math.PI / 180, sym: "°",    tight: true,  name: "Degrees" },
+  rad:  { f: 1,             sym: "rad",                name: "Radians" },
+  grad: { f: Math.PI / 200, sym: "grad",               name: "Gradians" }
+};
+
+const LEN_ALIAS = {}, ANG_ALIAS = {};
+(function () {
+  const put = (tbl, key, names) => names.forEach(n => tbl[n] = key);
+  put(LEN_ALIAS, "mm", ["mm", "millimeter", "millimeters", "millimetre", "millimetres"]);
+  put(LEN_ALIAS, "cm", ["cm", "centimeter", "centimeters", "centimetre", "centimetres"]);
+  put(LEN_ALIAS, "m",  ["m", "meter", "meters", "metre", "metres"]);
+  put(LEN_ALIAS, "km", ["km", "kilometer", "kilometers", "kilometre", "kilometres"]);
+  put(LEN_ALIAS, "in", ["in", "inch", "inches", '"', "''", "″", "”"]);
+  put(LEN_ALIAS, "ft", ["ft", "foot", "feet", "'", "′", "’"]);
+  put(LEN_ALIAS, "yd", ["yd", "yard", "yards"]);
+  put(LEN_ALIAS, "mi", ["mi", "mile", "miles"]);
+  put(ANG_ALIAS, "deg",  ["deg", "degs", "degree", "degrees", "°", "d"]);
+  put(ANG_ALIAS, "rad",  ["rad", "rads", "radian", "radians", "r"]);
+  put(ANG_ALIAS, "grad", ["grad", "grads", "gradian", "gradians", "gon"]);
+})();
+
+/* plain = always the decimal, whatever the toggle says — for the editable
+   pills, whose text gets parsed right back as input */
+const lenStr  = (inches, k, d, plain) => (plain ? fmt : numFmt)(inches / LEN[k].f, d) + " " + LEN[k].sym;
+const areaStr = (sqin,  k, d, plain) => (plain ? fmt : numFmt)(sqin / (LEN[k].f * LEN[k].f), d) + " " + LEN[k].sym + "²";
+const angStr  = (r, k, d, plain) => {
+  /* in radians the closed form is a multiple of π, not a bare fraction */
+  if (!plain && !S.exact && k === "rad") { const p = piStr(r); if (p) return p + " rad"; }
+  return (plain ? fmt : numFmt)(r / ANG[k].f, d) + (ANG[k].tight ? "" : " ") + ANG[k].sym;
+};
+
+function metricFor(inches) {
+  const mm = Math.abs(inches) * 25.4;
+  if (mm < 10) return "mm";
+  if (mm < 1000) return "cm";
+  if (mm < 1e6) return "m";
+  return "km";
+}
+function imperialFor(inches) {
+  const a = Math.abs(inches);
+  if (a < 12) return "in";
+  if (a < 63360) return "ft";
+  return "mi";
+}
+const altLenUnit = (inches, k) => (LEN[k].metric ? imperialFor(inches) : metricFor(inches));
+const altAngUnit = k => (k === "rad" ? "deg" : "rad");
+
+/* --- parsing "3.4 mm", 3.4", 5'6", plain numbers ----------------------- */
+const NUM_RE = /^([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\s*(.*)$/;
+const FEET_IN_RE = /^([+-]?(?:\d+\.?\d*|\.\d+))\s*(?:'|′|’|ft|feet|foot)\s*(\d+\.?\d*|\.\d+)\s*(?:"|''|″|”|in|inch|inches)?$/;
+
+function normalizeNumeric(s) {
+  if ((s.match(/,/g) || []).length === 1 && s.indexOf(".") === -1) return s.replace(",", ".");
+  return s.replace(/,/g, "");
+}
+function parseMeasure(raw, kind, fallbackUnit) {
+  let s = String(raw).trim().toLowerCase();
+  if (!s) return null;
+  s = normalizeNumeric(s);
+
+  if (kind === "side") {
+    const fi = s.match(FEET_IN_RE);
+    if (fi) {
+      const F = parseFloat(fi[1]), I = parseFloat(fi[2]);
+      if (isFinite(F) && isFinite(I)) return { value: F * 12 + Math.sign(F || 1) * I, unit: "ft" };
+    }
+  }
+  const m = s.match(NUM_RE);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  if (!isFinite(n)) return null;
+
+  const table = kind === "side" ? LEN_ALIAS : ANG_ALIAS;
+  const defs  = kind === "side" ? LEN : ANG;
+  let tok = m[2].trim();
+  if (tok.length > 1) tok = tok.replace(/\.$/, "");
+
+  if (tok === "") return { value: n * defs[fallbackUnit].f, unit: null };
+  const key = table[tok];
+  if (!key) return null;
+  return { value: n * defs[key].f, unit: key };
+}
+
+/* =======================================================================
+   Triangle solving — Levenberg-Marquardt directly on the vertex positions
+
+   The question a drag (or a typed value) asks is geometric: "move the
+   corners as little as possible from where they were put, while every
+   lock holds." So the unknowns are the corner coordinates themselves.
+
+   (The previous solver instead searched over the three side LENGTHS for
+   the lengths closest to the dragged shape's, then rebuilt and re-fitted a
+   triangle from them. Closest-in-lengths is not closest-in-position: with
+   side a locked and B dragged, the right answer is the point on the circle
+   of radius a around C nearest the cursor — always a real triangle — but
+   the length-space search often ran into the triangle inequality instead,
+   flattening the triangle or giving up on the lock. Tested on 12,000
+   realistic drags: it held the locks 96.5–98.8% of the time and once
+   threw a corner ~10¹⁰ triangle-widths away; this formulation held them
+   100% of the time, with an eighth as many needlessly flat results.)
+   ======================================================================= */
+/* n×n linear solve, Gaussian elimination with partial pivoting */
+function solveN(A, b) {
+  const n = b.length, M = A.map((row, i) => row.concat([b[i]]));
+  for (let c = 0; c < n; c++) {
+    let piv = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+    if (Math.abs(M[piv][c]) < 1e-300) return null;
+    const t = M[c]; M[c] = M[piv]; M[piv] = t;
+    for (let r = 0; r < n; r++) {
+      if (r === c) continue;
+      const f = M[r][c] / M[c][c];
+      if (f) for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+    }
+  }
+  return M.map((row, i) => row[n] / row[i]);
+}
+function anglesFromSides(a, b, c) {
+  const A = Math.acos(clamp((b * b + c * c - a * a) / (2 * b * c), -1, 1));
+  const B = Math.acos(clamp((a * a + c * c - b * b) / (2 * a * c), -1, 1));
+  const C = Math.acos(clamp((a * a + b * b - c * c) / (2 * a * b), -1, 1));
+  return [A, B, C];
+}
+/* the interior angle at vertex i, atan2(|u×v|, u·v) with u, v the two sides
+   leaving it — accurate at every angle, unlike arccos of the Law of
+   Cosines, which loses digits near 0° and 180° where cos is flat */
+function angleAt(P, i) {
+  const p0 = P[i], p1 = P[(i + 1) % 3], p2 = P[(i + 2) % 3];
+  const ux = p1.x - p0.x, uy = p1.y - p0.y, vx = p2.x - p0.x, vy = p2.y - p0.y;
+  return Math.atan2(Math.abs(ux * vy - uy * vx), ux * vx + uy * vy);
+}
+const SOFT_W = 0.02;
+const cost = r => r.reduce((s, v) => s + v * v, 0);
+/* residuals: one per lock (side length or angle off its target), plus a
+   soft pull of each free corner toward its anchor position */
+function posResiduals(X, free, base, cons, anchor, soft, scale) {
+  const P = [0, 1, 2].map(i => ({ x: base[i].x, y: base[i].y }));
+  free.forEach((v, n) => { P[v].x = X[2 * n]; P[v].y = X[2 * n + 1]; });
+  const r = [];
+  for (const c of cons) {
+    if (c.type === "side") {
+      const j = (c.i + 1) % 3, k = (c.i + 2) % 3;
+      r.push((Math.hypot(P[j].x - P[k].x, P[j].y - P[k].y) - c.value) * c.w);
+    } else r.push((angleAt(P, c.i) - c.value) * c.w * scale); /* radians × size, so both kinds weigh alike */
+  }
+  free.forEach(v => { r.push((P[v].x - anchor[v].x) * soft[v]); r.push((P[v].y - anchor[v].y) * soft[v]); });
+  return r;
+}
+/* moves the free corners as little as possible from `proposed` (each
+   weighted by wts[v] — a lower weight lets that corner give way more)
+   while meeting every constraint in `cons`; `pinIdx`, if given, is held
+   exactly where it is. Kept cheap: capped iterations keep a live solve
+   well under a millisecond. */
+function solvePositions(proposed, cons, wts, live, pinIdx) {
+  const free = [0, 1, 2].filter(v => v !== pinIdx);
+  const base = proposed.map(p => ({ x: p.x, y: p.y }));
+  if (!cons.length) return base;
+  const s0 = [0, 1, 2].map(i => { const j = (i + 1) % 3, k = (i + 2) % 3; return Math.hypot(base[j].x - base[k].x, base[j].y - base[k].y); });
+  const scale = Math.max((s0[0] + s0[1] + s0[2]) / 3, 1e-9);
+  let X = []; free.forEach(v => { X.push(base[v].x, base[v].y); });
+  const soft = [0, 1, 2].map(v => SOFT_W * (wts ? wts[v] : 1));
+  const anchor = base.map(p => ({ x: p.x, y: p.y }));
+  const rounds = live ? 3 : 6, maxIt = live ? 24 : 50, n = X.length, eps = scale * 1e-7;
+  for (let round = 0; round < rounds; round++) {
+    let lambda = 1e-3;
+    let r0 = posResiduals(X, free, base, cons, anchor, soft, scale), c0 = cost(r0);
+    for (let it = 0; it < maxIt; it++) {
+      const m = r0.length, J = [];
+      for (let q = 0; q < n; q++) {
+        const Xp = X.slice(); Xp[q] += eps;
+        const rp = posResiduals(Xp, free, base, cons, anchor, soft, scale);
+        const col = new Array(m);
+        for (let i = 0; i < m; i++) col[i] = (rp[i] - r0[i]) / eps;
+        J.push(col);
+      }
+      const N = [], g = [];
+      for (let p = 0; p < n; p++) {
+        N.push(new Array(n));
+        for (let q = 0; q < n; q++) { let t = 0; for (let i = 0; i < m; i++) t += J[p][i] * J[q][i]; N[p][q] = t; }
+        let t = 0; for (let i = 0; i < m; i++) t += J[p][i] * r0[i];
+        g.push(-t);
+      }
+      for (let p = 0; p < n; p++) N[p][p] += lambda * (N[p][p] + 1e-12);
+      const d = solveN(N, g);
+      if (!d) break;
+      const Xn = X.map((v, q) => v + d[q]);
+      const rn = posResiduals(Xn, free, base, cons, anchor, soft, scale), cn = cost(rn);
+      if (cn < c0) {
+        const step = Math.hypot(...d);
+        X = Xn; r0 = rn; c0 = cn; lambda = Math.max(lambda * 0.4, 1e-12);
+        if (step < scale * 1e-12) break;
+      } else { lambda *= 4; if (lambda > 1e12) break; }
+    }
+    /* re-anchor on this round's result: the soft pull only decides WHICH
+       solution to take, it must not leave a lasting bias on the locks */
+    let moveAmt = 0;
+    free.forEach((v, q) => { moveAmt += Math.hypot(X[2 * q] - anchor[v].x, X[2 * q + 1] - anchor[v].y); anchor[v] = { x: X[2 * q], y: X[2 * q + 1] }; });
+    if (moveAmt < scale * 1e-13) break;
+  }
+  const out = base.map(p => ({ x: p.x, y: p.y }));
+  free.forEach((v, q) => { out[v] = { x: X[2 * q], y: X[2 * q + 1] }; });
+  return out;
+}
+/* a triangle with sides a (BC), b (CA), c (AB): B at the origin, C on the
+   +x axis, A above (sign 1) or below (sign −1) — used to seed the default */
+function canonical(a, b, c, sign) {
+  const ax = (c * c + a * a - b * b) / (2 * a);
+  const ay = sign * Math.sqrt(Math.max(0, c * c - ax * ax));
+  return [{ x: ax, y: ay }, { x: 0, y: 0 }, { x: a, y: 0 }];
+}
+const signedArea2 = P => (P[1].x - P[0].x) * (P[2].y - P[0].y) - (P[1].y - P[0].y) * (P[2].x - P[0].x);
+const sidesOf = P => [dist(P[1], P[2]), dist(P[2], P[0]), dist(P[0], P[1])];
+/* rotations/flips/solves leave coordinates like 1.1e-16 where the true
+   value is 0 — anything that small relative to the triangle's own size
+   is float noise, and displays as the 0 it really is */
+const snapNoise = (v, scale) => (Math.abs(v) < Math.max(scale, 1e-300) * 1e-10 ? 0 : v);
+
+/* =======================================================================
+   State
+   ======================================================================= */
+const DEFAULT_SIDES = [5, 4, 3]; /* inches */
+
+const S = {
+  P: [],
+  lock:   { side: [false, false, false], angle: [false, false, false] },
+  /* while non-null, draw() shows the canvas side/angle mark mid-transition
+     between its unlocked and locked look — {p: 0..1}, mirrors the pill's
+     own draw-in ring animation */
+  lockAnim: { side: [null, null, null], angle: [null, null, null] },
+  target: { side: [0, 0, 0],             angle: [0, 0, 0] },
+  units:  { side: ["in", "in", "in"],    angle: ["deg", "deg", "deg"] },
+  lenUnit: "in", angUnit: "deg",
+  view: { cx: 0, cy: 0, z: 74 },
+  grid: true, gridAnim: 1, gridAnimT: null,
+  prec: 4, exact: true,
+  theme: "dark",
+  selected: new Set(),
+  viewOnly: false, viewFade: 0, /* viewFade: 0 = full UI drawing, 1 = view-only's plain outline */
+  hover: null, drag: null,
+  activeExplain: null /* which explanation is open, if any — kept live-updated as the triangle changes */
+};
+
+function seedTriangle() {
+  const p = canonical(DEFAULT_SIDES[0], DEFAULT_SIDES[1], DEFAULT_SIDES[2], 1);
+  const gx = (p[0].x + p[1].x + p[2].x) / 3, gy = (p[0].y + p[1].y + p[2].y) / 3;
+  S.P = p.map(v => ({ x: v.x - gx, y: v.y - gy }));
+}
+seedTriangle();
+
+const anyLockActive = () => S.lock.side.some(Boolean) || S.lock.angle.some(Boolean);
+function applyConstraints(proposedP, weights, extra, live, pinIdx) {
+  const cons = [];
+  for (let i = 0; i < 3; i++) if (S.lock.side[i])  cons.push({ type: "side",  i, value: S.target.side[i],  w: 1 });
+  for (let i = 0; i < 3; i++) if (S.lock.angle[i]) cons.push({ type: "angle", i, value: S.target.angle[i], w: 1 });
+  if (extra) for (const e of extra) cons.push(e);
+  /* pinIdx: a point that must land EXACTLY where it was put (a typed
+     coordinate, a grid snap) rather than just being weighted toward it */
+  S.P = solvePositions(proposedP, cons, weights || [1, 1, 1], !!live, pinIdx);
+}
+
+/* =======================================================================
+   Undo / redo — tracks user edits only; the initial load is the floor
+   ======================================================================= */
+const Hist = { stack: [], i: -1, timer: null, loaded: false };
+const snapshot = () => JSON.stringify({
+  P: S.P, lock: S.lock, target: S.target, units: S.units,
+  lenUnit: S.lenUnit, angUnit: S.angUnit, prec: S.prec, exact: S.exact, grid: S.grid
+});
+function pushHistory() {
+  if (Hist.timer) { clearTimeout(Hist.timer); Hist.timer = null; }
+  const s = snapshot();
+  if (Hist.i >= 0 && Hist.stack[Hist.i] === s) return;
+  Hist.stack.length = Hist.i + 1;
+  Hist.stack.push(s);
+  if (Hist.stack.length > 250) Hist.stack.shift();
+  Hist.i = Hist.stack.length - 1;
+  syncHistoryButtons();
+}
+function pushHistorySoon(ms) {
+  if (Hist.timer) clearTimeout(Hist.timer);
+  Hist.timer = setTimeout(() => { Hist.timer = null; pushHistory(); }, ms === undefined ? 450 : ms);
+}
+function flushHistory() { if (Hist.timer) pushHistory(); }
+function markLoaded() { Hist.stack = [snapshot()]; Hist.i = 0; Hist.loaded = true; syncHistoryButtons(); }
+function restore(json) {
+  cancelShapeAnim(); cancelCam(); cancelLockAnims(); /* a stale in-flight animation must never overwrite a restored state later */
+  const o = JSON.parse(json);
+  S.P      = o.P.map(p => ({ x: p.x, y: p.y }));
+  S.lock   = { side: o.lock.side.slice(),   angle: o.lock.angle.slice() };
+  S.target = { side: o.target.side.slice(), angle: o.target.angle.slice() };
+  S.units  = { side: o.units.side.slice(),  angle: o.units.angle.slice() };
+  S.lenUnit = o.lenUnit; S.angUnit = o.angUnit; S.prec = o.prec; S.exact = o.exact !== false; S.grid = o.grid;
+  S.gridAnim = S.grid ? 1 : 0;
+  syncChrome();
+  ensureVisible();
+  requestRender();
+}
+function undo() { flushHistory(); if (Hist.i <= 0) return; Hist.i--; restore(Hist.stack[Hist.i]); syncHistoryButtons(); }
+function redo() { flushHistory(); if (Hist.i >= Hist.stack.length - 1) return; Hist.i++; restore(Hist.stack[Hist.i]); syncHistoryButtons(); }
+function syncHistoryButtons() {
+  document.getElementById("btnUndo").disabled = Hist.i <= 0;
+  document.getElementById("btnRedo").disabled = Hist.i >= Hist.stack.length - 1;
+}
+
+/* =======================================================================
+   Derived quantities (lengths in inches, angles in radians)
+   ======================================================================= */
+function derive() {
+  const P = S.P;
+  const [a, b, c] = sidesOf(P);
+  /* angles straight from the coordinates (see angleAt) — the same angles
+     as arccos of the Law of Cosines, but accurate even near 0° and 180° */
+  const [A, B, C] = [angleAt(P, 0), angleAt(P, 1), angleAt(P, 2)];
+  const per = a + b + c, s = per / 2;
+  const area = Math.abs(signedArea2(P)) / 2;
+  const R = (a * b * c) / (4 * area);
+  const r = area / s;
+
+  const [pa, pb, pc] = P;
+  const d = 2 * (pa.x * (pb.y - pc.y) + pb.x * (pc.y - pa.y) + pc.x * (pa.y - pb.y));
+  const sa = pa.x * pa.x + pa.y * pa.y, sb = pb.x * pb.x + pb.y * pb.y, sc = pc.x * pc.x + pc.y * pc.y;
+  const circum = {
+    x: (sa * (pb.y - pc.y) + sb * (pc.y - pa.y) + sc * (pa.y - pb.y)) / d,
+    y: (sa * (pc.x - pb.x) + sb * (pa.x - pc.x) + sc * (pb.x - pa.x)) / d
+  };
+  const centroid = { x: (pa.x + pb.x + pc.x) / 3, y: (pa.y + pb.y + pc.y) / 3 };
+  const incenter = { x: (a * pa.x + b * pb.x + c * pc.x) / per, y: (a * pa.y + b * pb.y + c * pc.y) / per };
+  const ortho = { x: pa.x + pb.x + pc.x - 2 * circum.x, y: pa.y + pb.y + pc.y - 2 * circum.y };
+
+  const alt = [2 * area / a, 2 * area / b, 2 * area / c];
+  const med = [
+    0.5 * Math.sqrt(Math.max(0, 2 * b * b + 2 * c * c - a * a)),
+    0.5 * Math.sqrt(Math.max(0, 2 * a * a + 2 * c * c - b * b)),
+    0.5 * Math.sqrt(Math.max(0, 2 * a * a + 2 * b * b - c * c))
+  ];
+  const bis = [
+    (2 / (b + c)) * Math.sqrt(Math.max(0, b * c * s * (s - a))),
+    (2 / (a + c)) * Math.sqrt(Math.max(0, a * c * s * (s - b))),
+    (2 / (a + b)) * Math.sqrt(Math.max(0, a * b * s * (s - c)))
+  ];
+
+  const ang = [A, B, C];
+  const maxA = Math.max(A, B, C);
+  const kind = isRightAngle(maxA) ? "Right" : maxA > Math.PI / 2 ? "Obtuse" : "Acute";
+  /* equal sides = sides that DISPLAY equal at the current unit and
+     precision — the same rule isRightAngle uses — so the classification
+     can never say "Isosceles" beside two visibly different lengths
+     (the old fixed 0.01% tolerance called 3.0000 / 3.0002 isosceles) */
+  const shown = v => fmt(v / LEN[S.lenUnit].f, S.prec);
+  const eq = [shown(a) === shown(b), shown(b) === shown(c), shown(c) === shown(a)];
+  let shape = "Scalene";
+  if (eq[0] && eq[1]) shape = "Equilateral";
+  else if (eq[0] || eq[1] || eq[2]) shape = "Isosceles";
+
+  const arcCirc = [2 * A * R, 2 * B * R, 2 * C * R];   /* arc opposite each vertex, subtended by 2×angle */
+  const arcIn   = [r * (Math.PI - A), r * (Math.PI - B), r * (Math.PI - C)];
+
+  /* construction points, so the Circles/Cevians rows can draw the real
+     feature on the canvas — not just a generic highlight */
+  const lerp = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+  const altFoot = [0, 1, 2].map(i => {
+    const j = (i + 1) % 3, k = (i + 2) % 3, u = P[j], w = P[k];
+    const vx = w.x - u.x, vy = w.y - u.y, L2 = vx * vx + vy * vy || 1;
+    const t = ((P[i].x - u.x) * vx + (P[i].y - u.y) * vy) / L2;
+    return { x: u.x + t * vx, y: u.y + t * vy };
+  });
+  const medFoot = [0, 1, 2].map(i => lerp(P[(i + 1) % 3], P[(i + 2) % 3], 0.5));
+  const sideLen = [a, b, c];
+  const bisFoot = [0, 1, 2].map(i => {
+    const j = (i + 1) % 3, k = (i + 2) % 3;
+    const t = sideLen[k] / (sideLen[j] + sideLen[k]); /* divides j→k in ratio (side to k):(side to j) */
+    return lerp(P[j], P[k], t);
+  });
+  /* incircle touch points: touch[0] on side a (BC), touch[1] on side b (CA), touch[2] on side c (AB) */
+  const touch = [ lerp(pb, pc, (s - b) / a), lerp(pc, pa, (s - c) / b), lerp(pa, pb, (s - a) / c) ];
+
+  return { P, a, b, c, sides: [a, b, c], A, B, C, ang, per, s, area, R, r,
+           circum, centroid, incenter, ortho, alt, med, bis, kind, shape,
+           arcCirc, arcIn, altFoot, medFoot, bisFoot, touch };
+}
+
+/* =======================================================================
+   Canvas / view
+   ======================================================================= */
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const stage = document.getElementById("stage");
+const viewport = document.getElementById("viewport"); /* the canvas's own box — excludes the docked explanation panel */
+let W = 0, HH = 0, DPR = 1;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 1.5); /* capped: keeps fill-rate cheap on weak GPUs */
+  W = viewport.clientWidth; HH = viewport.clientHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(HH * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  invalidateCvRect();
+  /* assigning cv.width wipes the canvas on the spot. Deferring the
+     redraw to the next frame (requestRender) let the browser paint that
+     blank canvas in between — during the explanation panel's open/close
+     animation, which calls this every frame, that showed up as the grid
+     flickering. Redrawing synchronously means a cleared canvas is never
+     what gets painted. */
+  renderNow();
+}
+window.addEventListener("resize", resize);
+
+const sx = wx => (wx - S.view.cx) * S.view.z + W / 2;
+const sy = wy => HH / 2 - (wy - S.view.cy) * S.view.z;
+const wxAt = px => (px - W / 2) / S.view.z + S.view.cx;
+const wyAt = py => S.view.cy + (HH / 2 - py) / S.view.z;
+const toScreen = p => ({ x: sx(p.x), y: sy(p.y) });
+const toWorld  = p => ({ x: wxAt(p.x), y: wyAt(p.y) });
+
+/* --- smooth camera ---------------------------------------------------- */
+let camAnim = null;
+let zoomGlide = null; /* in-flight smooth wheel zoom, see the wheel handler */
+function cancelCam() {
+  if (camAnim !== null) { cancelAnimationFrame(camAnim); camAnim = null; }
+  if (zoomGlide) { cancelAnimationFrame(zoomGlide.raf); zoomGlide = null; }
+}
+function animateView(to, ms) {
+  cancelCam();
+  const from = { cx: S.view.cx, cy: S.view.cy, z: S.view.z };
+  const dur = ms === undefined ? 520 : ms;
+  if (dur <= 0) { S.view.cx = to.cx; S.view.cy = to.cy; S.view.z = to.z; requestRender(); return; }
+  const t0 = performance.now();
+  const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1), e = ease(t);
+    S.view.cx = from.cx + (to.cx - from.cx) * e;
+    S.view.cy = from.cy + (to.cy - from.cy) * e;
+    S.view.z  = from.z * Math.pow(to.z / from.z, e);
+    requestRender();
+    camAnim = t < 1 ? requestAnimationFrame(step) : null;
+  };
+  camAnim = requestAnimationFrame(step);
+}
+/* pad is either a single number (symmetric) or {top,right,bottom,left}
+   for asymmetric reservations — used to keep the triangle framed above
+   the bottom explanation panel instead of centered under it. */
+function fitTarget(pad) {
+  const xs = S.P.map(p => p.x), ys = S.P.map(p => p.y);
+  const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  const minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+  const w = Math.max(maxX - minX, 1e-9), h = Math.max(maxY - minY, 1e-9);
+  const m = pad === undefined ? { top: 220, right: 220, bottom: 220, left: 220 }
+          : typeof pad === "number" ? { top: pad, right: pad, bottom: pad, left: pad }
+          : { top: 220, right: 220, bottom: 220, left: 220, ...pad };
+  /* a fixed padding can exceed a small viewport outright — clamp it
+     proportionally so at least 40% of the stage stays usable instead of
+     collapsing to the 10px floor and zooming out absurdly */
+  m.left = Math.min(m.left, W * 0.3); m.right = Math.min(m.right, W * 0.3);
+  m.top = Math.min(m.top, HH * 0.3); m.bottom = Math.min(m.bottom, HH * 0.3);
+  const availW = Math.max(W - m.left - m.right, 10), availH = Math.max(HH - m.top - m.bottom, 10);
+  const z = clamp(Math.min(availW / w, availH / h), 1e-6, 1e9);
+  const wcx = (minX + maxX) / 2, wcy = (minY + maxY) / 2;
+  const targetScreenCx = m.left + availW / 2, targetScreenCy = m.top + availH / 2;
+  return { cx: wcx - (targetScreenCx - W / 2) / z, cy: wcy - (HH / 2 - targetScreenCy) / z, z };
+}
+const fitView  = (pad, ms) => animateView(fitTarget(pad), ms);
+const homeView = ms => animateView({ cx: 0, cy: 0, z: 74 }, ms);
+function ensureVisible() {
+  const p = S.P.map(toScreen);
+  const xs = p.map(q => q.x), ys = p.map(q => q.y);
+  const span = Math.max(Math.max.apply(null, xs) - Math.min.apply(null, xs),
+                        Math.max.apply(null, ys) - Math.min.apply(null, ys));
+  if (span < 26 || span > 2.4 * Math.min(W, HH)) fitView(undefined, 400);
+}
+
+/* --- grid show/hide "assemble outward from center" animation ---------- */
+function setGrid(on) {
+  S.grid = on;
+  if (S.gridAnimT) cancelAnimationFrame(S.gridAnimT);
+  const from = S.gridAnim, to = on ? 1 : 0;
+  const t0 = performance.now(), dur = 1800;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1);
+    S.gridAnim = from + (to - from) * ease(t);
+    requestRender();
+    S.gridAnimT = t < 1 ? requestAnimationFrame(step) : null;
+  };
+  S.gridAnimT = requestAnimationFrame(step);
+}
+
+function niceStep(v) {
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  const m = v / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p;
+}
+function gridStep() {
+  const f = LEN[S.lenUnit].f;
+  return niceStep((90 / S.view.z) / f) * f;
+}
+
+function drawGrid() {
+  if (S.gridAnim <= 0.001) return;
+  /* always assembles from world (0,0), never the viewport's own center —
+     so panning/zooming never changes where the animation starts from */
+  const cxp = sx(0), cyp = sy(0);
+  const maxR = Math.max(
+    Math.hypot(cxp, cyp), Math.hypot(cxp - W, cyp),
+    Math.hypot(cxp, cyp - HH), Math.hypot(cxp - W, cyp - HH)
+  ) + 40;
+  const revealR = maxR * S.gridAnim;
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cxp, cyp, Math.max(0, revealR), 0, TAU); ctx.clip();
+
+  const major = gridStep(), minor = major / 5;
+  const x0 = wxAt(0), x1 = wxAt(W), y0 = wyAt(HH), y1 = wyAt(0);
+  const pass = (step, color) => {
+    if (step * S.view.z < 5) return;
+    ctx.beginPath();
+    ctx.strokeStyle = color; ctx.lineWidth = 1;
+    for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+      const px = Math.round(sx(x)) + 0.5;
+      ctx.moveTo(px, 0); ctx.lineTo(px, HH);
+    }
+    for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+      const py = Math.round(sy(y)) + 0.5;
+      ctx.moveTo(0, py); ctx.lineTo(W, py);
+    }
+    ctx.stroke();
+  };
+  pass(minor, "rgba(128,128,128,.12)");
+  pass(major, "rgba(128,128,128,.22)");
+
+  ctx.beginPath();
+  ctx.strokeStyle = "rgba(128,128,128,.4)"; ctx.lineWidth = 1;
+  const ax = Math.round(sx(0)) + 0.5, ay = Math.round(sy(0)) + 0.5;
+  if (ax > -1 && ax < W + 1) { ctx.moveTo(ax, 0); ctx.lineTo(ax, HH); }
+  if (ay > -1 && ay < HH + 1) { ctx.moveTo(0, ay); ctx.lineTo(W, ay); }
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* draws only the portion of the arc between fractions tStart and tEnd
+   (0..1, measured along the sweep from the U-direction to the Wp-direction)
+   — drawArc itself is just the tStart=0,tEnd=1 special case */
+function drawArcPortion(V, U, Wp, radius, lw, color, tStart, tEnd) {
+  let d1x = U.x - V.x, d1y = U.y - V.y, l1 = Math.hypot(d1x, d1y) || 1;
+  let d2x = Wp.x - V.x, d2y = Wp.y - V.y, l2 = Math.hypot(d2x, d2y) || 1;
+  d1x /= l1; d1y /= l1; d2x /= l2; d2y /= l2;
+  const dot = clamp(d1x * d2x + d1y * d2y, -1, 1);
+  const cross = d1x * d2y - d1y * d2x;
+  const ang = Math.acos(dot) * (cross < 0 ? -1 : 1);
+  const a0 = ang * tStart, a1 = ang * tEnd;
+  if (Math.abs(a1 - a0) < 1e-6) return;
+  ctx.beginPath();
+  for (let i = 0; i <= 24; i++) {
+    const t = a0 + (a1 - a0) * i / 24, cs = Math.cos(t), sn = Math.sin(t);
+    const dx = cs * d1x - sn * d1y, dy = sn * d1x + cs * d1y;
+    const px = V.x + dx * radius, py = V.y + dy * radius;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.stroke();
+}
+function drawArc(V, U, Wp, radius, lw, color) {
+  drawArcPortion(V, U, Wp, radius, lw, color, 0, 1);
+}
+/* the lock-in/lock-out draw animation for an angle arc: two short arcs
+   grow inward from each ray, meeting (or, in reverse, retreating back
+   toward each ray) at the arc's midpoint — same shape as the pill ring */
+function drawArcGrow(V, U, Wp, radius, lw, color, p) {
+  const pc = clamp(p, 0, 1);
+  drawArcPortion(V, U, Wp, radius, lw, color, 0, 0.5 * pc);
+  drawArcPortion(V, U, Wp, radius, lw, color, 1 - 0.5 * pc, 1);
+}
+function drawRightAngle(V, U, Wp, size, color) {
+  let d1x = U.x - V.x, d1y = U.y - V.y, l1 = Math.hypot(d1x, d1y) || 1;
+  let d2x = Wp.x - V.x, d2y = Wp.y - V.y, l2 = Math.hypot(d2x, d2y) || 1;
+  d1x /= l1; d1y /= l1; d2x /= l2; d2y /= l2;
+  ctx.beginPath();
+  ctx.moveTo(V.x + d1x * size, V.y + d1y * size);
+  ctx.lineTo(V.x + (d1x + d2x) * size, V.y + (d1y + d2y) * size);
+  ctx.lineTo(V.x + d2x * size, V.y + d2y * size);
+  ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.stroke();
+}
+/* same lock draw-in animation, for the right-angle bracket special case:
+   its two segments (ray-to-corner, corner-to-ray) grow from each ray
+   inward and meet at the bracket's own corner */
+function drawRightAngleGrow(V, U, Wp, size, color, p) {
+  let d1x = U.x - V.x, d1y = U.y - V.y, l1 = Math.hypot(d1x, d1y) || 1;
+  let d2x = Wp.x - V.x, d2y = Wp.y - V.y, l2 = Math.hypot(d2x, d2y) || 1;
+  d1x /= l1; d1y /= l1; d2x /= l2; d2y /= l2;
+  const A = { x: V.x + d1x * size, y: V.y + d1y * size };
+  const M = { x: V.x + (d1x + d2x) * size, y: V.y + (d1y + d2y) * size };
+  const B = { x: V.x + d2x * size, y: V.y + d2y * size };
+  const pc = clamp(p, 0, 1);
+  ctx.strokeStyle = color; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(A.x + (M.x - A.x) * pc, A.y + (M.y - A.y) * pc); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(B.x, B.y); ctx.lineTo(B.x + (M.x - B.x) * pc, B.y + (M.y - B.y) * pc); ctx.stroke();
+}
+
+/* getComputedStyle forces the browser to flush any pending style/layout
+   work before it can answer — calling it fresh on every single draw()
+   (i.e. every animation frame during a drag) was a real, measurable
+   source of the reported lag, on top of the pill DOM thrashing already
+   fixed. These colors only ever change on an explicit theme toggle or a
+   custom-color edit, so they're cached and only re-read then. */
+let themeColorCache = null;
+function themeColors() {
+  if (!themeColorCache) {
+    const rootStyle = getComputedStyle(document.documentElement);
+    themeColorCache = {
+      bg: rootStyle.getPropertyValue("--bg").trim(),
+      lock: rootStyle.getPropertyValue("--lock").trim(),
+      blue: rootStyle.getPropertyValue("--blue").trim()
+    };
+  }
+  return themeColorCache;
+}
+function invalidateThemeColors() { themeColorCache = null; }
+
+function draw(D) {
+  const dark = S.theme !== "light";
+  ctx.clearRect(0, 0, W, HH);
+  const colors = themeColors();
+  ctx.fillStyle = colors.bg || (dark ? "#0b0b0d" : "#f4f4f6");
+  ctx.fillRect(0, 0, W, HH);
+  drawGrid();
+
+  /* view-only's plain outline, at opacity a */
+  const plainTri = a => {
+    const q = S.P.map(toScreen);
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.beginPath();
+    ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.lineTo(q[2].x, q[2].y); ctx.closePath();
+    ctx.fillStyle = dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.04)"; ctx.fill();
+    ctx.strokeStyle = dark ? "#c9c9d1" : "#33333a"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  };
+  /* S.viewFade runs 0 → 1 entering view-only (and back leaving it): the
+     full annotated drawing fades out while the plain outline fades in,
+     instead of every arc, label and handle vanishing in a single frame */
+  const vf = S.viewFade;
+  if (vf >= 1) { plainTri(1); return; }
+  if (vf > 0) { ctx.save(); ctx.globalAlpha = 1 - vf; }
+
+  const p = S.P.map(toScreen);
+  const hv = S.hover;
+  const fg = dark ? "#8f8f99" : "#7a7a84";
+  const fgLock = dark ? "#e6e6ea" : "#33333a";
+  const white = dark ? "#ffffff" : "#101012";
+  const lockColor = colors.lock || "#ff5c5c";
+  const blueColor = colors.blue || "#4ea1ff";
+
+  ctx.beginPath();
+  ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); ctx.lineTo(p[2].x, p[2].y);
+  ctx.closePath();
+  ctx.fillStyle = hv && hv.kind === "body" ? (dark ? "rgba(255,255,255,.075)" : "rgba(0,0,0,.06)")
+                                            : (dark ? "rgba(255,255,255,.045)" : "rgba(0,0,0,.035)");
+  ctx.fill();
+
+  const cS = toScreen(D.centroid);
+  ctx.save();
+  ctx.setLineDash([2, 4]); ctx.strokeStyle = dark ? "rgba(255,255,255,.13)" : "rgba(0,0,0,.14)"; ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    const u = p[(i + 1) % 3], w = p[(i + 2) % 3];
+    ctx.beginPath(); ctx.moveTo(p[i].x, p[i].y); ctx.lineTo((u.x + w.x) / 2, (u.y + w.y) / 2); ctx.stroke();
+  }
+  ctx.restore();
+
+  for (let i = 0; i < 3; i++) {
+    const u = p[(i + 1) % 3], w = p[(i + 2) % 3];
+    const isHov = hv && hv.kind === "side" && hv.i === i;
+    const locked = S.lock.side[i];
+    const anim = S.lockAnim.side[i];
+    ctx.lineCap = "round";
+    if (anim) {
+      /* base: the side's ordinary unlocked look, always fully drawn */
+      ctx.beginPath(); ctx.moveTo(u.x, u.y); ctx.lineTo(w.x, w.y);
+      ctx.strokeStyle = isHov ? white : fg;
+      ctx.lineWidth = isHov ? 3.2 : 1.9;
+      ctx.stroke();
+      /* the lock ring's own red draw-in, growing from each endpoint
+         toward the midpoint (mirrors the pill's two-corner ring) */
+      const midx = (u.x + w.x) / 2, midy = (u.y + w.y) / 2, pc = clamp(anim.p, 0, 1);
+      ctx.strokeStyle = lockColor; ctx.lineWidth = 2.8;
+      ctx.beginPath(); ctx.moveTo(u.x, u.y); ctx.lineTo(u.x + (midx - u.x) * pc, u.y + (midy - u.y) * pc); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x + (midx - w.x) * pc, w.y + (midy - w.y) * pc); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(u.x, u.y); ctx.lineTo(w.x, w.y);
+      ctx.strokeStyle = isHov ? white : locked ? lockColor : fg;
+      ctx.lineWidth = isHov ? 3.2 : locked ? 2.8 : 1.9;
+      ctx.stroke();
+    }
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const u = p[(i + 1) % 3], w = p[(i + 2) % 3];
+    const lim = Math.min(Math.hypot(u.x - p[i].x, u.y - p[i].y), Math.hypot(w.x - p[i].x, w.y - p[i].y));
+    const rr = Math.min(34, lim * 0.3);
+    if (rr < 6) continue;
+    const isHov = hv && hv.kind === "vertex" && hv.i === i;
+    const locked = S.lock.angle[i];
+    const anim = S.lockAnim.angle[i];
+    const col = isHov ? white : locked ? lockColor : fgLock;
+    const isRight = isRightAngle(D.ang[i]); /* same rule as the Right chip and the trig panel */
+    const size = Math.min(16, rr * 0.62);
+    if (anim) {
+      const baseCol = isHov ? white : fgLock, pc = clamp(anim.p, 0, 1);
+      if (isRight) {
+        drawRightAngle(p[i], u, w, size, baseCol);
+        drawRightAngleGrow(p[i], u, w, size, lockColor, pc);
+      } else {
+        drawArc(p[i], u, w, rr, 1.4, baseCol);
+        drawArcGrow(p[i], u, w, rr, 2.4, lockColor, pc);
+      }
+    } else if (isRight) drawRightAngle(p[i], u, w, size, col);
+    else drawArc(p[i], u, w, rr, locked ? 2.4 : 1.4, col);
+  }
+
+  ctx.beginPath(); ctx.arc(cS.x, cS.y, 2, 0, TAU);
+  ctx.fillStyle = dark ? "rgba(255,255,255,.3)" : "rgba(0,0,0,.3)"; ctx.fill();
+
+  /* generic geometry highlight, driven by clicking a stat row */
+  if (S.highlight) drawHighlight(D, S.highlight);
+
+  const names = ["A", "B", "C"];
+  for (let i = 0; i < 3; i++) {
+    const isHov = hv && hv.kind === "vertex" && hv.i === i;
+    const locked = S.lock.angle[i];
+    const sel = S.selected.has(i);
+    if (sel) { ctx.beginPath(); ctx.arc(p[i].x, p[i].y, 10, 0, TAU); ctx.strokeStyle = blueColor; ctx.lineWidth = 2; ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(p[i].x, p[i].y, isHov ? 7 : 5, 0, TAU);
+    ctx.fillStyle = locked ? lockColor : (dark ? "#0b0b0d" : "#f4f4f6"); ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = isHov || locked ? (locked ? lockColor : white) : (dark ? "#b8b8c2" : "#54545c");
+    ctx.stroke();
+
+    let ux = p[(i + 1) % 3].x - p[i].x, uy = p[(i + 1) % 3].y - p[i].y;
+    let wx2 = p[(i + 2) % 3].x - p[i].x, wy2 = p[(i + 2) % 3].y - p[i].y;
+    const lu = Math.hypot(ux, uy) || 1, lw = Math.hypot(wx2, wy2) || 1;
+    let bx = -(ux / lu + wx2 / lw), by = -(uy / lu + wy2 / lw);
+    const lb = Math.hypot(bx, by) || 1; bx /= lb; by /= lb;
+    ctx.font = "600 12px Inter, sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = dark ? "#8a8a94" : "#6a6a74";
+    ctx.fillText(names[i], p[i].x + bx * 20, p[i].y + by * 20);
+  }
+
+  if (vf > 0) { ctx.restore(); plainTri(vf); }
+}
+
+/* draws the arc from pStart to pEnd around center whose sweep magnitude
+   best matches targetAngleRad — the actual known central angle for that
+   arc (2·angle for the circumcircle, π−angle for the incircle). Picking
+   the arc this way, instead of guessing a side to swing away from, can
+   never end up highlighting the wrong (complementary) arc: whichever of
+   the two directions actually has that length is the one drawn. */
+function drawArcByLength(center, r, pStart, pEnd, targetAngleRad, color, lw) {
+  const a0 = Math.atan2(pStart.y - center.y, pStart.x - center.x);
+  const a1 = Math.atan2(pEnd.y - center.y, pEnd.x - center.x);
+  const norm = x => { let v = x % TAU; while (v < 0) v += TAU; while (v >= TAU) v -= TAU; return v; };
+  const ccw = norm(a1 - a0), cw = TAU - ccw;
+  const sweep = Math.abs(ccw - targetAngleRad) <= Math.abs(cw - targetAngleRad) ? ccw : -cw;
+  ctx.beginPath();
+  for (let k = 0; k <= 48; k++) {
+    const t = a0 + sweep * k / 48;
+    const px = center.x + Math.cos(t) * r, py = center.y + Math.sin(t) * r;
+    if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.stroke();
+}
+
+function drawHighlight(D, h) {
+  const p = S.P.map(toScreen);
+  ctx.save();
+  ctx.strokeStyle = "#4ea1ff"; ctx.lineWidth = 3.4; ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+  if (h.kind === "side") {
+    const u = p[(h.i + 1) % 3], w = p[(h.i + 2) % 3];
+    ctx.beginPath(); ctx.moveTo(u.x, u.y); ctx.lineTo(w.x, w.y); ctx.stroke();
+  } else if (h.kind === "vertex") {
+    ctx.beginPath(); ctx.arc(p[h.i].x, p[h.i].y, 12, 0, TAU); ctx.stroke();
+  } else if (h.kind === "point") {
+    const q = toScreen(h.get ? h.get(D) : D[h.which]);
+    ctx.beginPath(); ctx.arc(q.x, q.y, 6, 0, TAU); ctx.fillStyle = "#4ea1ff"; ctx.fill();
+
+  } else if (h.kind === "all") {
+    ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); ctx.lineTo(p[2].x, p[2].y); ctx.closePath();
+    ctx.lineWidth = 3; ctx.stroke();
+
+  } else if (h.kind === "circle") {
+    /* R / Rd / r / rd — draw the real circumcircle or incircle, plus a
+       radius or diameter line, using this triangle's actual geometry */
+    const center = h.which === "circ" ? D.circum : D.incenter;
+    const rad = h.which === "circ" ? D.R : D.r;
+    const q = toScreen(center), R2 = rad * S.view.z;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(q.x, q.y, R2, 0, TAU); ctx.stroke();
+    ctx.fillStyle = "#4ea1ff";
+    ctx.beginPath(); ctx.arc(q.x, q.y, 3, 0, TAU); ctx.fill();
+    ctx.lineWidth = 2.6;
+    const anchor = h.which === "circ" ? p[0] : toScreen(D.touch[0]);
+    let dx = anchor.x - q.x, dy = anchor.y - q.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+    ctx.beginPath();
+    if (h.mode === "diameter") { ctx.moveTo(q.x - dx * R2, q.y - dy * R2); ctx.lineTo(q.x + dx * R2, q.y + dy * R2); }
+    else { ctx.moveTo(q.x, q.y); ctx.lineTo(q.x + dx * R2, q.y + dy * R2); }
+    ctx.stroke();
+
+  } else if (h.kind === "arcCirc") {
+    const q = toScreen(D.circum);
+    ctx.beginPath(); ctx.arc(q.x, q.y, D.R * S.view.z, 0, TAU);
+    ctx.strokeStyle = "rgba(78,161,255,.32)"; ctx.lineWidth = 1.4; ctx.stroke();
+    const j = (h.i + 1) % 3, k = (h.i + 2) % 3;
+    drawArcByLength(q, D.R * S.view.z, p[j], p[k], 2 * D.ang[h.i], "#4ea1ff", 3.4);
+
+  } else if (h.kind === "arcIn") {
+    const q = toScreen(D.incenter);
+    ctx.beginPath(); ctx.arc(q.x, q.y, D.r * S.view.z, 0, TAU);
+    ctx.strokeStyle = "rgba(78,161,255,.32)"; ctx.lineWidth = 1.4; ctx.stroke();
+    const j = (h.i + 1) % 3, k = (h.i + 2) % 3;
+    const t1 = toScreen(D.touch[j]), t2 = toScreen(D.touch[k]);
+    drawArcByLength(q, D.r * S.view.z, t1, t2, Math.PI - D.ang[h.i], "#4ea1ff", 3.4);
+    ctx.fillStyle = "#4ea1ff";
+    [t1, t2].forEach(t => { ctx.beginPath(); ctx.arc(t.x, t.y, 3, 0, TAU); ctx.fill(); });
+
+  } else if (h.kind === "cevian") {
+    const i = h.i, from = p[i];
+    if (h.type === "alt") {
+      const foot = toScreen(D.altFoot[i]);
+      ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(foot.x, foot.y); ctx.stroke();
+      const j = (i + 1) % 3, k = (i + 2) % 3;
+      let dx = p[k].x - p[j].x, dy = p[k].y - p[j].y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+      let nx = -dy, ny = dx;
+      if ((from.x - foot.x) * nx + (from.y - foot.y) * ny < 0) { nx = -nx; ny = -ny; }
+      const sz = 8;
+      ctx.beginPath();
+      ctx.moveTo(foot.x + dx * sz, foot.y + dy * sz);
+      ctx.lineTo(foot.x + dx * sz + nx * sz, foot.y + dy * sz + ny * sz);
+      ctx.lineTo(foot.x + nx * sz, foot.y + ny * sz);
+      ctx.lineWidth = 1.6; ctx.stroke();
+    } else if (h.type === "med") {
+      const foot = toScreen(D.medFoot[i]);
+      ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(foot.x, foot.y); ctx.stroke();
+      ctx.fillStyle = "#4ea1ff"; ctx.beginPath(); ctx.arc(foot.x, foot.y, 4, 0, TAU); ctx.fill();
+    } else if (h.type === "bis") {
+      const foot = toScreen(D.bisFoot[i]);
+      ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(foot.x, foot.y); ctx.stroke();
+      const j = (i + 1) % 3, k = (i + 2) % 3;
+      drawArc(from, p[j], foot, 18, 1.8, "#4ea1ff");
+      drawArc(from, foot, p[k], 18, 1.8, "#4ea1ff");
+    }
+  }
+  ctx.restore();
+}
+
+/* =======================================================================
+   Pills — one input per corner and per side, plus per-vertex coordinates
+   ======================================================================= */
+const overlay = document.getElementById("overlay");
+const pills = [];
+
+/* measures the pill input's text with a throwaway canvas context instead
+   of a hidden DOM element + offsetWidth — that pattern needs a WRITE
+   (set its text) immediately followed by a layout-forcing READ, once per
+   pill, every single frame. Interleaved like that across 6 pills plus
+   the rest of layoutPills' own reads/writes, it was forcing a full
+   synchronous reflow more than a dozen times per frame during a drag —
+   the actual source of the reported lag, not the constraint solver
+   (which measures under 0.05ms). canvas measureText has no layout
+   dependency at all, so this can never force a reflow. */
+const measureCtx = document.createElement("canvas").getContext("2d");
+measureCtx.font = "500 12px Inter, sans-serif";
+if ("letterSpacing" in measureCtx) measureCtx.letterSpacing = "-0.01em";
+function autoWidth(input) {
+  const w = measureCtx.measureText(input.value || " ").width;
+  input.style.width = Math.max(44, Math.ceil(w) + 6) + "px";
+}
+/* the x/y coordinate boxes had a fixed 38px width, which clipped their
+   numbers ("-1.3325" cut to "-1.332") as soon as a value had a couple of
+   integer digits or more decimals — sized to their text the same way */
+const coordMeasureCtx = document.createElement("canvas").getContext("2d");
+coordMeasureCtx.font = "500 10px Inter, sans-serif";
+function autoWidthCoord(input) {
+  const w = coordMeasureCtx.measureText(input.value || " ").width;
+  const px = Math.max(30, Math.ceil(w) + 4) + "px";
+  if (input.style.width !== px) input.style.width = px;
+}
+
+const pillUnit = rec => S.units[rec.kind][rec.i];
+const pillText = (rec, v) => rec.kind === "side" ? lenStr(v, pillUnit(rec), S.prec, true) : angStr(v, pillUnit(rec), S.prec, true);
+function pillAlt(rec, v) {
+  const u = pillUnit(rec);
+  return rec.kind === "side" ? "(" + lenStr(v, altLenUnit(v, u), S.prec, true) + ")" : "(" + angStr(v, altAngUnit(u), S.prec, true) + ")";
+}
+
+function makePill(kind, i) {
+  const el = document.createElement("div");
+  el.className = "pill";
+  const tag = kind === "side" ? ["a", "b", "c"][i] : ["A", "B", "C"][i];
+  el.innerHTML =
+    '<div class="pill-body">' +
+      '<div class="pill-main">' +
+        '<span class="tag">' + tag + '</span>' +
+        '<input type="text" spellcheck="false" autocomplete="off" autocapitalize="off">' +
+        '<span class="warn"><i class="fa-solid fa-triangle-exclamation"></i></span>' +
+      '</div>' +
+      '<div class="pill-alt"></div>' +
+      (kind === "angle" ? '<div class="pill-coord"><span>x</span><input class="cx" type="text"><span>y</span><input class="cy" type="text"></div>' : '') +
+    '</div>' +
+    '<button class="lockbtn" tabindex="-1"><i class="fa-solid fa-lock-open"></i></button>' +
+    '<svg class="lockring" aria-hidden="true"><rect class="draw"/><rect class="draw rot"/></svg>';
+  overlay.appendChild(el);
+
+  const rec = {
+    el, kind, i,
+    input:   el.querySelector("input[type=text]:not(.cx):not(.cy)"),
+    alt:     el.querySelector(".pill-alt"),
+    cx:      el.querySelector(".cx"),
+    cy:      el.querySelector(".cy"),
+    lockBtn: el.querySelector(".lockbtn"),
+    icon:    el.querySelector(".lockbtn i"),
+    lockRects: el.querySelectorAll(".lockring rect.draw"),
+    lockAnimating: false,
+    forceLockedVisual: false
+  };
+
+  rec.input.addEventListener("input", () => {
+    autoWidth(rec.input);
+    const r = parseMeasure(rec.input.value, kind, pillUnit(rec));
+    if (!r) return;
+    if (r.unit) S.units[kind][i] = r.unit;
+    if (commitValue(kind, i, r.value)) pushHistorySoon();
+  });
+  rec.input.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === "Escape") { rec.input.blur(); return; }
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    const r = parseMeasure(rec.input.value, kind, pillUnit(rec));
+    if (!r) return;
+    if (r.unit) S.units[kind][i] = r.unit;
+    const u = pillUnit(rec), f = (kind === "side" ? LEN : ANG)[u].f;
+    const stepDisp = (e.shiftKey ? 10 : e.altKey ? 0.1 : 1) * (e.key === "ArrowUp" ? 1 : -1);
+    const next = r.value + stepDisp * f;
+    if (commitValue(kind, i, next)) { rec.input.value = pillText(rec, next); autoWidth(rec.input); pushHistorySoon(); }
+  });
+  rec.input.addEventListener("focus", () => { el.classList.add("active"); rec.input.select(); });
+  rec.input.addEventListener("blur",  () => { el.classList.remove("active"); flushHistory(); requestRender(); });
+  rec.lockBtn.addEventListener("click", () => toggleLock(kind, i));
+
+  if (kind === "angle") {
+    /* the box that ISN'T being typed in only shows a rounded (6 sig. fig.)
+       copy of its coordinate — re-parsing that text would quietly nudge
+       the vertex to the rounded value on every keystroke in the other box,
+       which in turn rotated the other two vertices off whatever exact
+       values (like 0) had been typed for them earlier. So an untouched
+       box always contributes the real, full-precision value instead. */
+    const readAxis = (inp, axis) => {
+      const cur = S.P[i][axis];
+      if (inp.value === inp.dataset.shown) return cur;
+      const r = parseMeasure(inp.value, "side", S.lenUnit);
+      return r ? r.value : null;
+    };
+    const commitCoord = () => {
+      const x = readAxis(rec.cx, "x"), y = readAxis(rec.cy, "y");
+      if (x === null || y === null) return;
+      const old = S.P.map(v => ({ x: v.x, y: v.y }));
+      const prop = old.map(v => ({ x: v.x, y: v.y }));
+      prop[i] = { x, y };
+      const anyLock = anyLockActive();
+      const scale = Math.max(...sidesOf(prop), 1e-9);
+      if (!anyLock && Math.abs(signedArea2(prop)) > scale * scale * 1e-9) {
+        /* nothing constrains the shape, so moving one vertex is exactly
+           that — the other two stay bit-for-bit where they were, no
+           solver or rotation fit (and so no float noise) involved */
+        S.P = prop;
+      } else {
+        /* a typed coordinate must land EXACTLY where you typed it, so this
+           point is pinned outright; the other two give way to satisfy any
+           active side/angle lock */
+        applyConstraints(prop, null, null, false, i);
+        /* ...but a vertex the solver only nudged by float noise keeps its
+           previous exact coordinates rather than drifting by 1e-16 */
+        const eps = scale * 1e-9;
+        for (let j = 0; j < 3; j++) {
+          if (j === i) continue;
+          if (Math.abs(S.P[j].x - old[j].x) < eps) S.P[j].x = old[j].x;
+          if (Math.abs(S.P[j].y - old[j].y) < eps) S.P[j].y = old[j].y;
+        }
+      }
+      ensureVisible(); requestRender(); pushHistorySoon();
+    };
+    rec.cx.addEventListener("input", () => { autoWidthCoord(rec.cx); commitCoord(); });
+    rec.cy.addEventListener("input", () => { autoWidthCoord(rec.cy); commitCoord(); });
+    rec.cx.addEventListener("focus", () => { el.classList.add("active"); rec.cx.select(); });
+    rec.cy.addEventListener("focus", () => { el.classList.add("active"); rec.cy.select(); });
+    rec.cx.addEventListener("blur", () => { flushHistory(); requestRender(); });
+    rec.cy.addEventListener("blur", () => { flushHistory(); requestRender(); });
+    [rec.cx, rec.cy].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Escape") inp.blur(); }));
+  }
+
+  pills.push(rec);
+}
+for (let i = 0; i < 3; i++) makePill("angle", i);
+for (let i = 0; i < 3; i++) makePill("side", i);
+
+/* real-pixel rounded-rect perimeter — matches the pill's own border-radius
+   exactly (closed form, so this never needs a layout-forcing measurement) */
+function roundedRectPerimeter(w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  return 2 * (w - 2 * r) + 2 * (h - 2 * r) + TAU * r;
+}
+const EASE_CSS = () => getComputedStyle(document.documentElement).getPropertyValue("--ease").trim();
+
+/* ring geometry in the pill's border-box pixels: the stroke (2.25px) is
+   centered half a stroke in from the outer edge, so its outside edge IS
+   the pill's outside edge — and its centerline radius is the pill's own
+   8px border-radius minus that half stroke, so the corners stay concentric */
+const RING = { inset: 1.125, rx: 8 - 1.125 };
+const ringPerimeter = (w, h) => roundedRectPerimeter(Math.max(0, w - RING.inset * 2), Math.max(0, h - RING.inset * 2), RING.rx);
+function syncLockRing(rec, w, h) {
+  if (w === undefined) { w = rec.el.offsetWidth; h = rec.el.offsetHeight; }
+  if (!w || !h) return;
+  const inset = RING.inset, rx = RING.rx;
+  const rw = Math.max(0, w - inset * 2), rh = Math.max(0, h - inset * 2);
+  const per = ringPerimeter(w, h);
+  rec.lockRects.forEach(r => {
+    r.setAttribute("x", inset); r.setAttribute("y", inset);
+    r.setAttribute("width", rw); r.setAttribute("height", rh);
+    r.setAttribute("rx", rx); r.setAttribute("ry", rx);
+  });
+  rec.el.querySelector(".lockring").setAttribute("viewBox", "0 0 " + w + " " + h);
+  if (!rec.lockAnimating) {
+    /* steady state (not mid draw animation): keep each rect showing
+       exactly half the loop, staying accurate if the pill resizes */
+    rec.lockRects.forEach(r => { r.style.transition = "none"; r.style.strokeDasharray = per; r.style.strokeDashoffset = per / 2; r.style.opacity = "1"; });
+  }
+}
+
+/* drives S.lockAnim[kind][i].p from wherever it currently sits to 1 (on)
+   or 0 (off), on the same timing as the pill's own ring animation, so the
+   side/angle mark on the canvas draws in and undraws right alongside it */
+const lockMarkRAF = { side: [null, null, null], angle: [null, null, null] };
+function animateLockMark(kind, i, on) {
+  if (lockMarkRAF[kind][i] !== null) cancelAnimationFrame(lockMarkRAF[kind][i]);
+  const from = S.lockAnim[kind][i] ? S.lockAnim[kind][i].p : (on ? 0 : 1);
+  const to = on ? 1 : 0;
+  const dur = on ? 600 : 500;
+  const t0 = performance.now();
+  const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1);
+    S.lockAnim[kind][i] = { p: from + (to - from) * ease(t) };
+    if (t < 1) { lockMarkRAF[kind][i] = requestAnimationFrame(step); requestRender(); }
+    else { lockMarkRAF[kind][i] = null; S.lockAnim[kind][i] = null; requestRender(); }
+  };
+  lockMarkRAF[kind][i] = requestAnimationFrame(step);
+}
+/* stops every in-flight lock-mark animation and clears their state — a
+   stale one must never keep painting over a triangle that was just
+   restored (undo/redo) or reset to a different lock configuration */
+function cancelLockAnims() {
+  ["side", "angle"].forEach(kind => {
+    for (let i = 0; i < 3; i++) {
+      if (lockMarkRAF[kind][i] !== null) { cancelAnimationFrame(lockMarkRAF[kind][i]); lockMarkRAF[kind][i] = null; }
+      S.lockAnim[kind][i] = null;
+    }
+  });
+}
+function toggleLock(kind, i) {
+  const wasOn = S.lock[kind][i];
+  const on = !wasOn;
+  if (on) { const D = derive(); S.target[kind][i] = kind === "side" ? D.sides[i] : D.ang[i]; }
+  S.lock[kind][i] = on;
+  animateLockMark(kind, i, on);
+  const rec = pills.find(p => p.kind === kind && p.i === i);
+  if (rec) {
+    if (on) {
+      rec.forceLockedVisual = true;
+      syncLockRing(rec);
+      const w = rec.el.offsetWidth, h = rec.el.offsetHeight;
+      const per = ringPerimeter(w, h);
+      rec.lockAnimating = true;
+      rec.lockRects.forEach(r => { r.style.transition = "none"; r.style.opacity = "1"; r.style.strokeDasharray = per; r.style.strokeDashoffset = per; });
+      /* force reflow so the "fully hidden" state actually paints before transitioning */
+      void rec.el.offsetHeight;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        rec.lockRects.forEach(r => { r.style.transition = "stroke-dashoffset .6s " + EASE_CSS(); r.style.strokeDashoffset = per / 2; });
+        setTimeout(() => { rec.lockAnimating = false; requestRender(); }, 650);
+      }));
+    } else if (rec.forceLockedVisual || rec.el.classList.contains("locked")) {
+      /* reverse: undraw the ring back to its two starting corners, then
+         drop the "locked" look only once that's finished */
+      rec.forceLockedVisual = true;
+      rec.lockAnimating = true;
+      const w = rec.el.offsetWidth, h = rec.el.offsetHeight;
+      const per = ringPerimeter(w, h);
+      rec.lockRects.forEach(r => { r.style.transition = "stroke-dashoffset .5s " + EASE_CSS(); r.style.strokeDashoffset = per; });
+      setTimeout(() => {
+        rec.lockAnimating = false;
+        rec.forceLockedVisual = false;
+        rec.lockRects.forEach(r => { r.style.transition = "none"; r.style.opacity = "0"; });
+        requestRender();
+      }, 520);
+    }
+  }
+  pushHistory(); requestRender();
+}
+function commitValue(kind, i, value) {
+  if (kind === "angle") { if (!(value > 1e-5 && value < Math.PI - 1e-5)) return false; }
+  else if (!(value > 1e-9)) return false;
+  if (S.lock[kind][i]) S.target[kind][i] = value;
+  applyConstraints(S.P, [1, 1, 1], [{ type: kind, i, value, w: 4 }]);
+  ensureVisible(); requestRender();
+  return true;
+}
+
+/* radius, around each vertex on screen, that no pill is ever allowed to
+   intrude into — covers the vertex dot, the angle arc (max ~34px) and
+   its locked double-ring, so a pill can never sit on top of a handle */
+const VERTEX_HANDLE_CLEARANCE = 40;
+
+/* rectangle-to-point distance (0 if the point is inside the rect) —
+   using the real pill footprint instead of a circle keeps a wide pill
+   from being pushed far past where it actually needs to go */
+function rectDistToPoint(px, py, hw, hh, vx, vy) {
+  const dx = Math.max(Math.abs(vx - px) - hw, 0);
+  const dy = Math.max(Math.abs(vy - py) - hh, 0);
+  return Math.hypot(dx, dy);
+}
+/* closest point on segment a–b to (px,py) — used to keep a pill clear of
+   the triangle's own edges, not just its vertices */
+function closestOnSegment(px, py, ax, ay, bx, by) {
+  const vx = bx - ax, vy = by - ay;
+  const len2 = vx * vx + vy * vy || 1;
+  const t = clamp(((px - ax) * vx + (py - ay) * vy) / len2, 0, 1);
+  return { x: ax + vx * t, y: ay + vy * t };
+}
+/* pushes the pill's rectangle along a single fixed ray (dirx,diry) until
+   it clears every vertex (by ptsMinDist) AND every triangle edge (by
+   segMinDist) at once — checked together in the same loop so clearing
+   one obstacle can't reintroduce a violation of the other */
+function pushClearOfObstacles(px, py, dirx, diry, hw, hh, pts, ptsMinDist, segs, segMinDist) {
+  for (let iter = 0; iter < 32; iter++) {
+    let worst = 0;
+    for (const v of pts) {
+      const d = rectDistToPoint(px, py, hw, hh, v.x, v.y);
+      if (d < ptsMinDist) worst = Math.max(worst, ptsMinDist - d);
+    }
+    for (const seg of segs) {
+      const cp = closestOnSegment(px, py, seg.a.x, seg.a.y, seg.b.x, seg.b.y);
+      const d = rectDistToPoint(px, py, hw, hh, cp.x, cp.y);
+      if (d < segMinDist) worst = Math.max(worst, segMinDist - d);
+    }
+    if (worst <= 0.5) break;
+    px += dirx * (worst + 1);
+    py += diry * (worst + 1);
+  }
+  return { x: px, y: py };
+}
+/* minimum gap a pill must keep from any of the triangle's own edges —
+   small, since this is just "don't touch", not the wide vertex-handle
+   clearance above */
+const TRIANGLE_EDGE_CLEARANCE = 14;
+
+/* Split into three passes — write, read, write — instead of interleaving
+   read-after-write per pill. Reading layout (offsetWidth/offsetHeight)
+   right after writing it (value/style) forces the browser to
+   synchronously recompute layout on the spot; doing that once per pill,
+   six times a frame, was the actual cost of a drag frame (the solver
+   itself runs in well under a tenth of a millisecond). Batching every
+   write, then every read, then every write again costs at most ONE
+   forced layout for the whole panel instead of six-plus. */
+function layoutPills(D) {
+  const p = S.P.map(toScreen);
+  const gx = (p[0].x + p[1].x + p[2].x) / 3, gy = (p[0].y + p[1].y + p[2].y) / 3;
+  const edges = [{ a: p[0], b: p[1] }, { a: p[1], b: p[2] }, { a: p[2], b: p[0] }];
+
+  const actuals = pills.map(rec => rec.kind === "side" ? D.sides[rec.i] : D.ang[rec.i]);
+
+  /* pass 1: writes only */
+  pills.forEach((rec, idx) => {
+    const i = rec.i;
+    if (document.activeElement !== rec.input) { rec.input.value = pillText(rec, actuals[idx]); autoWidth(rec.input); }
+    rec.alt.textContent = pillAlt(rec, actuals[idx]);
+    if (rec.kind === "angle") {
+      const wp = S.P[i], u = LEN[S.lenUnit];
+      const sc = Math.max(D.a, D.b, D.c);
+      if (document.activeElement !== rec.cx) rec.cx.value = rec.cx.dataset.shown = dp(snapNoise(wp.x, sc) / u.f);
+      if (document.activeElement !== rec.cy) rec.cy.value = rec.cy.dataset.shown = dp(snapNoise(wp.y, sc) / u.f);
+      autoWidthCoord(rec.cx); autoWidthCoord(rec.cy);
+    }
+  });
+
+  /* pass 2: reads only */
+  const metrics = pills.map(rec => ({ w: rec.el.offsetWidth || 60, h: rec.el.offsetHeight || 30 }));
+
+  /* pass 3: writes only, using the metrics already captured above */
+  pills.forEach((rec, idx) => {
+    const i = rec.i;
+    const actual = actuals[idx];
+    const hw = metrics[idx].w / 2, hh = metrics[idx].h / 2;
+    if (S.lock[rec.kind][i] || rec.forceLockedVisual) syncLockRing(rec, metrics[idx].w, metrics[idx].h);
+
+    let px, py, dirx, diry;
+    if (rec.kind === "angle") {
+      const j = (i + 1) % 3, k = (i + 2) % 3;
+      let ux = p[j].x - p[i].x, uy = p[j].y - p[i].y;
+      let wx2 = p[k].x - p[i].x, wy2 = p[k].y - p[i].y;
+      const lu = Math.hypot(ux, uy) || 1, lw = Math.hypot(wx2, wy2) || 1;
+      let bx = -(ux / lu + wx2 / lw), by = -(uy / lu + wy2 / lw);
+      let lb = Math.hypot(bx, by);
+      if (lb < 1e-6) { bx = p[i].x - gx; by = p[i].y - gy; lb = Math.hypot(bx, by) || 1; }
+      bx /= lb; by /= lb;
+      dirx = bx; diry = by;
+      px = p[i].x + bx * 68; py = p[i].y + by * 68;
+    } else {
+      const j = (i + 1) % 3, k = (i + 2) % 3;
+      const u = p[j], w = p[k];
+      const mx = (u.x + w.x) / 2, my = (u.y + w.y) / 2;
+      let ox = mx - gx, oy = my - gy;
+      const lo = Math.hypot(ox, oy) || 1; ox /= lo; oy /= lo;
+      dirx = ox; diry = oy;
+      px = mx + ox * 42; py = my + oy * 42;
+    }
+
+    /* never let the pill's footprint touch ANY vertex's handle zone (and
+       with it, that vertex's own A/B/C label, which sits well inside
+       this radius) or ANY of the triangle's three edges — thin/obtuse
+       triangles can bring a vertex or edge close enough to overlap the
+       "wrong" pill otherwise */
+    const clear = pushClearOfObstacles(px, py, dirx, diry, hw, hh, p, VERTEX_HANDLE_CLEARANCE, edges, TRIANGLE_EDGE_CLEARANCE);
+    px = clear.x; py = clear.y;
+
+    rec.el.style.left = px.toFixed(1) + "px";
+    rec.el.style.top  = py.toFixed(1) + "px";
+
+    const locked = S.lock[rec.kind][i];
+    rec.el.classList.toggle("locked", locked || rec.forceLockedVisual);
+    rec.el.classList.toggle("ring-full", locked && !rec.lockAnimating);
+    rec.el.classList.toggle("selected", rec.kind === "angle" && S.selected.has(i));
+    rec.icon.className = locked ? "fa-solid fa-lock" : "fa-solid fa-lock-open";
+
+    let conflict = false;
+    if (locked) {
+      const t = S.target[rec.kind][i];
+      const tol = rec.kind === "side" ? Math.max(1e-9, Math.abs(t) * 1e-4) : 2e-4;
+      conflict = Math.abs(actual - t) > tol;
+    }
+    rec.el.classList.toggle("conflict", conflict);
+    /* CSS tooltip (see [data-tip]) — only touched when the text actually
+       changes, since this runs every frame during a drag */
+    const tip = conflict ? "Locked at " + pillText(rec, S.target[rec.kind][i]) + " — unreachable with the other locks" : null;
+    if (tip === null) { if (rec.el.hasAttribute("data-tip")) rec.el.removeAttribute("data-tip"); }
+    else if (rec.el.dataset.tip !== tip) rec.el.dataset.tip = tip;
+  });
+}
+
+/* =======================================================================
+   Stats sidebar — cards with clickable rows that explain themselves
+   ======================================================================= */
+const statsEl = document.getElementById("stats");
+const refs = {};
+const rowMeta = {};   // id -> {kind,i,label,formula(D)->text}
+
+/* animates the section open/closed using its real measured height, so
+   it's smooth regardless of how much content the section holds */
+function toggleSection(sec) {
+  const wrap = sec.querySelector(".sec-collapse");
+  const collapsing = !sec.classList.contains("collapsed");
+  if (collapsing) {
+    wrap.style.transition = "none";
+    wrap.style.maxHeight = wrap.scrollHeight + "px";
+    sec.classList.add("collapsed");
+    void wrap.offsetHeight; /* commit the starting height synchronously */
+    /* double rAF: guarantees a real frame paints at the start height
+       before the transition target is applied, or the two writes can
+       coalesce into one and the transition never has anywhere to animate from */
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      wrap.style.transition = "";
+      wrap.style.maxHeight = "0px";
+    }));
+  } else {
+    sec.classList.remove("collapsed");
+    const target = wrap.scrollHeight;
+    wrap.style.transition = "none";
+    wrap.style.maxHeight = "0px";
+    void wrap.offsetHeight;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      wrap.style.transition = "";
+      wrap.style.maxHeight = target + "px";
+    }));
+    setTimeout(() => { if (!sec.classList.contains("collapsed")) wrap.style.maxHeight = "2000px"; }, 360);
+  }
+}
+function section(title, icon, cat) {
+  const sec = document.createElement("div");
+  sec.className = "sec cat-" + cat;
+  sec.innerHTML =
+    '<div class="sec-head"><i class="ico fa-solid ' + icon + '"></i><span>' + title +
+    '</span><i class="chev fa-solid fa-chevron-down"></i></div><div class="sec-collapse"><div class="sec-body"></div></div>';
+  sec.querySelector(".sec-head").addEventListener("click", () => toggleSection(sec));
+  statsEl.appendChild(sec);
+  const body = sec.querySelector(".sec-body");
+  body.parentSec = sec;
+  return body;
+}
+function addRow(body, key, id, opts) {
+  opts = opts || {};
+  const row = document.createElement("div");
+  row.className = "row" + (opts.hl ? " hl" : "") + (opts.info ? " clickable" : "") + (opts.icon ? " withicon" : "");
+  row.innerHTML = (opts.icon ? opts.icon : "") + '<span class="k">' + key + '</span><span class="v"></span>';
+  body.appendChild(row);
+  refs[id] = row.querySelector(".v");
+  if (opts.info) { rowMeta[id] = opts.info; row.addEventListener("click", () => openExplain(id)); }
+  return row;
+}
+const gap = body => { const s = document.createElement("div"); s.style.height = "6px"; body.appendChild(s); };
+
+/* =======================================================================
+   Row icons — a tiny schematic triangle, computed from real geometry
+   formulas on a fixed illustrative shape, so "Circumradius" or "Median"
+   can show what they mean at a glance instead of just naming it.
+   ======================================================================= */
+const ICON = (() => {
+  const P = [{ x: 20, y: 6 }, { x: 6, y: 27 }, { x: 34, y: 27 }]; // A, B, C
+  const [a, b, c] = sidesOf(P);
+  const per = a + b + c, s = per / 2;
+  const area = Math.abs(signedArea2(P)) / 2;
+  const R = (a * b * c) / (4 * area), r = area / s;
+  const [pa, pb, pc] = P;
+  const dd = 2 * (pa.x * (pb.y - pc.y) + pb.x * (pc.y - pa.y) + pc.x * (pa.y - pb.y));
+  const sa = pa.x * pa.x + pa.y * pa.y, sb = pb.x * pb.x + pb.y * pb.y, sc = pc.x * pc.x + pc.y * pc.y;
+  const circum = { x: (sa * (pb.y - pc.y) + sb * (pc.y - pa.y) + sc * (pa.y - pb.y)) / dd,
+                    y: (sa * (pc.x - pb.x) + sb * (pa.x - pc.x) + sc * (pb.x - pa.x)) / dd };
+  const incenter = { x: (a * pa.x + b * pb.x + c * pc.x) / per, y: (a * pa.y + b * pb.y + c * pc.y) / per };
+  return { P, a, b, c, R, r, circum, incenter };
+})();
+
+function iconSvg(inner) {
+  return '<svg class="row-icon" viewBox="0 0 40 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">' + inner + '</svg>';
+}
+function iconTri() {
+  const [A, B, C] = ICON.P;
+  return '<path d="M' + A.x + ',' + A.y + ' L' + B.x + ',' + B.y + ' L' + C.x + ',' + C.y + ' Z"/>';
+}
+function iconCircle(c, r, hl) {
+  return '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r + '"' + (hl ? ' class="hl"' : '') + '/>';
+}
+function iconDot(p) { return '<circle cx="' + p.x + '" cy="' + p.y + '" r="1.3" fill="currentColor" stroke="none"/>'; }
+function iconLine(p, q, hl) {
+  return '<line x1="' + p.x + '" y1="' + p.y + '" x2="' + q.x + '" y2="' + q.y + '"' + (hl ? ' class="hl" stroke-width="1.8"' : '') + '/>';
+}
+function iconArcBetween(center, r, p, q, hl) {
+  const a1 = Math.atan2(p.y - center.y, p.x - center.x), a2 = Math.atan2(q.y - center.y, q.x - center.x);
+  const large = Math.abs(a2 - a1) > Math.PI ? 1 : 0;
+  return '<path d="M' + p.x + ',' + p.y + ' A' + r + ',' + r + ' 0 ' + large + ' 1 ' + q.x + ',' + q.y + '"' +
+    (hl ? ' class="hl" stroke-width="2"' : '') + '/>';
+}
+
+const ROW_ICONS = {
+  circumR: () => iconSvg(iconTri() + iconCircle(ICON.circum, ICON.R) + iconDot(ICON.circum) + iconLine(ICON.circum, ICON.P[0], true)),
+  circumD: () => {
+    const c = ICON.circum, dirx = (ICON.P[0].x - c.x) / ICON.R, diry = (ICON.P[0].y - c.y) / ICON.R;
+    const p1 = { x: c.x + dirx * ICON.R, y: c.y + diry * ICON.R }, p2 = { x: c.x - dirx * ICON.R, y: c.y - diry * ICON.R };
+    return iconSvg(iconTri() + iconCircle(c, ICON.R) + iconLine(p1, p2, true) + iconDot(c));
+  },
+  inR: () => {
+    const foot = { x: ICON.incenter.x, y: ICON.P[1].y };
+    return iconSvg(iconTri() + iconCircle(ICON.incenter, ICON.r) + iconDot(ICON.incenter) + iconLine(ICON.incenter, foot, true));
+  },
+  inD: () => {
+    const c = ICON.incenter;
+    return iconSvg(iconTri() + iconCircle(c, ICON.r) + iconLine({ x: c.x - ICON.r, y: c.y }, { x: c.x + ICON.r, y: c.y }, true) + iconDot(c));
+  },
+  arcCirc: () => iconSvg(iconTri() + iconCircle(ICON.circum, ICON.R) + iconArcBetween(ICON.circum, ICON.R, ICON.P[1], ICON.P[2], true)),
+  arcIn: () => {
+    const c = ICON.incenter;
+    const p = { x: c.x - ICON.r * 0.7, y: c.y + ICON.r * 0.7 }, q = { x: c.x + ICON.r * 0.7, y: c.y + ICON.r * 0.7 };
+    return iconSvg(iconTri() + iconCircle(c, ICON.r) + iconArcBetween(c, ICON.r, p, q, true));
+  },
+  altitude: () => {
+    const A = ICON.P[0], foot = { x: A.x, y: ICON.P[1].y };
+    return iconSvg(iconTri() + iconLine(A, foot, true) +
+      '<path d="M' + (foot.x - 3) + ',' + foot.y + ' L' + (foot.x - 3) + ',' + (foot.y - 3) + ' L' + foot.x + ',' + (foot.y - 3) + '" stroke-width="1"/>');
+  },
+  median: () => {
+    const A = ICON.P[0], mid = { x: (ICON.P[1].x + ICON.P[2].x) / 2, y: (ICON.P[1].y + ICON.P[2].y) / 2 };
+    return iconSvg(iconTri() + iconLine(A, mid, true) + iconDot(mid));
+  },
+  bisector: () => {
+    const A = ICON.P[0], B = ICON.P[1], C = ICON.P[2];
+    const t = ICON.c / (ICON.b + ICON.c);
+    const D = { x: B.x + t * (C.x - B.x), y: B.y + t * (C.y - B.y) };
+    return iconSvg(iconTri() + iconLine(A, D, true));
+  }
+};
+function rowIcon(kind) { return ROW_ICONS[kind] ? ROW_ICONS[kind]() : ""; }
+
+{
+  const b = section("Measurements", "fa-ruler-combined", 0);
+  addRow(b, "Side a &nbsp;(BC)", "a", { hl: 1, info: { kind: "side", i: 0 } });
+  addRow(b, "Side b &nbsp;(CA)", "b", { hl: 1, info: { kind: "side", i: 1 } });
+  addRow(b, "Side c &nbsp;(AB)", "c", { hl: 1, info: { kind: "side", i: 2 } });
+  gap(b);
+  addRow(b, "Angle A", "A", { hl: 1, info: { kind: "vertex", i: 0 } });
+  addRow(b, "Angle B", "B", { hl: 1, info: { kind: "vertex", i: 1 } });
+  addRow(b, "Angle C", "C", { hl: 1, info: { kind: "vertex", i: 2 } });
+  addRow(b, "Sum", "sum", { info: { kind: "all" } });
+}
+{
+  const b = section("Geometry", "fa-shapes", 1);
+  addRow(b, "Area", "area", { hl: 1, info: { kind: "all" } });
+  addRow(b, "Perimeter", "per", { hl: 1, info: { kind: "all" } });
+  addRow(b, "Semiperimeter", "semi", { info: { kind: "all" } });
+  addRow(b, "Classification", "class");
+  const cr = document.createElement("div"); cr.className = "chip-row"; cr.id = "chips"; b.appendChild(cr);
+}
+{
+  const b = section("Trigonometry", "fa-wave-square", 2);
+  const wrap = document.createElement("div"); wrap.className = "tblock";
+  wrap.innerHTML = '<div class="thdr"><span></span><span>A</span><span>B</span><span>C</span></div>';
+  const fns = ["sin", "cos", "tan", "csc", "sec", "cot"];
+  for (const f of fns) {
+    const tr = document.createElement("div"); tr.className = "trow";
+    tr.innerHTML = '<span class="fn">' + f + '</span>' + [0,1,2].map(i => '<span class="c" id="tg_' + f + '_' + i + '"></span>').join("");
+    tr.addEventListener("click", () => openTrigExplain(f));
+    wrap.appendChild(tr);
+    for (let i = 0; i < 3; i++) refs["tg_" + f + "_" + i] = tr.querySelector("#tg_" + f + "_" + i);
+  }
+  b.appendChild(wrap);
+}
+{
+  const b = section("Circles", "fa-circle-notch", 3);
+  addRow(b, "Circumradius R", "R", { hl: 1, icon: rowIcon("circumR"), info: { kind: "circle", which: "circ", mode: "radius" } });
+  addRow(b, "Circumdiameter", "Rd", { icon: rowIcon("circumD"), info: { kind: "circle", which: "circ", mode: "diameter" } });
+  addRow(b, "Inradius r", "r", { hl: 1, icon: rowIcon("inR"), info: { kind: "circle", which: "in", mode: "radius" } });
+  addRow(b, "Incircle diameter", "rd", { icon: rowIcon("inD"), info: { kind: "circle", which: "in", mode: "diameter" } });
+  addRow(b, "R / r", "Rr", { info: { kind: "all" } });
+  addRow(b, "Incircle area", "inA", { info: { kind: "circle", which: "in", mode: "radius" } });
+  addRow(b, "Circumcircle area", "cirA", { info: { kind: "circle", which: "circ", mode: "radius" } });
+  gap(b);
+  addRow(b, "Circumarc BC (opp. A)", "arcC0", { icon: rowIcon("arcCirc"), info: { kind: "arcCirc", i: 0 } });
+  addRow(b, "Circumarc CA (opp. B)", "arcC1", { icon: rowIcon("arcCirc"), info: { kind: "arcCirc", i: 1 } });
+  addRow(b, "Circumarc AB (opp. C)", "arcC2", { icon: rowIcon("arcCirc"), info: { kind: "arcCirc", i: 2 } });
+  gap(b);
+  addRow(b, "Incircle arc at A", "arcI0", { icon: rowIcon("arcIn"), info: { kind: "arcIn", i: 0 } });
+  addRow(b, "Incircle arc at B", "arcI1", { icon: rowIcon("arcIn"), info: { kind: "arcIn", i: 1 } });
+  addRow(b, "Incircle arc at C", "arcI2", { icon: rowIcon("arcIn"), info: { kind: "arcIn", i: 2 } });
+}
+{
+  const b = section("Cevians", "fa-ruler-vertical", 4);
+  addRow(b, "Altitude hₐ", "h0", { icon: rowIcon("altitude"), info: { kind: "cevian", type: "alt", i: 0 } });
+  addRow(b, "Altitude hᵇ", "h1", { icon: rowIcon("altitude"), info: { kind: "cevian", type: "alt", i: 1 } });
+  addRow(b, "Altitude hᶜ", "h2", { icon: rowIcon("altitude"), info: { kind: "cevian", type: "alt", i: 2 } });
+  gap(b);
+  addRow(b, "Median mₐ", "m0", { icon: rowIcon("median"), info: { kind: "cevian", type: "med", i: 0 } });
+  addRow(b, "Median mᵇ", "m1", { icon: rowIcon("median"), info: { kind: "cevian", type: "med", i: 1 } });
+  addRow(b, "Median mᶜ", "m2", { icon: rowIcon("median"), info: { kind: "cevian", type: "med", i: 2 } });
+  gap(b);
+  addRow(b, "Bisector tₐ", "t0", { icon: rowIcon("bisector"), info: { kind: "cevian", type: "bis", i: 0 } });
+  addRow(b, "Bisector tᵇ", "t1", { icon: rowIcon("bisector"), info: { kind: "cevian", type: "bis", i: 1 } });
+  addRow(b, "Bisector tᶜ", "t2", { icon: rowIcon("bisector"), info: { kind: "cevian", type: "bis", i: 2 } });
+}
+{
+  const b = section("Centers & Vertices", "fa-crosshairs", 5);
+  addRow(b, "A", "pA", { info: { kind: "vertex", i: 0 } });
+  addRow(b, "B", "pB", { info: { kind: "vertex", i: 1 } });
+  addRow(b, "C", "pC", { info: { kind: "vertex", i: 2 } });
+  gap(b);
+  addRow(b, "Centroid", "cen", { info: { kind: "point", get: D => D.centroid } });
+  addRow(b, "Incenter", "inc", { info: { kind: "point", get: D => D.incenter } });
+  addRow(b, "Circumcenter", "cir", { info: { kind: "point", get: D => D.circum } });
+  addRow(b, "Orthocenter", "ort", { info: { kind: "point", get: D => D.ortho } });
+}
+
+/* ONE source for every trig value on screen — the sidebar table and the
+   explanation panel both read trigData(), and both print through trigSafe,
+   so the two can never disagree.
+
+   Which method is used depends on the triangle, because SOH-CAH-TOA is
+   only defined on a RIGHT triangle's own sides:
+
+   mode "sides" — the triangle has a right angle at r, and i is one of the
+     other two angles: SOH-CAH-TOA on the triangle's real sides.
+     opposite = side i, hypotenuse = side r, adjacent = the remaining leg.
+   mode "right" — i IS the right angle: it has no opposite/adjacent pair;
+     sin 90° = 1, cos 90° = 0, tan 90° / sec 90° are undefined.
+   mode "general" — no right angle: there's no hypotenuse, so SOH-CAH-TOA
+     does not apply. The two laws that hold for EVERY triangle give the
+     values from its real sides instead:
+       Law of Sines     a / sin A = b / sin B = c / sin C = 2R
+                          ⇒ sin A = a / (2R)   (R = circumradius)
+       Law of Cosines   cos A = (b² + c² − a²) / (2·b·c)
+     and tan = sin / cos, csc = 1 / sin, sec = 1 / cos, cot = cos / sin by
+     definition.
+
+   Numerically, sin and cos are evaluated as |u×v| / (|u||v|) and
+   u·v / (|u||v|) from the vertex coordinates (u, v = the two sides leaving
+   the vertex). Those are exactly a/(2R) and (b²+c²−a²)/(2bc) — the same
+   numbers — but computed without subtracting nearly-equal squares, which
+   on a thin sliver of a triangle lost ~9 of 16 digits. */
+const TRIG_RAW = {
+  sin: t => t.opposite / t.hypotenuse, cos: t => t.adjacent / t.hypotenuse, tan: t => t.opposite / t.adjacent,
+  csc: t => t.hypotenuse / t.opposite, sec: t => t.hypotenuse / t.adjacent, cot: t => t.adjacent / t.opposite
+};
+/* "is this a right angle?" — ONE rule for the whole app (the Right chip,
+   the right-angle square drawn on the canvas, and the trig method):
+   exactly when the angle reads 90 at the current decimal setting. The
+   three used to disagree (0.0057° vs 0.23° vs display tolerance), so a
+   corner showing 89.8° could get a right-angle square drawn on it. */
+function isRightAngle(rad) {
+  const tol = Math.max(0.5 * Math.pow(10, -S.prec), 1e-9); /* in degrees */
+  return Math.abs(deg(rad) - 90) < tol;
+}
+function rightVertex(D) {
+  if (!D.ang) return -1;
+  for (let i = 0; i < 3; i++) if (isRightAngle(D.ang[i])) return i;
+  return -1;
+}
+function trigData(D) {
+  const r = rightVertex(D);
+  return [0, 1, 2].map(i => {
+    const j = (i + 1) % 3, k = (i + 2) % 3;
+    if (r === i) return { mode: "right", opposite: D.sides[i], adjacent: 0, hypotenuse: D.sides[i] };
+    if (r >= 0) {
+      const t = 3 - i - r; /* the leg that isn't opposite angle i */
+      return { mode: "sides", opposite: D.sides[i], adjacent: D.sides[t], hypotenuse: D.sides[r],
+               sideOf: { opposite: i, adjacent: t, hypotenuse: r } };
+    }
+    const P = D.P || S.P, pi = P[i], pj = P[j], pk = P[k];
+    const ux = pj.x - pi.x, uy = pj.y - pi.y, vx = pk.x - pi.x, vy = pk.y - pi.y;
+    const dot = ux * vx + uy * vy, cross = Math.abs(ux * vy - uy * vx);
+    const lu = Math.hypot(ux, uy), lv = Math.hypot(vx, vy); /* side k and side j */
+    return { mode: "general", sin: cross / (lu * lv), cos: dot / (lu * lv) };
+  });
+}
+function trigRatio(t, fn) {
+  if (t.mode === "general") {
+    return { sin: t.sin, cos: t.cos, tan: t.sin / t.cos, csc: 1 / t.sin, sec: 1 / t.cos, cot: t.cos / t.sin }[fn];
+  }
+  return TRIG_RAW[fn](t);
+}
+/* the Law of Sines line (sin) and Law of Cosines line (cos) for angle i,
+   shared by the trig panel and the angle explanation. Each builder prints
+   its final value at nOut decimals, and prints every input just precisely
+   enough that redoing the arithmetic by hand from the digits on screen
+   gives exactly the next printed step — never "off by one" in the last
+   digit. `tail` replaces the final value (e.g. with a clickable answer). */
+function lawLines(D, i) {
+  const U = S.lenUnit, f = LEN[U].f, sym = LEN[U].sym;
+  const names = ["A", "B", "C"], lname = ["a", "b", "c"];
+  const j = (i + 1) % 3, k = (i + 2) % 3;
+  const p = lname[j], q = lname[k], o = lname[i], nm = names[i];
+  const r = (v, n) => +v.toFixed(n);
+  /* same coordinate formulas as trigData "general" — identical numbers */
+  const P = D.P || S.P, pi = P[i], pj = P[j], pk = P[k];
+  const ux = pj.x - pi.x, uy = pj.y - pi.y, vx = pk.x - pi.x, vy = pk.y - pi.y;
+  const lu = Math.hypot(ux, uy), lv = Math.hypot(vx, vy);
+  const sv = Math.abs(ux * vy - uy * vx) / (lu * lv), cv_ = (ux * vx + uy * vy) / (lu * lv);
+  const sp = D.sides[j] / f, sq_ = D.sides[k] / f, so = D.sides[i] / f, Rv = D.R / f;
+  const Nv = cv_ * 2 * sp * sq_, Dv = 2 * sp * sq_; /* b² + c² − a² and 2bc, display units² */
+  const vHl = { kind: "vertex", i };
+  const tf = (v, n) => trigSafe(v, true, n);
+  const lenH = (v, letter, n) => NC2(fmt(v, n) + " " + sym, letter);
+  const sqH  = (v, letter, n) => NC2(fmt(v * v, n) + " " + sym + "²", letter);
+  const nm2 = V(nm, nm);
+
+  /* sin via the Law of Sines, its final value printed at nOut decimals;
+     the inputs a and R get however many decimals it takes for
+     a ÷ (2·R), redone from the printed digits, to print as that value */
+  const sinLine = (nOut, tail) => {
+    let m = 15;
+    for (let n = nOut; n <= 15; n++) if (tf(r(so, n) / (2 * r(Rv, n)), nOut) === tf(sv, nOut)) { m = n; break; }
+    return "sin(" + nm2 + ") = " + FR(V(o, o), "2 · " + V("R", "R")) +
+      " = " + FR(lenH(so, o, m), "2 · " + lenH(Rv, "R", m)) + " = " + (tail || NH(tf(sv, nOut), vHl));
+  };
+  /* cos via the Law of Cosines, final value at nOut decimals; the
+     evaluated top/bottom (n2) and the substituted squares/products (m)
+     are each printed precisely enough to reproduce the next step */
+  const cosLine = (nOut, tail) => {
+    let n2 = 15, m = 15;
+    for (let n = nOut; n <= 15; n++) if (tf(r(Nv, n) / r(Dv, n), nOut) === tf(cv_, nOut)) { n2 = n; break; }
+    for (let n = n2; n <= 15; n++) {
+      const top = r(sp * sp, n) + r(sq_ * sq_, n) - r(so * so, n), bot = 2 * r(sp, n) * r(sq_, n);
+      if (fmt(top, n2) === fmt(Nv, n2) && fmt(bot, n2) === fmt(Dv, n2)) { m = n; break; }
+    }
+    return "cos(" + nm2 + ") = " + FR(V(p + "²", p) + " + " + V(q + "²", q) + " − " + V(o + "²", o), "2 · " + V(p, p) + " · " + V(q, q)) +
+      " = " + FR(sqH(sp, p, m) + " + " + sqH(sq_, q, m) + " − " + sqH(so, o, m), "2 · " + lenH(sp, p, m) + " · " + lenH(sq_, q, m)) +
+      " = " + FR(NH(fmt(Nv, n2) + " " + sym + "²", vHl), NH(fmt(Dv, n2) + " " + sym + "²", vHl)) + " = " + (tail || NH(tf(cv_, nOut), vHl));
+  };
+  return { sin: sv, cos: cv_, sinLine, cosLine };
+}
+
+/* plain = always the decimal (the explanation panel's derivation lines);
+   otherwise it follows the Exact/Approx toggle like every other stat */
+function trigSafe(v, plain, digits) {
+  if (Number.isNaN(v)) return "—";
+  /* only ever reached by dividing by exactly 0 — tan 90°, sec 90°: the
+     value doesn't exist, it isn't "infinity" */
+  if (!isFinite(v)) return "undefined";
+  /* these are unitless ratios of order 1 — anything this small is float
+     noise (cos of a rotated right angle), not a real value */
+  if (Math.abs(v) < 1e-12) v = 0;
+  /* a genuinely huge (but real) value, e.g. tan 89.99999°: show the
+     number itself compactly rather than calling it infinite */
+  if (Math.abs(v) >= 1e7) return v.toExponential(2).replace("e+", "e");
+  const d = digits === undefined ? S.prec : digits;
+  if (Math.abs(v) < 0.5 * Math.pow(10, -d)) return (0).toFixed(d);
+  return plain ? fmt(v, d) : numFmt(v, d);
+}
+
+let lastChipKey = null;
+function updateStats(D) {
+  const d = S.prec, U = S.lenUnit;
+  const alt = s => " <span class='alt'>(" + s + ")</span>";
+  const L    = v => lenStr(v, U, d) + alt(lenStr(v, altLenUnit(v, U), d));
+  const AREA = v => areaStr(v, U, d) + alt(areaStr(v, altLenUnit(Math.sqrt(Math.abs(v)), U), d));
+  const ANGLE = r => (S.angUnit === "rad" ? angStr(r, "rad", d) + alt(angStr(r, "deg", d))
+                                          : angStr(r, "deg", d) + alt(angStr(r, "rad", d)));
+  const sc = Math.max(D.a, D.b, D.c);
+  const PT = p => {
+    const x = snapNoise(p.x, sc) / LEN[U].f, y = snapNoise(p.y, sc) / LEN[U].f;
+    return "(" + numFmt(x, d) + ", " + numFmt(y, d) + ")"; /* coordinates are plain numbers, not a length — no unit */
+  };
+
+  refs.a.innerHTML = L(D.a); refs.b.innerHTML = L(D.b); refs.c.innerHTML = L(D.c);
+  refs.A.innerHTML = ANGLE(D.A); refs.B.innerHTML = ANGLE(D.B); refs.C.innerHTML = ANGLE(D.C);
+  refs.sum.innerHTML = ANGLE(Math.PI); refs.sum.classList.add("dim");
+
+  refs.area.innerHTML = AREA(D.area);
+  refs.per.innerHTML  = L(D.per);
+  refs.semi.innerHTML = L(D.s);
+  refs.class.textContent = D.kind + " · " + D.shape;
+
+  /* the six classification chips only change at the rare instant the
+     triangle crosses into a different kind/shape — rebuilding all six
+     DOM nodes from scratch on every frame regardless was pure churn */
+  const chipKey = D.kind + "|" + D.shape;
+  if (chipKey !== lastChipKey) {
+    lastChipKey = chipKey;
+    const chips = document.getElementById("chips");
+    chips.innerHTML = "";
+    [["Acute", D.kind === "Acute"], ["Right", D.kind === "Right"], ["Obtuse", D.kind === "Obtuse"],
+     ["Scalene", D.shape === "Scalene"], ["Isosceles", D.shape === "Isosceles"], ["Equilateral", D.shape === "Equilateral"]
+    ].forEach(([n, on]) => {
+      const c = document.createElement("div"); c.className = "chip" + (on ? " on" : ""); c.textContent = n; chips.appendChild(c);
+    });
+  }
+
+  const td = trigData(D);
+  for (let i = 0; i < 3; i++) {
+    for (const fn in TRIG_RAW) refs["tg_" + fn + "_" + i].textContent = trigSafe(trigRatio(td[i], fn));
+  }
+
+  refs.R.innerHTML = L(D.R); refs.Rd.innerHTML = L(2 * D.R);
+  refs.r.innerHTML = L(D.r); refs.rd.innerHTML = L(2 * D.r);
+  refs.Rr.textContent = numFmt(D.R / D.r, d);
+  refs.inA.innerHTML  = AREA(Math.PI * D.r * D.r);
+  refs.cirA.innerHTML = AREA(Math.PI * D.R * D.R);
+  refs.arcC0.innerHTML = L(D.arcCirc[0]); refs.arcC1.innerHTML = L(D.arcCirc[1]); refs.arcC2.innerHTML = L(D.arcCirc[2]);
+  refs.arcI0.innerHTML = L(D.arcIn[0]); refs.arcI1.innerHTML = L(D.arcIn[1]); refs.arcI2.innerHTML = L(D.arcIn[2]);
+
+  for (let i = 0; i < 3; i++) { refs["h" + i].innerHTML = L(D.alt[i]); refs["m" + i].innerHTML = L(D.med[i]); refs["t" + i].innerHTML = L(D.bis[i]); }
+
+  refs.pA.textContent = PT(D.P[0]); refs.pB.textContent = PT(D.P[1]); refs.pC.textContent = PT(D.P[2]);
+  refs.cen.textContent = PT(D.centroid); refs.inc.textContent = PT(D.incenter);
+  refs.cir.textContent = PT(D.circum);   refs.ort.textContent = PT(D.ortho);
+  ["pA","pB","pC","cen","inc","cir","ort"].forEach(k => refs[k].classList.add("dim"));
+}
+
+/* =======================================================================
+   Explanation modal — click any stat to see how it was computed
+   ======================================================================= */
+const modalRoot = document.createElement("div");
+modalRoot.className = "modal-backdrop";
+modalRoot.innerHTML = '<div class="modal"><div class="modal-head"><h3 id="mTitle"></h3><button class="iconbtn" id="mClose"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body" id="mBody"></div></div>';
+stage.appendChild(modalRoot); /* a sibling of #viewport, not a child of it — a real panel below the grid, not an overlay on top of it */
+document.getElementById("mClose").addEventListener("click", closeModal);
+/* turns "6.123e-17" into the full, non-scientific decimal string it
+   represents — a pure string transform, so it works from the already-
+   displayed text with no need for the original number. */
+function expandExponential(str) {
+  const m = str.match(/^(-?)(\d+)(?:\.(\d+))?e([+-]?\d+)$/i);
+  if (!m) return str;
+  const sign = m[1], digits = m[2] + (m[3] || ""), exp = parseInt(m[4], 10);
+  const pointPos = m[2].length + exp;
+  let out;
+  if (pointPos <= 0) out = "0." + "0".repeat(-pointPos) + digits;
+  else if (pointPos >= digits.length) out = digits + "0".repeat(pointPos - digits.length);
+  else out = digits.slice(0, pointPos) + "." + digits.slice(pointPos);
+  if (out.indexOf(".") >= 0) out = out.replace(/0+$/, "").replace(/\.$/, "");
+  return sign + out;
+}
+/* any number rendered in scientific notation becomes click-to-expand,
+   so a value like 6.123e-17 can be inspected in full */
+function makeExponentsClickable(container) {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const targets = [];
+  let node;
+  while ((node = walker.nextNode())) if (/-?\d+(?:\.\d+)?e[+-]?\d+/i.test(node.nodeValue)) targets.push(node);
+  targets.forEach(n => {
+    const parts = n.nodeValue.split(/(-?\d+(?:\.\d+)?e[+-]?\d+)/i);
+    const frag = document.createDocumentFragment();
+    parts.forEach(part => {
+      if (/^-?\d+(?:\.\d+)?e[+-]?\d+$/i.test(part)) {
+        const span = document.createElement("span");
+        span.className = "expandable";
+        span.textContent = part;
+        span.dataset.short = part;
+        span.dataset.full = expandExponential(part);
+        span.dataset.tip = "Click to see the full value"; span.dataset.tipPos = "top";
+        frag.appendChild(span);
+      } else if (part) frag.appendChild(document.createTextNode(part));
+    });
+    n.parentNode.replaceChild(frag, n);
+  });
+}
+/* clicking any colored variable or number in the equation — a, B, R,
+   the "C" in x_C, whatever — points at exactly what it refers to on
+   the triangle: a side, a vertex/angle, or a circle */
+const VAR_HIGHLIGHT = {
+  a: { kind: "side", i: 0 }, b: { kind: "side", i: 1 }, c: { kind: "side", i: 2 },
+  A: { kind: "vertex", i: 0 }, B: { kind: "vertex", i: 1 }, C: { kind: "vertex", i: 2 },
+  R: { kind: "circle", which: "circ", mode: "radius" },
+  r: { kind: "circle", which: "in", mode: "radius" },
+  s: { kind: "all" }, area: { kind: "all" }
+};
+modalRoot.addEventListener("click", e => {
+  const exp = e.target.closest(".expandable");
+  if (exp) {
+    const full = exp.classList.toggle("expanded");
+    exp.textContent = full ? exp.dataset.full : exp.dataset.short;
+    return;
+  }
+  if (e.target.closest(".copy-btn")) return; /* handled by its own listener */
+  const v = e.target.closest("[data-hl], .var, .numv");
+  if (!v) return;
+  let hl = null, key = null;
+  if (v.dataset.hl) { hl = JSON.parse(v.dataset.hl); key = "data:" + v.dataset.hl; }
+  else {
+    const m = v.className.match(/\bvar-([A-Za-z]+)\b/);
+    if (m && VAR_HIGHLIGHT[m[1]]) { hl = VAR_HIGHLIGHT[m[1]]; key = "var:" + m[1]; }
+  }
+  if (!hl) return;
+  S.highlight = hl; S.highlightKey = key;
+  markActiveHighlight();
+  requestRender();
+});
+/* outlines every value in the panel that points at what's currently
+   highlighted — clicking one "a" lights up every "a", so you can see
+   where that quantity flows through the whole derivation */
+function markActiveHighlight() {
+  const body = document.getElementById("mBody");
+  body.querySelectorAll(".hl-on").forEach(el => el.classList.remove("hl-on"));
+  const key = S.highlightKey;
+  if (!key) return;
+  if (key.startsWith("data:")) {
+    const want = key.slice(5);
+    body.querySelectorAll("[data-hl]").forEach(el => { if (el.dataset.hl === want) el.classList.add("hl-on"); });
+  } else {
+    body.querySelectorAll(".var-" + key.slice(4)).forEach(el => el.classList.add("hl-on"));
+  }
+}
+
+/* the panel is a real flex item (see #stage/#viewport) — opening or
+   closing it actually resizes the canvas, so this drives that resize
+   every frame exactly like the sidebar's own open/close animation does,
+   instead of animating a CSS property the canvas wouldn't notice. */
+let panelAnim = null;
+function setPanelOpen(open, targetPx, ms, keepState) {
+  if (panelAnim) cancelAnimationFrame(panelAnim);
+  const from = modalRoot.getBoundingClientRect().height;
+  const to = open ? targetPx : 0;
+  const t0 = performance.now(), dur = ms === undefined ? 260 : ms;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1);
+    modalRoot.style.height = (from + (to - from) * ease(t)) + "px";
+    resize();
+    if (t < 1) { panelAnim = requestAnimationFrame(step); }
+    else {
+      panelAnim = null;
+      modalRoot.style.height = to + "px";
+      resize();
+      /* keepState: only tucked away for view-only, not closed — the open
+         explanation (and its highlight) comes back when view-only ends */
+      if (!open && keepState) { requestRender(); }
+      else if (!open) { modalRoot.classList.remove("show"); S.highlight = null; S.highlightKey = null; S.activeExplain = null; modalPainted = null; requestRender(); }
+      else if (!keepState) { modalRoot.classList.add("show"); fitView(150, 420); }
+    }
+  };
+  panelAnim = requestAnimationFrame(step);
+}
+
+/* --- copy-to-clipboard: every equation line and every big value gets a
+   button. navigator.clipboard needs a secure context and can silently
+   fail when this file is opened as a bare file:// page, so there's
+   always a working fallback via a hidden textarea + execCommand. */
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand("copy"); } catch (_) {}
+  document.body.removeChild(ta);
+}
+function copyText(text, btn) {
+  const flash = () => {
+    if (!btn) return;
+    const icon = btn.querySelector("i");
+    const prevClass = icon.className;
+    btn.classList.add("copied"); icon.className = "fa-solid fa-check";
+    setTimeout(() => { btn.classList.remove("copied"); icon.className = prevClass; }, 900);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(flash).catch(() => { fallbackCopy(text); flash(); });
+  } else { fallbackCopy(text); flash(); }
+}
+function addCopyButtons(container) {
+  container.querySelectorAll(".eqn-line").forEach(line => {
+    const text = line.textContent.trim();
+    if (!text) return;
+    const btn = document.createElement("button");
+    btn.className = "copy-btn"; btn.type = "button";
+    btn.dataset.tip = "Copy this line"; btn.dataset.tipPos = "left"; btn.setAttribute("aria-label", "Copy this line");
+    btn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+    btn.addEventListener("click", e => { e.stopPropagation(); copyText(text, btn); });
+    line.appendChild(btn);
+  });
+  container.querySelectorAll(".bigv").forEach(box => {
+    const numEl = box.querySelector(".num");
+    if (!numEl) return;
+    const text = numEl.textContent.trim();
+    const btn = document.createElement("button");
+    btn.className = "copy-btn copy-btn-bigv"; btn.type = "button";
+    btn.dataset.tip = "Copy this value"; btn.dataset.tipPos = "left"; btn.setAttribute("aria-label", "Copy this value");
+    btn.innerHTML = '<i class="fa-solid fa-copy"></i>';
+    btn.addEventListener("click", e => { e.stopPropagation(); copyText(text, btn); });
+    box.appendChild(btn);
+  });
+}
+/* writes the title/body without touching the panel's open/close animation
+   — used both for the initial open and for every live refresh while it's
+   already open, so dragging or typing updates the math in place */
+/* the live refresh calls this on every render, but most renders (a hover,
+   a zoom frame, the panel's own open animation) don't change a single
+   number in it. Rebuilding the DOM anyway threw away hover state, any
+   text selection, and — if it landed between mousedown and mouseup —
+   the click itself, since the element pressed no longer existed. */
+let modalPainted = null;
+function paintModalContent(title, bodyHtml, force) {
+  const key = title + "\u0000" + bodyHtml;
+  if (!force && key === modalPainted) return;
+  modalPainted = key;
+  document.getElementById("mTitle").textContent = title;
+  const mBody = document.getElementById("mBody");
+  mBody.innerHTML = bodyHtml;
+  makeExponentsClickable(mBody);
+  addCopyButtons(mBody);
+  markActiveHighlight();
+}
+
+function openModal(title, bodyHtml) {
+  S.highlightKey = null; /* a freshly opened explanation starts on its row's own highlight */
+  paintModalContent(title, bodyHtml, true);
+  modalRoot.classList.add("show");
+  /* measure the content's natural height synchronously (no paint happens
+     between these writes, so there's no visible flicker), then animate
+     from the panel's current height up to that — capped so it can never
+     swallow the whole viewport */
+  const prevHeight = modalRoot.style.height || "0px";
+  modalRoot.style.height = "auto";
+  const natural = modalRoot.scrollHeight;
+  modalRoot.style.height = prevHeight;
+  void modalRoot.offsetHeight;
+  const target = Math.min(natural, stage.clientHeight * 0.5);
+  setPanelOpen(true, target);
+}
+function closeModal() { setPanelOpen(false, 0); }
+
+/* approx is a clean closed form (a fraction or a multiple of π) — only
+   shown when the geometry actually produces one. Without it there's
+   nothing to contrast against, so just the plain value gets shown. */
+function bigv(label, approx, exact) {
+  if (!approx) return '<div class="big"><div class="bigv"><div class="lbl">Value</div><div class="num">' + exact + '</div></div></div>';
+  return '<div class="big"><div class="bigv"><div class="lbl">Approximate</div><div class="num">' + approx + '</div></div>' +
+         '<div class="bigv"><div class="lbl">Exact</div><div class="num">' + exact + '</div></div></div>';
+}
+
+/* --- equation-building helpers: colored parameters + real fraction bars - */
+const V  = (sym, letter) => '<span class="var var-' + letter + '">' + sym + '</span>';
+const N  = text => '<span class="numv">' + text + '</span>';
+/* a *substituted* number that stands in for a named variable (a, B, R, …)
+   keeps that variable's color — the color thread has to survive past the
+   symbolic line, all the way through to the number itself, or it reads
+   as broken the moment real values appear */
+const NC2 = (text, letter) => '<span class="numv var-' + letter + '">' + text + '</span>';
+/* a number with no variable color of its own, but that still maps to a
+   real feature on the canvas — clicking it highlights exactly that (hl
+   is a drawHighlight descriptor; kept JSON-plain so it survives as an
+   attribute across the panel's live repaints) */
+const NH = (text, hl) => "<span class=\"numv hlv\" data-hl='" + JSON.stringify(hl) + "'>" + text + '</span>';
+const FR = (numHtml, denHtml) => '<span class="frac"><span class="num">' + numHtml + '</span><span class="den">' + denHtml + '</span></span>';
+/* a real subscript ("x" with a small lowered "A"), not the "x_A"
+   underscore-text placeholder — reads as actual math notation */
+const VS = (base, sub, letter) => '<span class="var var-' + letter + '">' + base + '<sub>' + sub + '</sub></span>';
+const NS = (base, sub) => '<span class="numv">' + base + '<sub>' + sub + '</sub></span>';
+/* the content is wrapped in its own span rather than sitting directly
+   inside the flex row: a flex container trims the whitespace at the
+   EDGES of each of its own direct text-node children, so plain text
+   mixed straight in with <span> variables ("vertices " + V(...) + "
+   and " + ...) silently loses the spaces next to every span and reads
+   as "verticesBandC". One wrapper per line sidesteps that entirely —
+   everything inside it is ordinary inline content again. */
+const EL = html => '<div class="eqn-line"><span class="eqn-content">' + html + '</span></div>';
+const BOXED = html => '<div class="eqn-line eqn-final"><span class="eqn-content">' + html + '</span></div>';
+/* a one/two-sentence aside explaining why a unit or representation
+   conversion is happening right here — always placed between the line
+   that ends in the old unit and the line that starts using the new one */
+const NOTE = text => '<div class="eqn-line eqn-note"><i class="fa-solid fa-circle-info"></i><span class="eqn-content">' + text + '</span></div>';
+const EQN = lines => '<div class="eqn">' + lines.join("") + '</div>';
+
+/* every quantity that appears mid-derivation carries its unit — these
+   always attach one. Every constant is a numeral — never spelled out
+   as a word — in every line, symbolic or substituted alike. */
+const WORD = { 2: "2", 3: "3", 4: "4" };
+/* every substituted number in a derivation step shows its decimal value
+   first, with a clean fraction (or, for radians, a π-multiple) appended
+   in parentheses whenever one genuinely exists for that value — never
+   just for an arbitrary irrational result (see niceRatio's tolerance) */
+const ulen   = (inches, U) => { const v = inches / LEN[U].f; const f = fractionStr(v); return dp(v) + " " + LEN[U].sym + (f ? " (" + f + " " + LEN[U].sym + ")" : ""); };
+const ulenSq = (inches, U) => { const v = inches / LEN[U].f, sq = v * v; const f = fractionStr(sq); return dp(sq) + " " + LEN[U].sym + "²" + (f ? " (" + f + " " + LEN[U].sym + "²)" : ""); };
+const uarea  = (sqin,  U) => { const v = sqin / (LEN[U].f * LEN[U].f); const f = fractionStr(v); return dp(v) + " " + LEN[U].sym + "²" + (f ? " (" + f + " " + LEN[U].sym + "²)" : ""); };
+const udeg   = rad => dp(deg(rad)) + "°";
+const urad   = rad => { const p = piStr(rad); return dp(rad) + " rad" + (p ? " (" + p + " rad)" : ""); };
+/* a substituted coordinate/position value: negatives get parenthesized
+   so "− -0.8" never appears as "minus minus", and a clean fraction (if
+   one exists) is appended after, outside that guard */
+function ncpFmt(inches, U, letter) {
+  const v = snapNoise(inches, Math.max(...sidesOf(S.P))) / LEN[U].f;
+  const s = dp(v);
+  const guarded = s.charAt(0) === "-" ? "(" + s + ")" : s;
+  const f = fractionStr(v);
+  return NC2(guarded + (f ? " (" + f + ")" : ""), letter);
+}
+/* a plain unitless computed value (a cosine, a ratio) — decimal first,
+   clean fraction in parens after, when one exists */
+function NF(v) {
+  if (!isFinite(v)) return N(dp(v));
+  const f = fractionStr(v);
+  return N(dp(v) + (f ? " (" + f + ")" : ""));
+}
+/* NF, but clickable — highlights hl on the canvas */
+function NFH(v, hl) {
+  if (!isFinite(v)) return NH(dp(v), hl);
+  const f = fractionStr(v);
+  return NH(dp(v) + (f ? " (" + f + ")" : ""), hl);
+}
+
+function openExplain(id, live) {
+  const D = derive();
+  const U = S.lenUnit;
+  const info = rowMeta[id];
+  if (!live) {
+    S.highlight = info || null;
+    S.activeExplain = { kind: "stat", id };
+    requestRender();
+  }
+
+  const names = ["A", "B", "C"], lname = ["a", "b", "c"];
+  const NL  = inches => N(ulen(inches, U));
+  const NLQ = inches => N(ulenSq(inches, U));
+  const NA  = sqin   => N(uarea(sqin, U));
+  const ND  = rad    => N(udeg(rad));
+  const NR  = rad    => N(urad(rad));
+  const NC  = inches => { const v = inches / LEN[U].f, f = fractionStr(v); return N(dp(v) + (f ? " (" + f + ")" : "")); }; /* coordinate — a position, not a measurement, so no unit */
+  /* colored counterparts — a substituted number that stands in for a
+     named variable keeps that variable's color, all the way to the end */
+  const NLc  = (inches, letter) => NC2(ulen(inches, U), letter);
+  const NLQc = (inches, letter) => NC2(ulenSq(inches, U), letter);
+  const NAc  = (sqin, letter)   => NC2(uarea(sqin, U), letter);
+  const NDc  = (rad, letter)    => NC2(udeg(rad), letter);
+  const NRc  = (rad, letter)    => NC2(urad(rad), letter);
+  /* clickable counterparts for results with no variable color of their
+     own — each highlights the feature it measures (see NH) */
+  const NLH  = (inches, hl) => NH(ulen(inches, U), hl);
+  const NAH  = (sqin, hl)   => NH(uarea(sqin, U), hl);
+  const NCH  = (inches, hl) => { const v = inches / LEN[U].f, f = fractionStr(v); return NH(dp(v) + (f ? " (" + f + ")" : ""), hl); };
+  let title = "", lines = [], approxS = "", exactS = "";
+
+  if (id === "a" || id === "b" || id === "c") {
+    const i = { a: 0, b: 1, c: 2 }[id];
+    const j = (i + 1) % 3, k = (i + 2) % 3;
+    const ncp0 = (inches, letter) => ncpFmt(inches, U, letter);
+    title = "Side " + lname[i] + " (" + names[j] + names[k] + ")";
+    lines = [
+      EL("Distance formula between vertices " + V(names[j], names[j]) + " and " + V(names[k], names[k]) + ":"),
+      EL(V(lname[i], lname[i]) + " = √[(x₂−x₁)² + (y₂−y₁)²]"),
+      EL(V(lname[i], lname[i]) + " = √[(" + ncp0(S.P[k].x, names[k]) + " − " + ncp0(S.P[j].x, names[j]) + ")² + (" + ncp0(S.P[k].y, names[k]) + " − " + ncp0(S.P[j].y, names[j]) + ")²]"),
+      BOXED(V(lname[i], lname[i]) + " = " + NLc(D.sides[i], lname[i]))
+    ];
+    approxS = lenSymbolic(D.sides[i], U); exactS = lenDecimal(D.sides[i], U);
+  } else if (id === "A" || id === "B" || id === "C") {
+    const i = { A: 0, B: 1, C: 2 }[id];
+    title = "Angle " + names[i] + " — Law of Cosines";
+    const L = lawLines(D, i);
+    const vA = V(names[i], names[i]);
+    const r = (v, n) => +v.toFixed(n);
+    /* cos printed precisely enough that arccos of the PRINTED cos gives
+       the printed angle — at 4 decimals alone, arccos(0.2714) can land a
+       few thousandths of a degree away from the angle shown */
+    const angTxt = fmt(deg(D.ang[i]), S.prec);
+    let nc = 15;
+    for (let n = S.prec; n <= 15; n++) if (fmt(deg(Math.acos(clamp(r(L.cos, n), -1, 1))), S.prec) === angTxt) { nc = n; break; }
+    /* same idea for the degree → radian step: the degrees are printed
+       with enough decimals that multiplying them by π/180 prints as the
+       radian value shown */
+    const radTxt = fmt(D.ang[i], S.prec);
+    let nd = 15;
+    for (let n = S.prec; n <= 15; n++) if (fmt(r(deg(D.ang[i]), n) * Math.PI / 180, S.prec) === radTxt) { nd = n; break; }
+    lines = [
+      EL(L.cosLine(nc)),
+      EL(vA + " = arccos(" + NH(fmt(L.cos, nc), { kind: "vertex", i }) + ") = " + NC2(angTxt + "°", names[i])),
+      NOTE("arccos returns the angle itself; it can be written in degrees or in radians. Radians are what the arc-length and area formulas need, and 180° = π rad, so degrees × π/180 = radians: " + N(fmt(deg(D.ang[i]), nd) + "°") + " × π/180 = " + NRc(D.ang[i], names[i]) + "."),
+      BOXED(vA + " = " + NDc(D.ang[i], names[i]) + " = " + NRc(D.ang[i], names[i]))
+    ];
+    approxS = angSymbolic(D.ang[i]); exactS = angDecimal(D.ang[i]);
+  } else if (id === "sum") {
+    title = "Angle sum";
+    lines = [
+      EL(V("A", "A") + " + " + V("B", "B") + " + " + V("C", "C") + " = 180° — an exact identity for any planar triangle, not a measurement."),
+      NOTE("180° is shown in radians too since that's the unit trig functions use internally: 180° × (π/180) = π rad."),
+      BOXED(V("A", "A") + " + " + V("B", "B") + " + " + V("C", "C") + " = 180° = π rad")
+    ];
+    approxS = angSymbolic(Math.PI); exactS = angDecimal(Math.PI);
+  } else if (id === "area") {
+    title = "Area — Shoelace formula";
+    const xA = VS("x", "A", "A"), yA = VS("y", "A", "A"), xB = VS("x", "B", "B"), yB = VS("y", "B", "B"), xC = VS("x", "C", "C"), yC = VS("y", "C", "C");
+    const ncp = (inches, letter) => ncpFmt(inches, U, letter);
+    const [pA, pB, pC] = S.P;
+    lines = [
+      EL("Area = " + FR("1", "2") + " |" + xA + "(" + yB + "−" + yC + ") + " + xB + "(" + yC + "−" + yA + ") + " + xC + "(" + yA + "−" + yB + ")|"),
+      EL("Area = " + FR("1", "2") + " |" +
+         ncp(pA.x, "A") + "(" + ncp(pB.y, "B") + " − " + ncp(pC.y, "C") + ") + " +
+         ncp(pB.x, "B") + "(" + ncp(pC.y, "C") + " − " + ncp(pA.y, "A") + ") + " +
+         ncp(pC.x, "C") + "(" + ncp(pA.y, "A") + " − " + ncp(pB.y, "B") + ")|"),
+      EL("Area = " + FR("1", "2") + " · |" + NAc(2 * D.area, "area") + "|"),
+      BOXED("Area = " + NAc(D.area, "area"))
+    ];
+    approxS = areaSymbolic(D.area, U); exactS = areaDecimal(D.area, U);
+  } else if (id === "per") {
+    title = "Perimeter";
+    lines = [
+      EL("Perimeter = " + V("a", "a") + " + " + V("b", "b") + " + " + V("c", "c")),
+      EL("Perimeter = " + NLc(D.a, "a") + " + " + NLc(D.b, "b") + " + " + NLc(D.c, "c")),
+      BOXED("Perimeter = " + NLH(D.per, { kind: "all" }))
+    ];
+    approxS = lenSymbolic(D.per, U); exactS = lenDecimal(D.per, U);
+  } else if (id === "semi") {
+    title = "Semiperimeter";
+    lines = [
+      EL(V("s", "s") + " = " + FR(V("a", "a") + " + " + V("b", "b") + " + " + V("c", "c"), "2")),
+      EL(V("s", "s") + " = " + FR(NLc(D.a, "a") + " + " + NLc(D.b, "b") + " + " + NLc(D.c, "c"), "2")),
+      BOXED(V("s", "s") + " = " + NLc(D.s, "s"))
+    ];
+    approxS = lenSymbolic(D.s, U); exactS = lenDecimal(D.s, U);
+  } else if (id === "R" || id === "Rd") {
+    title = id === "R" ? "Circumradius" : "Circumdiameter";
+    lines = [
+      EL(V("R", "R") + " = " + FR(V("a", "a") + " · " + V("b", "b") + " · " + V("c", "c"), "4 · " + V("Area", "area"))),
+      EL(V("R", "R") + " = " + FR(NLc(D.a, "a") + " · " + NLc(D.b, "b") + " · " + NLc(D.c, "c"), "4 · " + NAc(D.area, "area")))
+    ];
+    if (id === "Rd") {
+      lines.push(BOXED(V("R", "R") + " = " + NLc(D.R, "R")));
+      lines.push(EL("Diameter = 2 · " + V("R", "R")));
+      lines.push(BOXED("Diameter = 2 · " + NLc(D.R, "R") + " = " + NLH(2 * D.R, { kind: "circle", which: "circ", mode: "diameter" })));
+    } else {
+      lines.push(BOXED(V("R", "R") + " = " + NLc(D.R, "R")));
+    }
+    /* the same R from the Law of Sines — where the circumradius comes
+       from in the first place: every side divided by the sine of its
+       opposite angle is the circle's diameter */
+    const sinA = lawLines(D, 0).sin, fU = LEN[U].f, symU = LEN[U].sym;
+    const twoR = dp(2 * D.R / fU);
+    /* a and sin A printed precisely enough that dividing them by hand
+       prints exactly as the 2R shown */
+    let nS = 15;
+    for (let n = S.prec; n <= 15; n++) if (dp(+(D.a / fU).toFixed(n) / +sinA.toFixed(n)) === twoR) { nS = n; break; }
+    lines.push(NOTE("Check with the Law of Sines: " + V("a", "a") + " ÷ sin " + V("A", "A") + " = " + V("b", "b") + " ÷ sin " + V("B", "B") + " = " + V("c", "c") + " ÷ sin " + V("C", "C") + " = 2" + V("R", "R") + ". Here " +
+      V("a", "a") + " ÷ sin " + V("A", "A") + " = " + NC2(fmt(D.a / fU, nS) + " " + symU, "a") + " ÷ " + NH(fmt(sinA, nS), { kind: "vertex", i: 0 }) +
+      " = " + NH(twoR + " " + symU, { kind: "circle", which: "circ", mode: "diameter" }) + " = 2 · " + NLc(D.R, "R") + "."));
+    const v = id === "R" ? D.R : 2 * D.R;
+    approxS = lenSymbolic(v, U); exactS = lenDecimal(v, U);
+  } else if (id === "r" || id === "rd") {
+    title = id === "r" ? "Inradius" : "Incircle diameter";
+    lines = [
+      EL(V("r", "r") + " = " + FR(V("Area", "area"), V("s", "s"))),
+      EL(V("r", "r") + " = " + FR(NAc(D.area, "area"), NLc(D.s, "s")))
+    ];
+    if (id === "rd") {
+      lines.push(BOXED(V("r", "r") + " = " + NLc(D.r, "r")));
+      lines.push(EL("Diameter = 2 · " + V("r", "r")));
+      lines.push(BOXED("Diameter = 2 · " + NLc(D.r, "r") + " = " + NLH(2 * D.r, { kind: "circle", which: "in", mode: "diameter" })));
+    } else {
+      lines.push(BOXED(V("r", "r") + " = " + NLc(D.r, "r")));
+    }
+    const v = id === "r" ? D.r : 2 * D.r;
+    approxS = lenSymbolic(v, U); exactS = lenDecimal(v, U);
+  } else if (id === "inA" || id === "cirA") {
+    const letter = id === "inA" ? "r" : "R";
+    const radius = id === "inA" ? D.r : D.R;
+    title = id === "inA" ? "Incircle area" : "Circumcircle area";
+    lines = [
+      EL("Area = π · " + V(letter, letter) + "²"),
+      EL("Area = π · (" + NLc(radius, letter) + ")²" + " = π · " + NAc(radius * radius, letter)),
+      BOXED("Area = " + NAH(Math.PI * radius * radius, { kind: "circle", which: id === "inA" ? "in" : "circ", mode: "radius" }))
+    ];
+    approxS = areaSymbolic(Math.PI * radius * radius, U);
+    exactS = areaDecimal(Math.PI * radius * radius, U);
+  } else if (/^arcC/.test(id)) {
+    const i = +id.slice(4);
+    title = "Circumcircle arc opposite " + names[i];
+    lines = [
+      EL("By the inscribed angle theorem, the central angle over this chord is 2 · " + V(names[i], names[i]) + "."),
+      EL("Arc = " + V("R", "R") + " · (2 · " + V(names[i], names[i]) + ")"),
+      EL("Arc = " + NLc(D.R, "R") + " · (2 · " + NDc(D.ang[i], names[i]) + ")"),
+      NOTE("The arc-length formula (radius × central angle) only works when the angle is in radians, so 2 × " + N(dp(deg(D.ang[i]))) + "° is converted here: 2 × " + N(dp(deg(D.ang[i]))) + "° × (π/180) = " + NRc(2 * D.ang[i], names[i]) + "."),
+      EL("Arc = " + NLc(D.R, "R") + " · " + NRc(2 * D.ang[i], names[i])),
+      BOXED("Arc = " + NLH(D.arcCirc[i], { kind: "arcCirc", i }))
+    ];
+    approxS = lenSymbolic(D.arcCirc[i], U); exactS = lenDecimal(D.arcCirc[i], U);
+  } else if (/^arcI/.test(id)) {
+    const i = +id.slice(4);
+    title = "Incircle arc between the tangent points at " + names[i];
+    lines = [
+      EL("The incircle touches the two sides that meet at " + V(names[i], names[i]) + ". The radii to those two touch points are perpendicular to the sides, so with " + V(names[i], names[i]) + " they make a quadrilateral with two 90° corners; its angles sum to 2π, leaving a central angle of π − " + V(names[i], names[i]) + " between the radii."),
+      EL("Arc = " + V("r", "r") + " · (π − " + V(names[i], names[i]) + ")"),
+      EL("Arc = " + NLc(D.r, "r") + " · (" + N(dp(Math.PI) + " rad") + " − " + NRc(D.ang[i], names[i]) + ") = " + NLc(D.r, "r") + " · " + NRc(Math.PI - D.ang[i], names[i])),
+      BOXED("Arc = " + NLH(D.arcIn[i], { kind: "arcIn", i }))
+    ];
+    approxS = lenSymbolic(D.arcIn[i], U); exactS = lenDecimal(D.arcIn[i], U);
+  } else if (/^h\d$/.test(id)) {
+    const i = +id[1];
+    title = "Altitude from " + names[i];
+    lines = [
+      EL("h = " + FR("2 · " + V("Area", "area"), V(lname[i], lname[i]))),
+      EL("h = " + FR("2 · " + NAc(D.area, "area"), NLc(D.sides[i], lname[i]))),
+      BOXED("h = " + NLH(D.alt[i], { kind: "cevian", type: "alt", i }))
+    ];
+    approxS = lenSymbolic(D.alt[i], U); exactS = lenDecimal(D.alt[i], U);
+  } else if (/^m\d$/.test(id)) {
+    const i = +id[1], j = (i + 1) % 3, k = (i + 2) % 3;
+    title = "Median from " + names[i];
+    lines = [
+      EL("m = " + FR("1", "2") + " · √(2" + V(lname[j] + "²", lname[j]) + " + 2" + V(lname[k] + "²", lname[k]) + " − " + V(lname[i] + "²", lname[i]) + ")"),
+      EL("m = " + FR("1", "2") + " · √(2 · " + NLQc(D.sides[j], lname[j]) + " + 2 · " + NLQc(D.sides[k], lname[k]) + " − " + NLQc(D.sides[i], lname[i]) + ")"),
+      BOXED("m = " + NLH(D.med[i], { kind: "cevian", type: "med", i }))
+    ];
+    approxS = lenSymbolic(D.med[i], U); exactS = lenDecimal(D.med[i], U);
+  } else if (/^t\d$/.test(id)) {
+    const i = +id[1], j = (i + 1) % 3, k = (i + 2) % 3;
+    title = "Angle bisector from " + names[i];
+    lines = [
+      EL("t = " + FR("2 · " + V(lname[j], lname[j]) + " · " + V(lname[k], lname[k]), V(lname[j], lname[j]) + " + " + V(lname[k], lname[k])) + " · cos" + FR(V(names[i], names[i]), "2")),
+      EL("t = " + FR("2 · " + NLc(D.sides[j], lname[j]) + " · " + NLc(D.sides[k], lname[k]), NLc(D.sides[j], lname[j]) + " + " + NLc(D.sides[k], lname[k])) + " · cos(" + NDc(D.ang[i] / 2, names[i]) + ")"),
+      EL("t = " + NLH((2 * D.sides[j] * D.sides[k]) / (D.sides[j] + D.sides[k]), { kind: "cevian", type: "bis", i }) + " · " + NFH(Math.cos(D.ang[i] / 2), { kind: "vertex", i })),
+      BOXED("t = " + NLH(D.bis[i], { kind: "cevian", type: "bis", i }))
+    ];
+    approxS = lenSymbolic(D.bis[i], U); exactS = lenDecimal(D.bis[i], U);
+  } else if (id === "Rr") {
+    title = "Circumradius / Inradius";
+    lines = [
+      EL(FR(V("R", "R"), V("r", "r")) + " = " + FR(NLc(D.R, "R"), NLc(D.r, "r"))),
+      BOXED(V("R", "R") + "⁄" + V("r", "r") + " = " + NF(D.R / D.r)),
+      EL("Euler's inequality guarantees " + V("R", "R") + "⁄" + V("r", "r") + " ≥ 2, with equality only for an equilateral triangle.")
+    ];
+    approxS = plainSymbolic(D.R / D.r); exactS = plainDecimal(D.R / D.r);
+  } else if (/^p[ABC]$/.test(id)) {
+    const i = { pA: 0, pB: 1, pC: 2 }[id];
+    const sc = Math.max(D.a, D.b, D.c);
+    const vx = snapNoise(S.P[i].x, sc) / LEN[U].f, vy = snapNoise(S.P[i].y, sc) / LEN[U].f;
+    title = "Vertex " + names[i] + " coordinates";
+    lines = [EL("Plotted directly from the current triangle geometry — not derived from a formula."),
+             BOXED(V(names[i], names[i]) + " = (" + NC2(dp(vx), names[i]) + ", " + NC2(dp(vy), names[i]) + ")")];
+    approxS = coordSymbolic(vx, vy);
+    exactS  = coordDecimal(vx, vy);
+  } else if (id === "cen" || id === "inc" || id === "cir" || id === "ort") {
+    const pt = info.get(D);
+    const ncp = (inches, letter) => ncpFmt(inches, U, letter);
+    const [pA, pB, pC] = S.P;
+    const ptHl = { kind: "point", which: { cen: "centroid", inc: "incenter", cir: "circum", ort: "ortho" }[id] };
+    const NC = inches => NCH(inches, ptHl);
+    const m = {
+      cen: ["Centroid", [
+        EL("Average of the three vertices: " + FR(V("A", "A") + " + " + V("B", "B") + " + " + V("C", "C"), "3")),
+        EL("Centroid = (" + FR(ncp(pA.x, "A") + " + " + ncp(pB.x, "B") + " + " + ncp(pC.x, "C"), "3") + ", " +
+                             FR(ncp(pA.y, "A") + " + " + ncp(pB.y, "B") + " + " + ncp(pC.y, "C"), "3") + ")"),
+        BOXED("Centroid = (" + NC(pt.x) + ", " + NC(pt.y) + ")")
+      ]],
+      inc: ["Incenter", [
+        EL("A weighted average of the three vertices' coordinates — each vertex weighted by the length of the side directly opposite it (" + V("a", "a") + " is opposite " + V("A", "A") + ", " + V("b", "b") + " opposite " + V("B", "B") + ", " + V("c", "c") + " opposite " + V("C", "C") + "):"),
+        EL(FR(V("a", "a") + "·" + V("A", "A") + " + " + V("b", "b") + "·" + V("B", "B") + " + " + V("c", "c") + "·" + V("C", "C"), V("a", "a") + " + " + V("b", "b") + " + " + V("c", "c"))),
+        EL(NS("Incenter", "x") + " = " + FR(NLc(D.a, "a") + " · " + ncp(pA.x, "A") + " + " + NLc(D.b, "b") + " · " + ncp(pB.x, "B") + " + " + NLc(D.c, "c") + " · " + ncp(pC.x, "C"),
+                                 NLc(D.a, "a") + " + " + NLc(D.b, "b") + " + " + NLc(D.c, "c"))),
+        EL(NS("Incenter", "y") + " = " + FR(NLc(D.a, "a") + " · " + ncp(pA.y, "A") + " + " + NLc(D.b, "b") + " · " + ncp(pB.y, "B") + " + " + NLc(D.c, "c") + " · " + ncp(pC.y, "C"),
+                                 NLc(D.a, "a") + " + " + NLc(D.b, "b") + " + " + NLc(D.c, "c"))),
+        BOXED("Incenter = (" + NC(pt.x) + ", " + NC(pt.y) + ")")
+      ]],
+      cir: ["Circumcenter", [
+        EL("Equidistant from all three vertices; the intersection of the perpendicular bisectors of the sides."),
+        EL("|Circumcenter − " + V("A", "A") + "| = |Circumcenter − " + V("B", "B") + "| = |Circumcenter − " + V("C", "C") + "| = " + V("R", "R")),
+        EL("|Circumcenter − " + V("A", "A") + "| = " + NLc(dist(pt, pA), "A") + "&nbsp;&nbsp;&nbsp;|Circumcenter − " + V("B", "B") + "| = " + NLc(dist(pt, pB), "B") + "&nbsp;&nbsp;&nbsp;|Circumcenter − " + V("C", "C") + "| = " + NLc(dist(pt, pC), "C")),
+        BOXED("Circumcenter = (" + NC(pt.x) + ", " + NC(pt.y) + ")")
+      ]],
+      ort: ["Orthocenter", [
+        EL("Intersection of the three altitudes — equivalently, Orthocenter = " + V("A", "A") + " + " + V("B", "B") + " + " + V("C", "C") + " − 2 · Circumcenter."),
+        EL(NS("Orthocenter", "x") + " = " + ncp(pA.x, "A") + " + " + ncp(pB.x, "B") + " + " + ncp(pC.x, "C") + " − 2 · " + ncp(D.circum.x, "R")),
+        EL(NS("Orthocenter", "y") + " = " + ncp(pA.y, "A") + " + " + ncp(pB.y, "B") + " + " + ncp(pC.y, "C") + " − 2 · " + ncp(D.circum.y, "R")),
+        BOXED("Orthocenter = (" + NC(pt.x) + ", " + NC(pt.y) + ")")
+      ]]
+    }[id];
+    title = m[0]; lines = m[1];
+    approxS = coordSymbolic(pt.x / LEN[U].f, pt.y / LEN[U].f);
+    exactS  = coordDecimal(pt.x / LEN[U].f, pt.y / LEN[U].f);
+  } else { title = id; lines = []; approxS = null; exactS = "—"; }
+
+  if (live) paintModalContent(title, bigv(title, approxS, exactS) + EQN(lines));
+  else openModal(title, bigv(title, approxS, exactS) + EQN(lines));
+}
+
+/* SOH-CAH-TOA fraction each function is defined by, in terms of the
+   opposite/adjacent/hypotenuse of the right triangle formed by dropping
+   a perpendicular from one adjacent vertex onto the other adjacent side */
+const TRIG_DEF = {
+  sin: ["opposite", "hypotenuse"], cos: ["adjacent", "hypotenuse"], tan: ["opposite", "adjacent"],
+  csc: ["hypotenuse", "opposite"], sec: ["hypotenuse", "adjacent"], cot: ["adjacent", "opposite"]
+};
+
+function openTrigExplain(fn, live) {
+  const D = derive();
+  const U = S.lenUnit;
+  const names = ["A", "B", "C"], lname = ["a", "b", "c"];
+
+  /* same values and same formatter the sidebar table uses (trigData /
+     trigRatio / trigSafe) — so the two can never disagree */
+  const tri = trigData(D);
+  const tfmt = v => trigSafe(v, true); /* derivation lines are always the decimal; the Approximate box carries the fraction */
+  const f = LEN[U].f, sym = LEN[U].sym;
+
+  /* Every number is shown at the Decimals setting — except where the
+     arithmetic, redone by hand from exactly what's printed, wouldn't come
+     out to the printed result. Then (and only then) that line gets the
+     extra decimal(s) it needs, so no step on screen is ever "off by one". */
+  const r = (v, n) => +v.toFixed(n);
+  function digitsFor(test) { for (let n = S.prec; n <= 15; n++) if (test(n)) return n; return 15; }
+  const withFrac = (txt, v, unit) => { const fr = fractionStr(v); return txt + (fr ? " (" + fr + (unit ? " " + unit : "") + ")" : ""); };
+  const lenT = (inches, n) => withFrac(fmt(inches / f, n) + " " + sym, inches / f, sym);
+
+  const rv = rightVertex(D);
+  const lines = [];
+  if (rv >= 0) {
+    const [numWord, denWord] = TRIG_DEF[fn];
+    lines.push(EL(fn + " = " + FR(numWord, denWord)));
+    lines.push(NOTE("This is a right triangle (the right angle is at " + V(names[rv], names[rv]) + "), so SOH-CAH-TOA applies directly to its own sides: the hypotenuse is " + V(lname[rv], lname[rv]) + ", the side across from the right angle. For each other angle, “opposite” is the side across from it and “adjacent” is the remaining leg."));
+  } else {
+    lines.push(NOTE("This triangle has no right angle, so SOH-CAH-TOA does not apply — there is no hypotenuse. The two laws that hold for EVERY triangle give the values from its real sides instead: the Law of Sines, a ÷ sin A = b ÷ sin B = c ÷ sin C = 2R (R = circumradius), so sin A = a ÷ (2R); and the Law of Cosines, cos A = (b² + c² − a²) ÷ (2·b·c). tan, csc, sec and cot then follow from their definitions: tan = sin ÷ cos, csc = 1 ÷ sin, sec = 1 ÷ cos, cot = cos ÷ sin."));
+  }
+
+  names.forEach((nm, i) => {
+    const t = tri[i];
+    const ratio = trigRatio(t, fn), shown = tfmt(ratio);
+    const ratioFrac = isFinite(ratio) && Math.abs(ratio) < 1e7 ? fractionStr(ratio) : null;
+    const answer = hl => NH(shown + (ratioFrac ? " (" + ratioFrac + ")" : ""), hl);
+
+    if (t.mode === "right") {
+      /* the right angle itself: its two sides are both legs, so there's
+         no opposite/adjacent pair — the values are the definitions */
+      const why = { sin: "= 1", cos: "= 0", tan: "is undefined (it would divide by cos 90° = 0)", csc: "= 1", sec: "is undefined (it would divide by cos 90° = 0)", cot: "= 0" }[fn];
+      lines.push(NOTE(V(nm, nm) + " is the right angle itself, so it has no opposite/adjacent pair; by definition " + fn + " 90° " + why + "."));
+      lines.push(BOXED(fn + "(" + V(nm, nm) + ") = " + answer({ kind: "vertex", i })));
+      return;
+    }
+
+    if (t.mode === "sides") {
+      /* SOH-CAH-TOA on real sides: each keeps its side color and a click
+         highlights that side */
+      const [numWord, denWord] = TRIG_DEF[fn];
+      const num = t[numWord], den = t[denWord];
+      const n = digitsFor(n => tfmt(r(num / f, n) / r(den / f, n)) === shown);
+      const leg = word => NC2(lenT(t[word], n), lname[t.sideOf[word]]);
+      lines.push(BOXED(fn + "(" + V(nm, nm) + ") = " + FR(V(numWord, lname[t.sideOf[numWord]]), V(denWord, lname[t.sideOf[denWord]])) +
+        " = " + FR(leg(numWord), leg(denWord)) + " = " + answer({ kind: "all" })));
+      return;
+    }
+
+    /* general triangle — Law of Sines for sin, Law of Cosines for cos,
+       and the definitions for the rest. p, q = the two sides meeting at
+       this angle; o = the side across from it. */
+    const j = (i + 1) % 3, k = (i + 2) % 3;
+    const p = lname[j], q = lname[k], o = lname[i];
+    const L = lawLines(D, i), sv = L.sin, cv_ = L.cos, sinLine = L.sinLine, cosLine = L.cosLine;
+    const vHl = { kind: "vertex", i };
+    const tf = (v, n) => trigSafe(v, true, n);
+    const nm2 = V(nm, nm);
+
+    /* an obtuse angle's cos/tan/sec/cot are negative — say where that
+       comes from, since nothing else on screen is negative */
+    if (D.ang[i] > Math.PI / 2 && fn !== "sin" && fn !== "csc") {
+      lines.push(NOTE(nm2 + " is obtuse, so the side across from it is long enough that " + V(o + "²", o) + " > " + V(p + "²", p) + " + " + V(q + "²", q) +
+        ": the top of the Law of Cosines is negative, so cos(" + nm2 + ") is negative" +
+        (fn === "cos" ? "." : ", and so is " + fn + "(" + nm2 + "), which divides by or into it.")));
+    }
+
+    if (fn === "sin") { lines.push(BOXED(sinLine(S.prec, answer(vHl)))); return; }
+    if (fn === "cos") { lines.push(BOXED(cosLine(S.prec, answer(vHl)))); return; }
+
+    /* tan, csc, sec, cot: from sin and cos by definition. sin/cos are
+       shown at however many decimals make the final division, redone by
+       hand, print as the answer. */
+    const needS = fn !== "sec", needC = fn !== "csc";
+    const quot = { tan: (s, c) => s / c, csc: s => 1 / s, sec: (s, c) => 1 / c, cot: (s, c) => c / s }[fn];
+    let n = 15;
+    for (let d = S.prec; d <= 15; d++) if (tf(quot(r(sv, d), r(cv_, d)), S.prec) === shown) { n = d; break; }
+    if (needS) lines.push(EL(sinLine(n)));
+    if (needC) lines.push(EL(cosLine(n)));
+    const sN = NH(tf(sv, n), vHl), cN = NH(tf(cv_, n), vHl);
+    const sym2 = { tan: FR("sin(" + nm2 + ")", "cos(" + nm2 + ")"), csc: FR("1", "sin(" + nm2 + ")"),
+                   sec: FR("1", "cos(" + nm2 + ")"), cot: FR("cos(" + nm2 + ")", "sin(" + nm2 + ")") }[fn];
+    const num2 = { tan: FR(sN, cN), csc: FR("1", sN), sec: FR("1", cN), cot: FR(cN, sN) }[fn];
+    lines.push(BOXED(fn + "(" + nm2 + ") = " + sym2 + " = " + num2 + " = " + answer(vHl)));
+  });
+
+  const ratios = [0, 1, 2].map(i => trigRatio(tri[i], fn));
+  /* a ratio only gets a fraction form where one genuinely exists (a
+     3-4-5 triangle's 0.6, 0.8, 0.75 …) — the other letters just repeat
+     their own decimal so the two rows still line up */
+  const fracs = ratios.map(v => (isFinite(v) && Math.abs(v) < 1e7) ? fractionStr(v) : null);
+  const exactS = names.map((nm, i) => V(nm, nm) + ": " + tfmt(ratios[i])).join("&nbsp;&nbsp;&nbsp;");
+  const approxS = fracs.some(fr => fr)
+    ? names.map((nm, i) => V(nm, nm) + ": " + (fracs[i] || tfmt(ratios[i]))).join("&nbsp;&nbsp;&nbsp;")
+    : null;
+
+  const title = fn.toUpperCase() + " of each angle";
+  if (live) {
+    paintModalContent(title, bigv(fn, approxS, exactS) + EQN(lines));
+  } else {
+    openModal(title, bigv(fn, approxS, exactS) + EQN(lines));
+    S.activeExplain = { kind: "trig", fn };
+    S.highlight = { kind: "all" }; requestRender();
+  }
+}
+
+/* =======================================================================
+   Render loop
+   ======================================================================= */
+let pending = false;
+/* each stage runs in its own try/catch: an exception thrown while, say,
+   laying out the pills must never be able to freeze the pills forever —
+   every other stage (and every later frame) still has to run. */
+function safeStep(name, fn) {
+  try { fn(); } catch (err) { console.error("render step '" + name + "' failed:", err); }
+}
+function requestRender() {
+  if (pending) return;
+  pending = true;
+  requestAnimationFrame(() => { if (pending) renderNow(); });
+}
+function renderNow() {
+  {
+    pending = false;
+    let D = null;
+    safeStep("derive", () => { D = derive(); });
+    if (!D) return; /* nothing downstream can run without geometry */
+    safeStep("draw", () => draw(D));
+    /* pills keep tracking the triangle while they fade out into view-only
+       (the canvas is resizing under them as the sidebar slides shut) */
+    if (!S.viewOnly || S.viewFade < 1) safeStep("layoutPills", () => layoutPills(D));
+    if (!S.viewOnly) {
+      safeStep("updateStats", () => updateStats(D));
+      /* applySearchFilter deliberately isn't run here — it depends only
+         on the search box text and the (static) row labels, neither of
+         which changes when the triangle does. It already has its own
+         "input" listener; running the full multi-querySelectorAll sweep
+         over every row on every single animation frame during a drag,
+         for a result that could not possibly have changed, was pure
+         waste stacked on top of everything else in this loop. */
+    }
+    safeStep("zoomtag", () => {
+      const f = LEN[S.lenUnit].f, g = gridStep();
+      const zt = document.getElementById("zoomtag");
+      if (zt) zt.innerHTML = Math.round(S.view.z / 74 * 100) + "%  ·  grid " + trim(g / f) + " " + LEN[S.lenUnit].sym +
+        " <span style='opacity:.6'>(" + trim(g / LEN[altLenUnit(g, S.lenUnit)].f) + " " + LEN[altLenUnit(g, S.lenUnit)].sym + ")</span>";
+    });
+    /* the explanation panel, if one is open, tracks the triangle live —
+       dragging a handle or typing a new value updates its numbers in
+       place, same as everything else on screen */
+    if (S.activeExplain) safeStep("refreshActiveExplain", () => {
+      const a = S.activeExplain;
+      if (a.kind === "stat") openExplain(a.id, true);
+      else if (a.kind === "trig") openTrigExplain(a.fn, true);
+    });
+  }
+}
+
+/* =======================================================================
+   Hit testing
+   ======================================================================= */
+function distToSeg(p, u, w) {
+  const vx = w.x - u.x, vy = w.y - u.y;
+  const L2 = vx * vx + vy * vy;
+  let t = L2 === 0 ? 0 : ((p.x - u.x) * vx + (p.y - u.y) * vy) / L2;
+  t = clamp(t, 0, 1);
+  return { d: Math.hypot(p.x - (u.x + t * vx), p.y - (u.y + t * vy)), t };
+}
+function pointInTri(p, q) {
+  const s = (a, b, c) => (a.x - c.x) * (b.y - c.y) - (b.x - c.x) * (a.y - c.y);
+  const d1 = s(p, q[0], q[1]), d2 = s(p, q[1], q[2]), d3 = s(p, q[2], q[0]);
+  return !(((d1 < 0) || (d2 < 0) || (d3 < 0)) && ((d1 > 0) || (d2 > 0) || (d3 > 0)));
+}
+function hitTest(m) {
+  const p = S.P.map(toScreen);
+  for (let i = 0; i < 3; i++) if (Math.hypot(m.x - p[i].x, m.y - p[i].y) <= 15) return { kind: "vertex", i };
+  for (let i = 0; i < 3; i++) {
+    const r = distToSeg(m, p[(i + 1) % 3], p[(i + 2) % 3]);
+    if (r.d <= 11 && r.t > 0.15 && r.t < 0.85) return { kind: "side", i };
+  }
+  if (pointInTri(m, p)) return { kind: "body", i: -1 };
+  return null;
+}
+
+/* =======================================================================
+   Interaction — drag vertices/sides/body, pan, zoom, multi-select, snap
+   ======================================================================= */
+/* getBoundingClientRect is a layout-forcing read too, and mouseAt runs on
+   every single pointermove — cached and only refreshed by resize()
+   (called on every window resize and on every sidebar/panel toggle,
+   the only things that can actually move the canvas), instead of once
+   per mouse event during a drag. */
+let cvRectCache = null;
+function invalidateCvRect() { cvRectCache = null; }
+const mouseAt = e => {
+  if (!cvRectCache) cvRectCache = cv.getBoundingClientRect();
+  return { x: e.clientX - cvRectCache.left, y: e.clientY - cvRectCache.top };
+};
+
+cv.addEventListener("contextmenu", e => e.preventDefault());
+
+cv.addEventListener("pointerdown", e => {
+  if (S.viewOnly) return;
+  const m = mouseAt(e);
+  cancelCam(); cancelShapeAnim();
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+
+  if (e.button === 2 || e.button === 1 || (e.altKey && !e.shiftKey)) {
+    S.drag = { mode: "pan", last: m }; cv.style.cursor = "grabbing"; return;
+  }
+  if (e.button !== 0) return;
+
+  const hit = hitTest(m);
+
+  if (hit && hit.kind === "vertex" && e.shiftKey) {
+    const wasSelected = S.selected.has(hit.i);
+    if (!wasSelected) S.selected.add(hit.i);
+    if (S.selected.size >= 2) {
+      /* group of 2+: a plain click (no movement) toggles membership off;
+         any real drag rigidly translates the whole selection instead of
+         re-solving constraints, which is what keeps a multi-drag free
+         while a lone vertex still gets the precise constrained solve. */
+      S.drag = { mode: "multi", startWorld: toWorld(m), startP: S.P.map(v => ({ x: v.x, y: v.y })),
+                 idx: [...S.selected], clickVertex: hit.i, wasSelected, moved: false };
+      cv.style.cursor = "grabbing";
+    } else {
+      S.drag = { mode: "vertex", i: hit.i, startWorld: toWorld(m), startP: S.P.map(v => ({ x: v.x, y: v.y })), shift: true };
+      cv.style.cursor = "grabbing";
+    }
+    requestRender();
+    return;
+  }
+  if (!hit) { S.drag = { mode: "pan", last: m }; cv.style.cursor = "grabbing"; return; }
+  if (hit.kind !== "vertex" || !S.selected.has(hit.i)) S.selected.clear();
+
+  S.drag = { mode: hit.kind, i: hit.i, startWorld: toWorld(m), startP: S.P.map(v => ({ x: v.x, y: v.y })), shift: e.shiftKey };
+  cv.style.cursor = "grabbing";
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+});
+
+function snapPoint(w) {
+  const grid = gridStep();
+  const nearestX = Math.round(w.x / grid) * grid, nearestY = Math.round(w.y / grid) * grid;
+  const px = sx(w.x), py = sy(w.y);
+  const npx = sx(nearestX), npy = sy(nearestY);
+  const d = Math.hypot(px - npx, py - npy);
+  return d < 16 ? { x: nearestX, y: nearestY, snapped: true } : { x: w.x, y: w.y, snapped: false };
+}
+
+cv.addEventListener("pointermove", e => {
+  if (S.viewOnly) return;
+  const m = mouseAt(e);
+  const dg = S.drag;
+
+  if (!dg) {
+    const h = hitTest(m);
+    const changed = JSON.stringify(h) !== JSON.stringify(S.hover);
+    S.hover = h;
+    cv.style.cursor = !h ? "default" : h.kind === "body" ? "grab" : "move";
+    if (changed) requestRender();
+    return;
+  }
+
+  if (dg.mode === "pan") {
+    S.view.cx -= (m.x - dg.last.x) / S.view.z;
+    S.view.cy += (m.y - dg.last.y) / S.view.z;
+    dg.last = m;
+    requestRender();
+    return;
+  }
+
+  const w = toWorld(m);
+  const dx = w.x - dg.startWorld.x, dy = w.y - dg.startWorld.y;
+
+  if (dg.mode === "multi") {
+    if (Math.hypot(dx, dy) > 1e-4) dg.moved = true;
+    const p2 = dg.startP.map((v, idx) => dg.idx.includes(idx) ? { x: v.x + dx, y: v.y + dy } : { x: v.x, y: v.y });
+    /* moving all three is a rigid translation — nothing to solve. Moving
+       two of three reshapes the triangle, so any active side/angle lock
+       has to be re-satisfied, exactly like a single-vertex drag (this
+       used to move them freely and silently break the locks) */
+    if (dg.idx.length < 3 && anyLockActive()) {
+      const wts = [1, 1, 1]; dg.idx.forEach(v => { wts[v] = 0.35; });
+      applyConstraints(p2, wts, null, true);
+    } else S.P = p2;
+    requestRender();
+    return;
+  }
+
+  if (dg.mode === "vertex" || dg.mode === "side") {
+    /* the LM solve behind applyConstraints is the expensive part of a
+       drag, and pointermove can fire far faster than the screen repaints
+       (well over 60/sec on some mice/trackpads) — solving on every single
+       one queues up more work than the frame budget allows and shows up
+       as the drag lagging behind the cursor. Coalescing to one solve per
+       animation frame (like requestRender already does for painting)
+       keeps it exactly as responsive as the display's own refresh rate. */
+    dg.liveDX = dx; dg.liveDY = dy;
+    dg.liveSnap = null;
+    if (dg.mode === "vertex" && e.shiftKey) {
+      /* snap the CANDIDATE VERTEX position itself, not the mouse — if the
+         vertex was grabbed a few pixels off its own center (well within
+         the hit-test tolerance), snapping the mouse's world position and
+         then re-adding that same offset would land the vertex slightly
+         off the grid line, not exactly on it */
+      const cand = { x: dg.startP[dg.i].x + dx, y: dg.startP[dg.i].y + dy };
+      const sp = snapPoint(cand);
+      if (sp.snapped) dg.liveSnap = { x: sp.x, y: sp.y };
+    }
+    if (!dg.solvePending) {
+      dg.solvePending = true;
+      requestAnimationFrame(() => {
+        dg.solvePending = false;
+        if (S.drag !== dg) return; /* drag ended or a new one started before this frame ran */
+        const p2 = dg.startP.map(v => ({ x: v.x, y: v.y }));
+        if (dg.mode === "vertex") {
+          if (dg.liveSnap) {
+            /* an explicit snap target must land EXACTLY there regardless
+               of any active lock — pin it outright instead of just
+               weighting toward it (see alignPinned) */
+            p2[dg.i] = { x: dg.liveSnap.x, y: dg.liveSnap.y };
+            applyConstraints(p2, null, null, true, dg.i);
+          } else {
+            p2[dg.i] = { x: dg.startP[dg.i].x + dg.liveDX, y: dg.startP[dg.i].y + dg.liveDY };
+            const wts = [1, 1, 1]; wts[dg.i] = 0.25;
+            applyConstraints(p2, wts, null, true);
+          }
+        } else {
+          const j = (dg.i + 1) % 3, k = (dg.i + 2) % 3;
+          p2[j] = { x: dg.startP[j].x + dg.liveDX, y: dg.startP[j].y + dg.liveDY };
+          p2[k] = { x: dg.startP[k].x + dg.liveDX, y: dg.startP[k].y + dg.liveDY };
+          const wts = [1, 1, 1]; wts[j] = 0.35; wts[k] = 0.35;
+          applyConstraints(p2, wts, null, true);
+        }
+        requestRender();
+      });
+    }
+    return;
+  } else if (dg.mode === "body") {
+    S.P = dg.startP.map(v => ({ x: v.x + dx, y: v.y + dy }));
+  }
+  requestRender();
+});
+
+function endDrag(e) {
+  if (!S.drag) return;
+  const dg = S.drag;
+  const wasGeometry = dg.mode !== "pan";
+  if (dg.mode === "multi" && dg.idx.length < 3 && anyLockActive()) applyConstraints(S.P, [1, 1, 1], null, false);
+  if (dg.mode === "vertex" || dg.mode === "side") {
+    /* final high-accuracy solve — still pinned if the drag ended while
+       snapped, so this cleanup pass can't nudge the vertex back off the
+       grid point it just landed on */
+    applyConstraints(S.P, [1, 1, 1], null, false, dg.mode === "vertex" && dg.liveSnap ? dg.i : undefined);
+  }
+  if (dg.mode === "multi" && !dg.moved && dg.wasSelected) S.selected.delete(dg.clickVertex);
+  S.drag = null;
+  cv.style.cursor = "default";
+  try { cv.releasePointerCapture(e.pointerId); } catch (_) {}
+  if (wasGeometry) pushHistory();
+  requestRender();
+}
+cv.addEventListener("pointerup", endDrag);
+cv.addEventListener("pointercancel", endDrag);
+cv.addEventListener("pointerleave", () => { if (!S.drag) { S.hover = null; requestRender(); } });
+
+cv.addEventListener("wheel", e => {
+  if (S.viewOnly) return;
+  e.preventDefault();
+  const m = mouseAt(e);
+  /* wheel notches accumulate into a TARGET zoom; the view then eases
+     toward it every frame (exponential smoothing in log-space) instead of
+     jumping a whole notch at once. The world point under the cursor is
+     re-pinned under the cursor on every frame, so it stays put the
+     whole way even if the cursor moves mid-glide. */
+  const fromZ = zoomGlide ? zoomGlide.target : S.view.z;
+  if (camAnim !== null) cancelCam();
+  const target = clamp(fromZ * Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.02 : 0.0016)), 1e-6, 1e9);
+  const anchor = toWorld(m);
+  if (zoomGlide) { zoomGlide.target = target; zoomGlide.m = m; zoomGlide.w = anchor; return; }
+  zoomGlide = { target, m, w: anchor, raf: 0, last: performance.now() };
+  const step = now => {
+    const g = zoomGlide;
+    if (!g) return;
+    const dt = Math.min(64, now - g.last); g.last = now;
+    const k = 1 - Math.exp(-dt / 55); /* ~55ms time constant, frame-rate independent */
+    const lz = Math.log(S.view.z), lt = Math.log(g.target);
+    const done = Math.abs(lt - lz) < 1e-4;
+    S.view.z = done ? g.target : Math.exp(lz + (lt - lz) * k);
+    S.view.cx = g.w.x - (g.m.x - W / 2) / S.view.z;
+    S.view.cy = g.w.y - (HH / 2 - g.m.y) / S.view.z;
+    renderNow();
+    if (done) zoomGlide = null; else g.raf = requestAnimationFrame(step);
+  };
+  zoomGlide.raf = requestAnimationFrame(step);
+}, { passive: false });
+
+/* =======================================================================
+   Shape transform buttons — rotate / flip / scale, all animated smoothly
+   (the triangle is repositioned by dragging its body directly; there's
+   no separate "move" control)
+   ======================================================================= */
+let shapeAnim = null;
+function cancelShapeAnim() { if (shapeAnim !== null) { cancelAnimationFrame(shapeAnim); shapeAnim = null; } }
+
+/* paramFn(e) returns the interpolated point set for eased progress e∈[0,1] */
+function animateShapeTransform(paramFn, ms) {
+  cancelShapeAnim(); cancelCam();
+  const dur = ms === undefined ? 450 : ms;
+  const t0 = performance.now();
+  const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1);
+    S.P = paramFn(ease(t));
+    requestRender();
+    if (t < 1) { shapeAnim = requestAnimationFrame(step); }
+    else { shapeAnim = null; animateView(fitTarget(), 380); pushHistory(); }
+  };
+  shapeAnim = requestAnimationFrame(step);
+}
+function rotateBy(a) {
+  const c = derive().centroid;
+  const start = S.P.map(v => ({ x: v.x, y: v.y }));
+  animateShapeTransform(e => {
+    const ang = a * e, cs = Math.cos(ang), sn = Math.sin(ang);
+    return start.map(p => { const x = p.x - c.x, y = p.y - c.y; return { x: c.x + x * cs - y * sn, y: c.y + x * sn + y * cs }; });
+  }, 420);
+}
+function flip(axis) {
+  const c = derive().centroid;
+  const start = S.P.map(v => ({ x: v.x, y: v.y }));
+  animateShapeTransform(e => {
+    /* the mirror factor sweeps 1 → -1 through 0, so the triangle
+       visibly compresses to a line and unfolds mirrored — reads as a
+       smooth flip rather than an instant, jarring swap */
+    const f = 1 - 2 * e;
+    return start.map(p => axis === "h" ? { x: c.x + (p.x - c.x) * f, y: p.y } : { x: p.x, y: c.y + (p.y - c.y) * f });
+  }, 420);
+}
+function scaleBy(factor) {
+  const c = derive().centroid;
+  const start = S.P.map(v => ({ x: v.x, y: v.y }));
+  /* scaling is a similarity: every length × factor, every angle unchanged.
+     Pressing scale is an explicit request to change the size, so a locked
+     side's target scales along with it (angle locks need nothing) —
+     otherwise the lock would be left permanently in conflict */
+  const startTargets = S.target.side.slice();
+  animateShapeTransform(e => {
+    const f = 1 + (factor - 1) * e;
+    for (let i = 0; i < 3; i++) if (S.lock.side[i]) S.target.side[i] = startTargets[i] * f;
+    return start.map(p => ({ x: c.x + (p.x - c.x) * f, y: c.y + (p.y - c.y) * f }));
+  }, 380);
+}
+
+/* =======================================================================
+   Toolbar / chrome
+   ======================================================================= */
+const LEN_ORDER = ["in", "ft", "yd", "mi", "mm", "cm", "m", "km"];
+const ANG_ORDER = ["deg", "rad", "grad"];
+
+function syncChrome() {
+  document.getElementById("lenLabel").textContent = LEN[S.lenUnit].sym.toUpperCase();
+  document.getElementById("angLabel").textContent = ANG[S.angUnit].sym === "°" ? "DEG" : S.angUnit.toUpperCase();
+  document.getElementById("btnGrid").classList.toggle("on", S.grid);
+  document.getElementById("btnView").classList.toggle("on", S.viewOnly);
+  document.getElementById("precVal").textContent = S.prec;
+  document.querySelectorAll("#exactToggle button").forEach(b => b.classList.toggle("on", b.dataset.v === (S.exact ? "exact" : "approx")));
+  document.documentElement.setAttribute("data-theme", S.theme);
+  document.getElementById("btnTheme").innerHTML = S.theme === "light" ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+  syncHistoryButtons();
+}
+
+/* small floating menu used for unit pickers */
+let openMenuEl = null;
+function closeMenu() { if (openMenuEl) { openMenuEl.remove(); openMenuEl = null; document.removeEventListener("pointerdown", menuOutside, true); } }
+function menuOutside(e) { if (openMenuEl && !openMenuEl.contains(e.target)) closeMenu(); }
+function openMenu(anchor, items) {
+  closeMenu();
+  const el = document.createElement("div");
+  el.className = "menu";
+  items.forEach(it => {
+    const d = document.createElement("div");
+    d.className = "menu-item" + (it.on ? " on" : "");
+    d.innerHTML = "<span>" + it.label + "</span>" + (it.on ? "<i class='fa-solid fa-check' style='font-size:10px'></i>" : "");
+    d.addEventListener("click", () => { closeMenu(); it.click(); });
+    el.appendChild(d);
+  });
+  document.body.appendChild(el);
+  const r = anchor.getBoundingClientRect();
+  el.style.top = (r.bottom + 6) + "px";
+  let left = r.left;
+  if (left + el.offsetWidth > window.innerWidth - 8) left = window.innerWidth - el.offsetWidth - 8;
+  el.style.left = left + "px";
+  openMenuEl = el;
+  setTimeout(() => document.addEventListener("pointerdown", menuOutside, true), 0);
+}
+
+document.getElementById("btnLen").addEventListener("click", e => {
+  openMenu(e.currentTarget, LEN_ORDER.map(k => ({
+    label: LEN[k].name + " (" + LEN[k].sym + ")", on: k === S.lenUnit,
+    click: () => { S.lenUnit = k; S.units.side = [k, k, k]; syncChrome(); pushHistory(); requestRender(); }
+  })));
+});
+document.getElementById("btnAng").addEventListener("click", e => {
+  openMenu(e.currentTarget, ANG_ORDER.map(k => ({
+    label: ANG[k].name, on: k === S.angUnit,
+    click: () => { S.angUnit = k; S.units.angle = [k, k, k]; syncChrome(); pushHistory(); requestRender(); }
+  })));
+});
+
+document.getElementById("btnGrid").addEventListener("click", () => { setGrid(!S.grid); pushHistory(); syncChrome(); });
+document.getElementById("btnFit").addEventListener("click", () => fitView());
+document.getElementById("btnCenter").addEventListener("click", () => homeView());
+/* entering/leaving view-only is animated end to end: the toolbar, pills
+   and hints fade (CSS), the sidebar and any open explanation panel slide
+   shut/open (so the canvas resizes smoothly into the freed space instead
+   of snapping), and the canvas cross-fades from the annotated drawing to
+   the plain outline (S.viewFade). Leaving restores exactly what was open
+   before — sidebar and panel alike. */
+let viewFadeAnim = null, viewRestore = null;
+function setViewOnly(on) {
+  if (on === S.viewOnly) return;
+  S.viewOnly = on;
+  document.body.classList.toggle("view-only", on);
+  closeMenu();
+
+  if (on) {
+    viewRestore = {
+      sidebar: sidebarOpen,
+      panelPx: modalRoot.classList.contains("show") ? modalRoot.getBoundingClientRect().height : 0
+    };
+    if (sidebarOpen) setSidebarOpen(false);
+    if (viewRestore.panelPx > 0) setPanelOpen(false, 0, 280, true);
+  } else if (viewRestore) {
+    if (viewRestore.sidebar && !sidebarOpen) setSidebarOpen(true);
+    if (viewRestore.panelPx > 0 && modalRoot.classList.contains("show")) setPanelOpen(true, viewRestore.panelPx, 280, true);
+    viewRestore = null;
+  }
+
+  if (viewFadeAnim) cancelAnimationFrame(viewFadeAnim);
+  const from = S.viewFade, to = on ? 1 : 0, t0 = performance.now(), dur = 320;
+  const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1);
+    S.viewFade = from + (to - from) * ease(t);
+    requestRender();
+    viewFadeAnim = t < 1 ? requestAnimationFrame(step) : null;
+  };
+  viewFadeAnim = requestAnimationFrame(step);
+  syncChrome(); requestRender();
+}
+document.getElementById("btnView").addEventListener("click", () => setViewOnly(!S.viewOnly));
+document.getElementById("exitViewOnly").addEventListener("click", () => setViewOnly(false));
+document.getElementById("btnUndo").addEventListener("click", undo);
+document.getElementById("btnRedo").addEventListener("click", redo);
+document.getElementById("btnClear").addEventListener("click", () => {
+  cancelLockAnims();
+  S.lock.side = [false, false, false]; S.lock.angle = [false, false, false];
+  pushHistory(); requestRender();
+});
+document.getElementById("btnReset").addEventListener("click", () => {
+  cancelShapeAnim(); cancelCam(); cancelLockAnims();
+  S.lock.side = [false, false, false]; S.lock.angle = [false, false, false];
+  S.units.side = [S.lenUnit, S.lenUnit, S.lenUnit];
+  S.units.angle = [S.angUnit, S.angUnit, S.angUnit];
+  S.selected.clear();
+  seedTriangle();
+  /* frame the fresh triangle straight away — the same fit as the Fit
+     button (or, with an explanation open, the tighter fit that keeps it
+     clear of the panel) — rather than the fixed home zoom, which could
+     leave the reset triangle tiny or half off-screen in a small window */
+  fitView(modalRoot.classList.contains("show") ? 150 : undefined, 420);
+  pushHistory(); requestRender();
+});
+
+document.getElementById("btnRotL").addEventListener("click", () => rotateBy(-radOf(15)));
+document.getElementById("btnRotR").addEventListener("click", () => rotateBy(radOf(15)));
+document.getElementById("btnFlipH").addEventListener("click", () => flip("h"));
+document.getElementById("btnFlipV").addEventListener("click", () => flip("v"));
+document.getElementById("btnScaleDown").addEventListener("click", () => scaleBy(0.9));
+document.getElementById("btnScaleUp").addEventListener("click", () => scaleBy(1 / 0.9));
+
+const setPrec = n => { S.prec = clamp(n, 0, 8); syncChrome(); pushHistory(); requestRender(); };
+document.getElementById("precUp").addEventListener("click", () => setPrec(S.prec + 1));
+document.getElementById("precDown").addEventListener("click", () => setPrec(S.prec - 1));
+document.querySelectorAll("#exactToggle button").forEach(b => b.addEventListener("click", () => {
+  S.exact = b.dataset.v === "exact"; syncChrome(); pushHistory(); requestRender();
+}));
+
+document.getElementById("btnTheme").addEventListener("click", () => {
+  S.theme = S.theme === "light" ? "dark" : "light";
+  invalidateThemeColors();
+  syncChrome(); pushHistory(); requestRender();
+});
+
+document.getElementById("navtoggle").addEventListener("click", () => setSidebarOpen(!sidebarOpen));
+
+/* --- sidebar open/close driven by JS width animation, so the canvas
+   never sees a mismatched raster mid-transition --------------------- */
+const sidebarEl = document.getElementById("sidebar");
+let sidebarOpen = window.innerWidth >= 900;
+let sbAnim = null;
+function setSidebarOpen(open) {
+  sidebarOpen = open;
+  if (sbAnim) cancelAnimationFrame(sbAnim);
+  /* must be visible (not display:none) for the whole open animation, or
+     the sidebar only "pops in" fully-expanded on the last frame instead
+     of sliding out — display:none is only reapplied once fully closed */
+  const wasClosed = sidebarEl.style.display === "none" || getComputedStyle(sidebarEl).display === "none";
+  if (open && wasClosed) { sidebarEl.style.display = ""; sidebarEl.style.flex = "0 0 0px"; sidebarEl.style.width = "0px"; }
+  const from = sidebarEl.getBoundingClientRect().width;
+  const to = open ? 352 : 0;
+  const t0 = performance.now(), dur = 240;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const step = now => {
+    const t = clamp((now - t0) / dur, 0, 1);
+    const w = from + (to - from) * ease(t);
+    sidebarEl.style.flex = "0 0 " + w + "px";
+    sidebarEl.style.width = w + "px";
+    resize();
+    if (t < 1) { sbAnim = requestAnimationFrame(step); }
+    else {
+      sbAnim = null;
+      sidebarEl.style.flex = ""; sidebarEl.style.width = "";
+      sidebarEl.style.display = open ? "" : "none";
+      resize();
+    }
+  };
+  sbAnim = requestAnimationFrame(step);
+}
+
+/* =======================================================================
+   Settings modal — color customization
+   ======================================================================= */
+const COLOR_VARS = [
+  ["--bg", "Canvas background"], ["--panel", "Sidebar background"], ["--pill", "Input box background"],
+  ["--accent", "Accent / selection"], ["--header", "Header background"], ["--footer", "Footer background"]
+];
+document.getElementById("btnSettings").addEventListener("click", () => {
+  const rows = COLOR_VARS.map(([v, label]) => {
+    const cur = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    const hex = cur.startsWith("#") ? cur : "#101012";
+    return '<div class="settings-row"><span class="lbl">' + label + '</span><input type="color" data-var="' + v + '" value="' + hex + '"></div>';
+  }).join("");
+  const resetRow = '<div class="settings-row"><span class="lbl">Reset all custom colors</span><button class="tbtn" id="mResetColors">Reset</button></div>';
+  openModal("Appearance", '<div class="card">' + rows + resetRow + '</div>');
+  document.querySelectorAll('#mBody input[type=color]').forEach(inp => {
+    inp.addEventListener("input", () => {
+      document.documentElement.style.setProperty(inp.dataset.var, inp.value);
+      invalidateThemeColors(); requestRender();
+    });
+  });
+  document.getElementById("mResetColors").addEventListener("click", () => {
+    COLOR_VARS.forEach(([v]) => document.documentElement.style.removeProperty(v));
+    invalidateThemeColors(); requestRender();
+    closeModal();
+  });
+});
+
+/* =======================================================================
+   Search
+   ======================================================================= */
+function applySearchFilter() {
+  const q = document.getElementById("searchBox").value.trim().toLowerCase();
+  document.querySelectorAll(".sec").forEach(sec => {
+    const body = sec.querySelector(".sec-body");
+    const title = sec.querySelector(".sec-head span").textContent.toLowerCase();
+    if (!q) { sec.classList.remove("searchhide"); body.querySelectorAll(".row").forEach(r => r.classList.remove("rowhide")); return; }
+    let any = title.includes(q);
+    body.querySelectorAll(".row").forEach(r => {
+      const t = r.querySelector(".k") ? r.querySelector(".k").textContent.toLowerCase() : "";
+      const hit = t.includes(q) || title.includes(q);
+      r.classList.toggle("rowhide", !hit);
+      if (hit) any = true;
+    });
+    body.querySelectorAll(".trow").forEach(r => { if (title.includes(q)) any = true; });
+    sec.classList.toggle("searchhide", !any);
+    if (any && q && sec.classList.contains("collapsed")) {
+      sec.classList.remove("collapsed");
+      sec.querySelector(".sec-collapse").style.maxHeight = "2000px";
+    }
+  });
+}
+document.getElementById("searchBox").addEventListener("input", applySearchFilter);
+
+/* =======================================================================
+   Keyboard
+   ======================================================================= */
+window.addEventListener("keydown", e => {
+  const key = e.key.toLowerCase();
+  if (e.ctrlKey || e.metaKey) {
+    if (key === "z" && !e.shiftKey) { e.preventDefault(); if (document.activeElement) document.activeElement.blur(); undo(); return; }
+    if (key === "y" || (key === "z" && e.shiftKey)) { e.preventDefault(); if (document.activeElement) document.activeElement.blur(); redo(); return; }
+    return;
+  }
+  if (key === "escape") { closeModal(); closeMenu(); S.selected.clear(); requestRender(); return; }
+  if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) return;
+  if (key === "f") fitView();
+  else if (key === "g") document.getElementById("btnGrid").click();
+  else if (key === "r") document.getElementById("btnReset").click();
+  else if (key === "u") document.getElementById("btnClear").click();
+  else if (key === "d") document.getElementById("btnAng").click();
+  else if (key === "l") document.getElementById("btnLen").click();
+  else if (key === "b") document.getElementById("navtoggle").click();
+  else if (key === "v") document.getElementById("btnView").click();
+});
+
+/* boot */
+if (window.innerWidth < 900) { sidebarOpen = false; sidebarEl.style.display = "none"; }
+syncChrome();
+resize();
+markLoaded();
+requestRender();
+</script>
+</body>
+</html>
