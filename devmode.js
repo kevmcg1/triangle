@@ -231,7 +231,7 @@
       if (modalOpen()) { closeModal(); await settle(900); }
       const sbx = $('#searchBox'); if (sbx && sbx.value) { setNative(sbx, ''); sbx.dispatchEvent(new Event('input', { bubbles: true })); }
       if (S.viewOnly) { setViewOnly(false); await settle(1500); }
-      window.__where = 'reset: units'; S.lenUnit = 'in'; S.units.side = ['in', 'in', 'in']; S.angUnit = 'deg'; S.units.angle = ['deg', 'deg', 'deg']; S.exact = true; S.theme = 'dark';
+      window.__where = 'reset: units'; S.lenUnit = 'in'; S.units.side = ['in', 'in', 'in']; S.angUnit = 'deg'; S.units.angle = ['deg', 'deg', 'deg']; S.exact = true; S.theme = 'dark'; customColors.dark = {}; customColors.light = {}; applyCustomColors();
       window.__where = 'reset: clear+reset'; $('#btnClear').click(); window.__where = 'reset: after clear'; $('#btnReset').click(); window.__where = 'reset: after reset'; S.selected.clear(); setGrid(true); setPrec(4);
       window.__where = 'reset: sidebar'; if (!sidebarOpen && innerWidth >= 900) { setSidebarOpen(true); await settle(900); }
       $$('.sec.collapsed').forEach(s => toggleSection(s));
