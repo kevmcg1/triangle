@@ -3483,7 +3483,7 @@ document.querySelectorAll("#exactToggle button").forEach(b => b.addEventListener
 
 document.getElementById("btnTheme").addEventListener("click", () => {
   S.theme = S.theme === "light" ? "dark" : "light";
-  invalidateThemeColors();
+  applyCustomColors();
   syncChrome(); pushHistory(); requestRender();
 });
 
@@ -3530,6 +3530,16 @@ const COLOR_VARS = [
   ["--bg", "Canvas background"], ["--panel", "Sidebar background"], ["--pill", "Input box background"],
   ["--accent", "Accent / selection"], ["--header", "Header background"], ["--footer", "Footer background"]
 ];
+/* Custom colors belong to the theme they were picked in. They are written as inline styles, which beat the theme's own
+   variables, so one set shared by both themes pinned the panels, header and footer to the first theme's colors and
+   switching themes only changed the canvas. Each theme keeps its own set; switching swaps them (and drops the other's). */
+const customColors = { dark: {}, light: {} };
+function applyCustomColors() {
+  COLOR_VARS.forEach(([v]) => document.documentElement.style.removeProperty(v));
+  const mine = customColors[S.theme === "light" ? "light" : "dark"];
+  Object.keys(mine).forEach(v => document.documentElement.style.setProperty(v, mine[v]));
+  invalidateThemeColors();
+}
 document.getElementById("btnSettings").addEventListener("click", () => {
   const rows = COLOR_VARS.map(([v, label]) => {
     const cur = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -3540,13 +3550,13 @@ document.getElementById("btnSettings").addEventListener("click", () => {
   openModal("Appearance", '<div class="card">' + rows + resetRow + '</div>');
   document.querySelectorAll('#mBody input[type=color]').forEach(inp => {
     inp.addEventListener("input", () => {
-      document.documentElement.style.setProperty(inp.dataset.var, inp.value);
-      invalidateThemeColors(); requestRender();
+      customColors[S.theme === "light" ? "light" : "dark"][inp.dataset.var] = inp.value;
+      applyCustomColors(); requestRender();
     });
   });
   document.getElementById("mResetColors").addEventListener("click", () => {
-    COLOR_VARS.forEach(([v]) => document.documentElement.style.removeProperty(v));
-    invalidateThemeColors(); requestRender();
+    customColors.dark = {}; customColors.light = {};
+    applyCustomColors(); requestRender();
     closeModal();
   });
 });
