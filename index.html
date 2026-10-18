@@ -94,6 +94,19 @@ input,button,select{font-family:inherit}
 }
 .side-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:24px}
 
+/* Logo at the top of the sidebar (same mark as Shop Tool Sim): bracketed two-line stack, solid line on top, outlined italic line below */
+.side-logo{flex:0 0 auto;padding:20px 18px 14px;text-align:center}
+.logo-mark{margin:0;font-family:'Bebas Neue','Inter',sans-serif;font-size:2.35rem;font-weight:400;letter-spacing:.055em;line-height:.9;color:#e4e6ea;display:flex;align-items:center;justify-content:center;gap:.28em;user-select:none}
+.logo-stack{display:flex;flex-direction:column;align-items:center;gap:.06em}
+.logo-top{display:block;white-space:nowrap}
+.logo-bot{display:block;font-style:italic;text-transform:uppercase;letter-spacing:.1em;text-indent:.1em;color:#6d737c;white-space:nowrap}
+@supports (-webkit-text-stroke:1px black){ .logo-bot{color:transparent;-webkit-text-stroke:1.4px #e4e6ea} }
+.logo-brk{display:block;font-size:1.55em;line-height:.78;color:#e8c547;opacity:.85}
+:root[data-theme="light"] .logo-mark{color:#17171a}
+:root[data-theme="light"] .logo-bot{color:#8c8c96}
+@supports (-webkit-text-stroke:1px black){ :root[data-theme="light"] .logo-bot{color:transparent;-webkit-text-stroke:1.4px #17171a} }
+:root[data-theme="light"] .logo-brk{color:#c9a227}
+
 .sec{border-bottom:1px solid var(--line);position:relative}
 .sec::before{content:"";position:absolute;inset:0;background:var(--tint);pointer-events:none;z-index:0}
 .sec.cat-0{--tint:var(--cat-0)} .sec.cat-1{--tint:var(--cat-1)} .sec.cat-2{--tint:var(--cat-2)}
@@ -445,6 +458,13 @@ body.view-only #exitViewOnly{
 
 <div id="appBody">
   <aside id="sidebar">
+    <header class="side-logo" aria-hidden="true">
+      <div class="logo-mark">
+        <span class="logo-brk">[</span>
+        <span class="logo-stack"><span class="logo-top">Triangle</span><span class="logo-bot">Thing</span></span>
+        <span class="logo-brk">]</span>
+      </div>
+    </header>
     <div class="side-scroll" id="stats"></div>
     <div class="side-foot">
       <div class="pf-group"><span class="pf-lbl">Decimals</span>
