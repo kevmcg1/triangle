@@ -180,7 +180,7 @@ function auditDisplay(D, add, degenerate, a, b, c, s) {
     if (!sh) { if (!/π|undefined|—|∞/.test(text(key))) add(label, want, NaN, { tol: 0, note: 'row text "' + text(key).slice(0, 30) + '" could not be read' }); return; }
     let tol, abs;
     if (sh.frac) { abs = Math.max(1e-300, Math.abs(want)); tol = 1e-8; }
-    else if (sh.exp) { abs = Math.max(1e-300, Math.abs(want)); tol = Math.pow(10, -Math.max(1, d - 1)) * 0.51; }
+    else if (sh.exp) { abs = Math.max(1e-300, Math.abs(want)); tol = Math.pow(10, -Math.max(2, d - 1)) * 0.51; }
     else { abs = 1; tol = 0.5 * Math.pow(10, -d) * 1.001 + 1e-12 * Math.abs(want); }
     add(label + ' — shows "' + text(key).split('(')[0].trim() + '"', want, sh.v, { abs, tol });
   };
@@ -204,8 +204,9 @@ function auditDisplay(D, add, degenerate, a, b, c, s) {
     const m = /^\(\s*([^,]+),\s*([^)]+)\)/.exec(text(key)); if (!m) return;
     const x = parseShown(m[1]), y = parseShown(m[2]); if (!x || !y) return;
     const sc = Math.max(D.a, D.b, D.c), snap = v => (Math.abs(v) < sc * 1e-10 ? 0 : v);
-    const o = { abs: 1, tol: 0.5 * Math.pow(10, -d) * 1.001 + 1e-12 * Math.abs(p.x / lf) };
-    add(label + ' x', snap(p.x) / lf, x.v, o); add(label + ' y', snap(p.y) / lf, y.v, { abs: 1, tol: 0.5 * Math.pow(10, -d) * 1.001 + 1e-12 * Math.abs(p.y / lf) });
+    const opt = (sh, v) => sh.exp ? { abs: Math.max(Math.abs(v), 1e-300), tol: Math.pow(10, -Math.max(2, d - 1)) * 0.51 } : { abs: 1, tol: 0.5 * Math.pow(10, -d) * 1.001 + 1e-12 * Math.abs(v) };
+    const px = snap(p.x) / lf, py = snap(p.y) / lf;
+    add(label + ' x', px, x.v, opt(x, px)); add(label + ' y', py, y.v, opt(y, py));
   };
   pt('Vertex A', 'pA', D.P[0]); pt('Vertex B', 'pB', D.P[1]); pt('Vertex C', 'pC', D.P[2]);
   pt('Centroid', 'cen', D.centroid); pt('Incenter', 'inc', D.incenter); pt('Circumcenter', 'cir', D.circum); pt('Orthocenter', 'ort', D.ortho);
