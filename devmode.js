@@ -15,10 +15,13 @@
 //                   decimal setting, every explanation panel, the search box, view-only, the theme, the settings panel, zooming to
 //                   the extremes, dragging far off screen, 300 clicks in two seconds, 400 key presses, and smooth dragging
 //
+// While it runs the panel shows a progress bar with the time it should finish, and a live analysis of exactly what is being tested right now
+// (the control, the value, why, what changed, which checks ran, the calculation audit, and a trail of recent steps).
+//
 // After every step it looks for: a script error or unhandled promise, a console error, numbers that stopped being numbers (NaN / Infinity
 // in the model or showing in the page), a triangle whose angles no longer add up to 180° or that breaks the law of cosines, a locked side
 // or angle that moved, history that went out of range, sideways scrolling, a canvas that no longer matches its box, and a frame that
-// stalled. It times every frame to grade how smoothly each kind of step ran. The report lists what it covered, every problem with
+// stalled, and any of the sidebar's calculations that disagree with an independent re-derivation (calc_audit.js). It times every frame to grade how smoothly each kind of step ran. The report lists what it covered, every problem with
 // the exact steps that led to it (and the seed to replay it), the slowest controls, and the controls that did nothing.
 (function () {
   'use strict';
@@ -49,6 +52,7 @@
   /* values typed into fields */
   const V_SIDE  = ['3', '4.5', '5', '12', '0.5', '7.25 in', '3.4 mm', '2 ft', '1.5 cm', '1e2', '0', '-4', 'abc', '', '3,5', '1e-7', '999999', 'Infinity', 'NaN', '   8   ', "5'6\"", '0.0000001', '1e308', '9'.repeat(40)];
   const V_ANGLE = ['60', '90', '45.5', '120°', '1.2 rad', '100 grad', '180', '0', '-30', '361', 'abc', '', '90deg', '0.0001', '179.999', '1e5'];
+  const V_SCALE = ['100', '200', '50 %', '0.5x', '1e3', '0', '-20', 'abc', '', '12.5%', '1e-5', '1e12'];
   const V_COORD = ['0', '1.5', '-2', '100', 'abc', '', '1e3', '-1e-3', '3 mm', '1e308'];
   const V_SEARCH = ['area', 'side', 'tri', 'sin', '', 'zzz', 'a', 'π', '  ', 'circum', '<b>x</b>', 'ang', 'median', '(', '\\', 'a'.repeat(60)];
   const KEYS = [['f'], ['g'], ['r'], ['u'], ['d'], ['l'], ['b'], ['v'], ['Escape'], ['z', { ctrl: true }], ['y', { ctrl: true }], ['z', { ctrl: true, shift: true }], ['x'], ['1'], ['ArrowLeft'], ['ArrowUp'], ['Tab'], ['Enter'], [' '], ['Delete'], ['+'], ['-']];
@@ -120,6 +124,35 @@
     catch (e) { return 'err:' + e.message; }
   };
 
+
+  /* ------------------------------------------------------------------ live view: what is being tested right now */
+  const LIVE = { stage: 'idle', phase: '', phaseNo: 0, phaseTotal: 0, scenario: '', purpose: '', stepNo: 0, stepTotal: 0, ctl: null, value: undefined, diff: null, cats: [], audit: null, ms: 0, fr: null, issuesNow: 0, flow: [], log: [], t0: 0, lastPaint: 0 };
+  const stateParts = () => {
+    try { return { 'triangle corners': S.P.map(p => p.x.toFixed(7) + ',' + p.y.toFixed(7)).join(' '), 'locks': JSON.stringify(S.lock), 'units': S.lenUnit + '/' + S.angUnit + JSON.stringify(S.units), 'decimals / exact': S.prec + '/' + S.exact, 'theme': S.theme, 'grid': S.grid, 'view-only': S.viewOnly, 'sidebar open': sidebarOpen, 'explanation panel': modalOpen() + hashStr(($('#mBody') || {}).textContent || ''), 'selection': [...S.selected].join(), 'pivot': JSON.stringify(S.pivot), 'camera': [S.view.cx, S.view.cy, S.view.z].map(v => v.toPrecision(6)).join(), 'sidebar numbers': hashStr(statsEl.textContent), 'search box': ($('#searchBox') || {}).value }; }
+    catch (e) { return {}; }
+  };
+  const diffParts = (a, b) => Object.keys(b).filter(k => a && a[k] !== b[k]);
+  const KIND_PURPOSE = {
+    button: 'press the button and check it does its job (or nothing) without breaking the triangle, the sidebar numbers, history or layout',
+    field: 'type the value the way a person would and check it is either applied to the triangle or refused politely, never producing NaN / Infinity or freezing the page',
+    gesture: 'perform the mouse gesture on the canvas and check the shape, the locks, the camera and the drawing stay valid while the pointer moves and after it lets go',
+    row: 'click the sidebar row / section header and check it opens, collapses or highlights without errors and its numbers still match the triangle',
+    menu: 'pick the item in the open menu and check the setting really changes everywhere it is shown',
+    key: 'press the key and check the shortcut does what it says (or nothing) without errors'
+  };
+  function classifyValue(v) {
+    if (v === undefined) return '';
+    const t = String(v).trim();
+    if (t === '') return 'an empty box (should be ignored, keeping the old value)';
+    if (/^(nan|infinity|-infinity)$/i.test(t)) return 'the word ' + t + ' (must be refused, never stored)';
+    if (/^[+-]?\d+(\.\d+)?(e[+-]?\d+)?$/i.test(t)) { const n = parseFloat(t); return n === 0 ? 'zero (a degenerate size or angle)' : Math.abs(n) >= 1e9 ? 'an extreme number (' + t.slice(0, 14) + ' — tests overflow in every formula)' : Math.abs(n) <= 1e-6 ? 'a vanishingly small number (tests rounding and exponent display)' : n < 0 ? 'a negative number (must be refused or handled)' : 'an ordinary number'; }
+    if (/^[+-]?[\d.]+\s*[a-z°'"′″]+/i.test(t) || /^\d+'\s*\d/.test(t)) return 'a number with a unit (tests unit parsing and conversion)';
+    return 'text that is not a number (must be refused, not crash)';
+  }
+  const CATS = [['model', 'corners finite, decimals in range, selection valid'], ['view', 'camera finite and zoom positive'], ['geometry', 'angles sum to 180°, law of cosines, Heron, perimeter, circumcenter'], ['lock', 'every locked side / angle kept its value'], ['display', 'no NaN / undefined / Infinity text, no stray — rows'], ['history', 'undo / redo pointer and buttons agree'], ['layout', 'no sideways scroll, canvas matches its box'], ['calc audit', 'every sidebar number re-derived a second way']];
+  function setLive(patch) { Object.assign(LIVE, patch); const t = performance.now(); if (t - LIVE.lastPaint > 110) { LIVE.lastPaint = t; liveRender(); } }
+  function liveLog(R, row) { LIVE.log.push(Object.assign({ at: Math.round((Date.now() - R.started) / 100) / 10 }, row)); if (LIVE.log.length > 600) LIVE.log.splice(0, 200); }
+
   /* ------------------------------------------------------------------ the controls */
   function discover() {
     const C = [], seen = new Set();
@@ -136,6 +169,8 @@
       if (visible(p.input)) add('in:' + nm, 'field', nm + ' box', async (r, k) => typeInto(p.input, k && k.value !== undefined ? k.value : pick(r, V), r), { values: V });
       if (p.cx && visible(p.cx)) { add('in:' + nm + ':x', 'field', nm + ' x', async r => typeInto(p.cx, pick(r, V_COORD), r), { values: V_COORD }); add('in:' + nm + ':y', 'field', nm + ' y', async r => typeInto(p.cy, pick(r, V_COORD), r), { values: V_COORD }); }
     });
+    const XF = [['xfRot', 'rotation', V_ANGLE], ['xfPx', 'position x', V_COORD], ['xfPy', 'position y', V_COORD], ['xfSc', 'scale', V_SCALE], ['xfCx', 'pivot x', V_COORD], ['xfCy', 'pivot y', V_COORD]];
+    XF.forEach(([id, name, V]) => { const el = $('#' + id); if (el && visible(el)) add('in:' + id, 'field', 'transform ' + name, async (r, k) => typeInto(el, k && k.value !== undefined ? k.value : pick(r, V), r), { values: V }); });
     const sb = $('#searchBox'); if (sb && visible(sb)) add('in:search', 'field', 'search box', async r => typeInto(sb, pick(r, V_SEARCH), r), { values: V_SEARCH });
     $$('input[type=color]').forEach((c, i) => { if (!dev(c) && visible(c)) add('color:' + i, 'field', 'color ' + i, async r => { setNative(c, '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0')); c.dispatchEvent(new Event('input', { bubbles: true })); }); });
     $$('input[type=checkbox],input[type=range],select').forEach((c, i) => { if (!dev(c) && visible(c)) add('ctl:' + c.id + i, 'field', c.id || c.type, async r => { if (c.tagName === 'SELECT') { c.selectedIndex = Math.floor(r() * c.options.length); c.dispatchEvent(new Event('change', { bubbles: true })); } else if (c.type === 'range') { setNative(c, String(+c.min + r() * (+c.max - +c.min))); c.dispatchEvent(new Event('input', { bubbles: true })); } else c.click(); }); });
@@ -187,6 +222,13 @@
         if (D.area > 1e-4 * sc * sc) { const h = Math.sqrt(Math.max(0, D.s * (D.s - D.a) * (D.s - D.b) * (D.s - D.c))); if (Math.abs(h - D.area) / D.area > 1e-6) bad('geometry', 'Heron area ' + h + ' disagrees with ' + D.area); }
         if (D.R < 2 * D.r * (1 - 1e-9)) bad('geometry', 'circumradius is smaller than twice the inradius');
         if (well && D.R < 1e6 * sc && [0, 1, 2].some(i => Math.abs(dist(D.circum, S.P[i]) - D.R) > 1e-6 * D.R)) bad('geometry', 'the circumcenter is not equally far from the corners');
+      }
+      /* every sidebar number, re-derived a second way (calc_audit.js) */
+      if (typeof calcAudit === 'function' && !S.viewOnly) {
+        if (pending) renderNow();
+        const au = calcAudit(derive());
+        LIVE.audit = { total: au.total, failed: au.failed.length, ms: au.ms, tested: au.tested, degenerate: au.degenerate };
+        for (const f of au.failed.slice(0, 6)) bad('calc audit', f.group + ' · ' + f.label + ': should be ' + auditNum(f.expected) + ' but is ' + auditNum(f.actual) + (f.note ? ' (' + f.note + ')' : ''));
       }
       /* locks keep their value */
       const nl = S.lock.side.filter(Boolean).length + S.lock.angle.filter(Boolean).length, sd = sidesOf(S.P);
@@ -240,7 +282,7 @@
   }
 
   function newReport(mode, seed) {
-    return { mode, seed, started: Date.now(), finished: 0, steps: 0, scenarios: 0, kinds: {}, issues: [], issueKeys: new Map(), frames: {}, ctl: new Map(), flows: [], coverage: { singles: 0, pairs: 0, combos: 0, seqs: 0, flows: 0 }, slow: [], noop: [], values: 0, controls: 0 };
+    return { phases: {}, plan: {}, total: 0, mode, seed, started: Date.now(), finished: 0, steps: 0, scenarios: 0, kinds: {}, issues: [], issueKeys: new Map(), frames: {}, ctl: new Map(), flows: [], coverage: { singles: 0, pairs: 0, combos: 0, seqs: 0, flows: 0 }, slow: [], noop: [], values: 0, controls: 0 };
   }
   function addIssue(R, iss, trail) {
     const key = iss.type + '|' + iss.msg.replace(/[0-9.e+-]+/g, '#').slice(0, 90);
@@ -253,9 +295,12 @@
   async function stepOnce(R, c, r, trail, fixedVal, section) {
     const key0 = stateKey(), fi = FM.ts.length, e0 = ERR.length, t0 = performance.now(), di = FM.draw.length;
     let thrown = null;
+    const before = stateParts();
+    setLive({ stage: 'firing', ctl: { id: c.id, kind: c.kind, label: c.label }, value: fixedVal, purpose: KIND_PURPOSE[c.kind] || '', diff: null, cats: [] }); LIVE.lastPaint = 0; liveRender();
     EV.max = 0; window.__where = 'fire ' + c.label + (fixedVal !== undefined ? ' = ' + fixedVal : '');
     try { await c.fire(r, fixedVal === undefined ? undefined : { value: fixedVal }); } catch (e) { thrown = e; }
     window.__where = 'settle after ' + c.label;
+    setLive({ stage: 'settling (waiting for animations and the next frames)' });
     let sync = performance.now() - t0; if (c.kind === 'gesture') sync = EV.max;
     await settle();
     R.steps++; R.kinds[c.kind] = (R.kinds[c.kind] || 0) + 1;
@@ -265,9 +310,16 @@
     if (thrown) addIssue(R, { type: 'script error', sev: 'error', msg: c.label + ' threw: ' + thrown.message }, trail);
     for (let k = e0; k < ERR.length; k++) addIssue(R, { type: ERR[k].type, sev: ERR[k].type === 'console warning' ? 'warn' : 'error', msg: ERR[k].msg }, trail);
     window.__where = 'check after ' + c.label;
-    for (const iss of check(c.label)) addIssue(R, iss, trail);
+    setLive({ stage: 'checking (' + CATS.length + ' groups of checks)', diff: diffParts(before, stateParts()) });
+    const found = check(c.label);
+    for (const iss of found) addIssue(R, iss, trail);
+    LIVE.cats = CATS.map(([cat, what]) => ({ cat, what, bad: found.filter(i => i.type === cat).length }));
+    LIVE.ms = sync; LIVE.issuesNow = R.issues.length;
     const g = deltasSince(fi); (R.frames[section || c.kind] = R.frames[section || c.kind] || []).push(...g);
     const worst = g.length ? Math.max(...g) : 0;
+    LIVE.fr = frameStats(g);
+    liveLog(R, { scenario: R.cur, step: c.label + (fixedVal !== undefined ? ' = ' + JSON.stringify(String(fixedVal).slice(0, 18)) : ''), kind: c.kind, ms: Math.round(sync), changed: LIVE.diff || [], problems: found.length + (thrown ? 1 : 0) });
+    setLive({ stage: 'done — next step' }); LIVE.lastPaint = 0; liveRender();
     if (worst > FR.stall) addIssue(R, { type: 'stall', sev: 'warn', msg: c.label + ' stalled the page for ' + Math.round(worst) + ' ms' }, trail);
     if (sync > 150) addIssue(R, { type: 'slow control', sev: 'warn', msg: c.label + ' took ' + Math.round(sync) + ' ms to respond' }, trail);
     return sync;
@@ -276,13 +328,15 @@
   async function scenario(R, name, steps, r, section) {
     R.scenarios++; R.cur = name;
     const trail = [];
-    for (const s of steps) { if (RUN.stop) return; await stepOnce(R, s.c, r, trail, s.v, section); progress(R); }
+    LIVE.scenario = name; LIVE.stepTotal = steps.length; LIVE.flow = [];
+    let n = 0;
+    for (const s of steps) { if (RUN.stop) return; LIVE.stepNo = ++n; await stepOnce(R, s.c, r, trail, s.v, section); progress(R); }
   }
 
   /* ------------------------------------------------------------------ flows: whole journeys with checks along the way */
   function flowTools(R) {
     const out = [];
-    const T = (name, ok, detail) => { out.push({ name, ok: !!ok, detail: ok ? '' : String(detail || '') }); if (!ok) addIssue(R, { type: 'flow', sev: 'error', msg: name + (detail ? ': ' + detail : '') }, [R.cur]); };
+    const T = (name, ok, detail) => { out.push({ name, ok: !!ok, detail: ok ? '' : String(detail || '') }); LIVE.flow.push({ name, ok: !!ok }); if (LIVE.flow.length > 8) LIVE.flow.shift(); LIVE.stage = 'flow check: ' + name; LIVE.stepNo = out.length; LIVE.lastPaint = 0; liveRender(); liveLog(R, { scenario: R.cur, step: 'check: ' + name, kind: 'flow', ms: 0, changed: [], problems: ok ? 0 : 1 }); if (!ok) addIssue(R, { type: 'flow', sev: 'error', msg: name + (detail ? ': ' + detail : '') }, [R.cur]); };
     return { out, T };
   }
   const snapP = () => S.P.map(p => ({ x: p.x, y: p.y }));
@@ -318,6 +372,65 @@
     ['sidebar and resize', async (R, f) => { await resetApp(); for (let i = 0; i < 6; i++) { key('b'); await settle(1200); dispatchEvent(new Event('resize')); await settle(); } f.T('toggling the sidebar six times leaves the layout consistent', Math.abs(cv.width - Math.round(cv.clientWidth * DPR)) <= 2, cv.width + ' vs ' + cv.clientWidth * DPR); if (!sidebarOpen) { key('b'); await settle(1200); } }],
     ['smooth dragging', async (R, f) => { await resetApp(); const fi = FM.ts.length, di = FM.draw.length; for (let k = 0; k < 6; k++) { const i = k % 3; const from = toClient(S.P[i]), c = cvRect(); await drag(from, { x: c.left + c.width * (.3 + .4 * ((k * 37) % 10) / 10), y: c.top + c.height * (.3 + .4 * ((k * 53) % 10) / 10) }, { steps: 60 }); } const g = deltasSince(fi), fs = frameStats(g), gr = grade(fs), dr = FM.draw.slice(di), dp = r1(pct(dr, .95)); R.smoothDrag = { frames: fs, grade: gr.word, drawP95: dp, draws: dr.length }; (R.frames['smooth dragging'] = R.frames['smooth dragging'] || []).push(...g); f.T('dragging corners is ' + gr.word + ' (p95 frame ' + fs.p95 + ' ms, redraw p95 ' + dp + ' ms)', gr.cls !== 'bad', JSON.stringify(fs)); f.T('every drag step redraws within a frame budget (redraw p95 under 16 ms)', dp < 16, dp + ' ms'); }],
     ['smooth zoom and pan', async (R, f) => { await resetApp(); const c = cvRect(), fi = FM.ts.length; for (let i = 0; i < 40; i++) { wheel(c.left + c.width / 2, c.top + c.height / 2, i < 20 ? -150 : 150); await raf(); } await settle(1500); await drag({ x: c.left + 300, y: c.top + 300 }, { x: c.left + 700, y: c.top + 500 }, { button: 2, steps: 60 }); const g = deltasSince(fi), fs = frameStats(g), gr = grade(fs); R.smoothZoom = { frames: fs, grade: gr.word }; (R.frames['smooth zoom/pan'] = R.frames['smooth zoom/pan'] || []).push(...g); f.T('zooming and panning is ' + gr.word + ' (p95 frame ' + fs.p95 + ' ms)', gr.cls !== 'bad', JSON.stringify(fs)); }],
+    ['rotate, move and scale about every pivot', async (R, f) => {
+      const xf = id => $('#' + id), setBox = async (id, v) => { await typeInto(xf(id), String(v), () => 0.1); await settle(); };
+      for (const [mode, name] of PIVOTS) {
+        await resetApp(); setPivotMode(mode); await settle(); xf('xfToggle').closest('#xform').classList.remove('collapsed');
+        const s0 = sidesOf(S.P), ang0 = [derive().A, derive().B, derive().C], pv0 = pivotWorld();
+        await setBox('xfRot', '40');
+        f.T(name + ': rotating keeps every side', sidesOf(S.P).every((v, i) => near(v, s0[i], 1e-6)), sidesOf(S.P));
+        f.T(name + ': rotation reads 40°', near(deg(rotationNow()), 40, 1e-6), deg(rotationNow()));
+        f.T(name + ': the pivot itself stays put while rotating', near(pivotWorld().x, pv0.x, 1e-6) && near(pivotWorld().y, pv0.y, 1e-6), JSON.stringify([pv0, pivotWorld()]));
+        const pv1 = pivotWorld();
+        await setBox('xfSc', '250');
+        f.T(name + ': scale reads 250%', near(scaleNow() * 100, 250, 1e-6), scaleNow() * 100);
+        f.T(name + ': scaling keeps every angle', [derive().A, derive().B, derive().C].every((v, i) => near(v, ang0[i], 1e-6)), [derive().A, derive().B, derive().C]);
+        f.T(name + ': the pivot stays put while scaling', near(pivotWorld().x, pv1.x, 1e-6) && near(pivotWorld().y, pv1.y, 1e-6), JSON.stringify([pv1, pivotWorld()]));
+        if (mode !== 'origin') {
+          const sNow = sidesOf(S.P);
+          await setBox('xfPx', '2'); await setBox('xfPy', '-1.5');
+          const q = pivotWorld();
+          f.T(name + ': position moves the pivot to (2, -1.5) in', near(q.x, 2, 1e-6) && near(q.y, -1.5, 1e-6), JSON.stringify(q));
+          f.T(name + ': moving does not change the shape', sidesOf(S.P).every((v, i) => near(v, sNow[i], 1e-6)), sidesOf(S.P));
+        }
+        const bad = check('pivot ' + name).filter(x => x.sev === 'error'); f.T(name + ': nothing is broken afterwards', bad.length === 0, JSON.stringify(bad.slice(0, 2)));
+      }
+      await resetApp();
+      /* typing rubbish into the transform boxes changes nothing */
+      const P0 = snapP(); for (const id of ['xfRot', 'xfPx', 'xfSc']) for (const v of ['abc', '', 'NaN', '0', '-5', '1e999']) await setBox(id, v);
+      f.T('nonsense typed into the transform boxes leaves a finite triangle', S.P.every(p => Number.isFinite(p.x) && Number.isFinite(p.y)), JSON.stringify(S.P));
+    }],
+    ['a custom pivot can be dragged and follows the triangle', async (R, f) => {
+      await resetApp(); setPivotMode('custom'); await settle();
+      const q0 = pivotWorld(), from = toClient(q0), c = cvRect(), to = { x: from.x + 60, y: from.y - 40 };
+      await drag(from, to, { steps: 10 }); await settle();
+      const q1 = pivotWorld(), want = toWorld({ x: to.x - c.left, y: to.y - c.top });
+      f.T('dragging the pivot marker moves the pivot under the pointer', near(q1.x, want.x, 1e-3) && near(q1.y, want.y, 1e-3), JSON.stringify([q1, want]));
+      const rel = toBary(q1); await drag(toClient(S.P[0]), { x: toClient(S.P[0]).x + 50, y: toClient(S.P[0]).y + 30 }, { steps: 8 }); await settle();
+      const b = S.pivot.bary; f.T('the custom pivot keeps its place relative to the triangle when a corner moves', rel && b.every((v, i) => near(v, rel[i], 1e-9)), JSON.stringify([rel, b]));
+      click('btnReset'); await settle(); f.T('resetting the triangle puts the pivot back on the centroid', S.pivot.mode === 'centroid');
+    }],
+    ['overlapping labels get leader arrows', async (R, f) => {
+      await resetApp(); await settle();
+      f.T('no leader arrows on the roomy default triangle', $$('#leaders .ld.on').length === 0, $$('#leaders .ld.on').length);
+      S.P = [{ x: -1.5, y: 0 }, { x: 1.5, y: 0 }, { x: 0, y: 0.05 }]; fitView(undefined, 0); await settle(800); requestRender(); await settle();
+      const boxes = pills.map(p => p.el.getBoundingClientRect());
+      let over = 0; for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) { const a = boxes[i], b = boxes[j]; if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) over++; }
+      f.T('labels on a flat triangle no longer sit on top of each other', over === 0, over + ' overlapping pairs');
+      const on = $$('#leaders .ld.on'); f.T('the labels that were crowded have leader arrows', on.length >= 2, on.length + ' arrows');
+      f.T('every arrow has real coordinates', on.every(g => [...g.querySelectorAll('line')].every(l => ['x1', 'y1', 'x2', 'y2'].every(a => Number.isFinite(parseFloat(l.getAttribute(a)))))), 'NaN in an arrow');
+      await resetApp(); await sleep(300); f.T('arrows disappear again once there is room', $$('#leaders .ld.on').length === 0, $$('#leaders .ld.on').length);
+    }],
+    ['the calculation audit agrees at every unit and precision', async (R, f) => {
+      await resetApp(); const tris = [[[0, 0], [4, 0], [0, 3]], [[0, 0], [10, 0], [5, 0.001]], [[0, 0], [1e4, 0], [3e3, 8e3]], [[-3, 2], [7, 1], [0, 6]], [[0, 0], [1, 0], [0.5, 0.8660254037844386]]];
+      let n = 0, failed = [];
+      for (const lk of LEN_ORDER) { await lenItems(lk); for (const ak of ANG_ORDER) { await angItems(ak); for (const pr of [0, 4, 8]) { setPrec(pr); for (const t of tris) { S.P = t.map(([x, y]) => ({ x, y })); requestRender(); await raf(); await raf(); n++; if (AUDIT.failed.length) failed.push(lk + '/' + ak + '/' + pr + ': ' + AUDIT.failed[0].label); } } } }
+      f.T('all ' + n + ' unit, precision and shape combinations agree with the independent maths', failed.length === 0, failed.slice(0, 3).join(' | '));
+      for (const v of ['approx', 'exact']) { $$('#exactToggle button').find(e => e.dataset.v === v).click(); await settle(); f.T('the audit passes in ' + v + ' display mode', AUDIT.failed.length === 0, AUDIT.failed.slice(0, 2).map(c => c.label).join(' | ')); }
+      f.T('the audit bar says so', /verified|Flat/.test($('#auditText').textContent), $('#auditText').textContent);
+      const bar = $('#auditBar'); bar.click(); await settle(1400); f.T('the audit details panel opens with a table of checks', modalOpen() && $$('#mBody .audit-table tr').length > 50, $$('#mBody .audit-table tr').length);
+      closeModal(); await settle(1200);
+    }],
     ['the drawing is never blank', async (R, f) => { await resetApp(); const r = rng(77); for (let i = 0; i < 8; i++) { await pick(r, discover().filter(c => c.kind === 'button' && !/btnView|navtoggle/.test(c.id))).fire(r); await settle(900); } f.T('the canvas has ink after eight random buttons', canvasHasInk()); }]
   ];
 
@@ -325,12 +438,23 @@
   async function run(opts) {
     if (RUN.on) return RUN.report;
     opts = opts || {}; const mode = MODES[opts.mode] ? opts.mode : 'standard', M = MODES[mode], seed = opts.seed === undefined ? (Date.now() & 0xffff) : +opts.seed;
-    RUN.on = true; RUN.stop = false; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
+    RUN.on = true; RUN.stop = false; LIVE.log.length = 0; LIVE.stage = 'starting'; LIVE.cats = []; LIVE.audit = null; LIVE.ctl = null; LIVE.value = undefined; LIVE.diff = null; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
     const R = newReport(mode, seed); R.label = M.label; RUN.report = R; RUN.R = R;
     const r = rng(seed);
-    const phase = (n, total) => { R.phase = n; R.phaseTotal = total; progress(R); };
+    const phase = (n, total) => {
+      const now = performance.now(); if (R.phaseName) { const ps = R.phases[R.phaseName]; ps.ms = now - R.phaseT0; ps.done = R.scenarios - ps.s0; }
+      R.phase = n; R.phaseTotal = total; R.phaseName = n; R.phaseT0 = now; R.phases[n] = R.phases[n] || { s0: R.scenarios, steps0: R.steps, ms: 0, done: 0, planned: R.plan[n] || total };
+      LIVE.phase = n; LIVE.phaseTotal = total; progress(R);
+    };
     try {
       await resetApp(); const C0 = discover(); R.controls = C0.length; R.controlList = C0.map(c => c.id);
+      /* the exact amount of work, so the progress bar and the finishing time mean something */
+      { const only = opts.only, ctls = only ? C0.filter(c => only.includes(c.id)) : C0;
+        const nTog = Math.min(10, C0.filter(c => c.toggle && !/btnSettings|btnLen|btnAng/.test(c.id)).length);
+        R.plan = { 'one by one': ctls.reduce((n, c) => n + (c.values ? Math.min(c.values.length, M.vals) : 1), 0), 'pairs': only ? 0 : Math.min(M.pairs, C0.length * C0.length), 'toggle combinations': only ? 0 : Math.min(M.combos, 1 << nTog), 'random runs': only ? 0 : M.seqs, 'flows': only ? 0 : FLOWS.length * M.loops };
+        R.total = Object.values(R.plan).reduce((a, b) => a + b, 0);
+        /* rough steps per scenario in each phase, used only until that phase has been measured */
+        R.stepsPer = { 'one by one': 1, 'pairs': 2, 'toggle combinations': 2 + M.probe, 'random runs': 6.5, 'flows': 30 }; }
       /* ---- one by one ---- */
       phase('one by one', C0.length);
       for (const c0 of C0) {
@@ -377,7 +501,7 @@
       if (!RUN.stop && !opts.only) {
         phase('flows', FLOWS.length * M.loops);
         for (let loop = 0; loop < M.loops && !RUN.stop; loop++) for (const [name, fn] of FLOWS) {
-          if (RUN.stop) break; R.cur = 'flow: ' + name; const f = flowTools(R); const e0 = ERR.length, fi = FM.ts.length;
+          if (RUN.stop) break; R.cur = 'flow: ' + name; LIVE.scenario = R.cur; LIVE.ctl = { id: 'flow', kind: 'flow', label: name }; LIVE.value = undefined; LIVE.diff = null; LIVE.stepNo = 0; LIVE.stepTotal = 0; LIVE.purpose = 'run a whole journey (' + name + ') and test its outcomes along the way, then run the full set of checks on the result'; const f = flowTools(R); const e0 = ERR.length, fi = FM.ts.length;
           try { await fn(R, f); } catch (e) { f.T(name + ' ran to the end', false, e.message); }
           for (let k = e0; k < ERR.length; k++) addIssue(R, { type: ERR[k].type, sev: ERR[k].type === 'console warning' ? 'warn' : 'error', msg: ERR[k].msg }, [R.cur]);
           for (const iss of check('after flow ' + name)) addIssue(R, iss, [R.cur]);
@@ -386,7 +510,8 @@
         }
       }
     } catch (e) { addIssue(R, { type: 'dev tool', sev: 'error', msg: 'the run stopped on ' + e.message }, [R.cur || '']); }
-    await resetApp(); fmStop(); R.finished = Date.now(); R.stopped = RUN.stop; RUN.on = false;
+    { const ps = R.phases[R.phaseName]; if (ps) { ps.ms = performance.now() - R.phaseT0; ps.done = R.scenarios - ps.s0; } }
+    await resetApp(); fmStop(); R.finished = Date.now(); R.stopped = RUN.stop; RUN.on = false; LIVE.stage = RUN.stop ? 'stopped' : 'finished';
     finalize(R); render(R); progress(R); return R;
   }
 
@@ -400,6 +525,7 @@
     R.errors = R.issues.filter(i => i.sev === 'error'); R.warnings = R.issues.filter(i => i.sev !== 'error');
     R.flowFail = R.flows.reduce((n, f) => n + f.checks - f.passed, 0); R.flowChecks = R.flows.reduce((n, f) => n + f.checks, 0);
     R.verdict = R.errors.length === 0 && R.flowFail === 0 ? (R.overall.grade.cls === 'bad' ? 'works, but choppy' : 'no glitches found') : 'problems found';
+    R.trace = LIVE.log.slice(-300);
     R.ctl = undefined; R.issueKeys = undefined;
   }
 
@@ -410,7 +536,7 @@
 .dev .bd{overflow:auto;padding:10px 12px;display:grid;gap:10px;align-content:start}.dev button,.dev select,.dev input{font:inherit;color:inherit;background:#1c1c24;border:1px solid #33333f;border-radius:7px;padding:5px 9px}.dev button{cursor:pointer}.dev button:hover{border-color:#8aa}
 .dev .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.dev .bar{height:7px;background:#23232d;border-radius:4px;overflow:hidden}.dev .bar i{display:block;height:100%;width:0;background:#7bd389;transition:width .2s}
 .dev .note{color:#9a9aa8}.dev .ok{color:#7bd389}.dev .warn{color:#f5c542}.dev .bad{color:#ff7a7a}.dev table{width:100%;border-collapse:collapse}.dev td,.dev th{padding:3px 6px;border-bottom:1px solid #23232d;text-align:left;vertical-align:top}.dev th{color:#9a9aa8;font-weight:600}
-.dev .iss{border:1px solid #2c2c36;border-radius:8px;padding:7px 9px;margin:4px 0}.dev .iss small{display:block;color:#9a9aa8;word-break:break-word}.dev code{background:#1c1c24;padding:1px 4px;border-radius:4px}`;
+.dev .bar.big{height:11px}.dev .prog{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.dev .prog b{font-size:17px}.dev .live{border:1px solid #2c2c36;border-radius:8px;padding:8px 10px;background:#101016}.dev .live td:first-child{color:#9a9aa8;white-space:nowrap;width:1%;padding-right:10px}.dev .chip{display:inline-block;margin:1px 3px 1px 0;padding:0 6px;border-radius:9px;border:1px solid #33333f;font-size:11px}.dev .chip.ok{border-color:#2f6b3a}.dev .chip.bad{border-color:#8a2f2f;background:#2a1515}.dev .trace{max-height:150px;overflow:auto;font:11px/1.4 ui-monospace,Menlo,monospace;color:#b9b9c6;border-top:1px solid #23232d;margin-top:6px;padding-top:4px}.dev .trace div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dev .iss{border:1px solid #2c2c36;border-radius:8px;padding:7px 9px;margin:4px 0}.dev .iss small{display:block;color:#9a9aa8;word-break:break-word}.dev code{background:#1c1c24;padding:1px 4px;border-radius:4px}`;
   function build() {
     if (panel) return panel;
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
@@ -418,7 +544,7 @@
     panel.innerHTML = `<div class="hd"><h4>Dev mode · Triangle Thing</h4><span></span><button data-x="close" aria-label="Close">✕</button></div><div class="bd">
       <div class="note">Tests every button, slider-like control, input box, menu, row and canvas gesture on its own, in pairs, in combinations and in random runs, then runs whole flows, and grades how smoothly it all ran. <b>Backtick</b> opens and closes this panel.</div>
       <div class="row"><select id="devMode"><option value="quick">Quick</option><option value="standard" selected>Standard</option><option value="thorough">Thorough</option></select><input id="devSeed" placeholder="seed (optional)" size="14"><button data-x="start">Start</button><button data-x="stop" disabled>Stop</button></div>
-      <div class="note" id="devLabel"></div><div class="bar"><i id="devBar"></i></div><div id="devStatus" class="note">Ready.</div><div class="row"><button data-x="copy" disabled>Copy report</button><button data-x="json" disabled>Download JSON</button></div><div id="devOut"></div></div>`;
+      <div class="note" id="devLabel"></div><div class="bar big"><i id="devBar"></i></div><div class="prog"><b id="devPct">0%</b><span id="devEta" class="note"></span></div><div id="devStatus" class="note">Ready.</div><div id="devPhases"></div><div id="devLive"></div><div class="row"><button data-x="copy" disabled>Copy report</button><button data-x="json" disabled>Download JSON</button></div><div id="devOut"></div></div>`;
     document.body.appendChild(panel);
     const lab = () => { $('#devLabel', panel).textContent = MODES[$('#devMode', panel).value].label; }; lab(); $('#devMode', panel).onchange = lab;
     panel.addEventListener('click', e => {
@@ -431,11 +557,69 @@
     });
     return panel;
   }
+  const fmtDur = ms => { ms = Math.max(0, Math.round(ms / 1000)); const h = Math.floor(ms / 3600), m = Math.floor(ms % 3600 / 60), sec = ms % 60; return h ? h + 'h ' + String(m).padStart(2, '0') + 'm' : m ? m + 'm ' + String(sec).padStart(2, '0') + 's' : sec + 's'; };
+  const clock = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  /* time left: phases already measured use their own average time per scenario; phases not reached yet are priced from the average time per step so far */
+  function estimate(R) {
+    const now = performance.now(), names = Object.keys(R.plan);
+    const stepMs = R.steps > 4 ? (Date.now() - R.started) / R.steps : 600;
+    let left = 0;
+    for (const n of names) {
+      const planned = R.plan[n], ps = R.phases[n];
+      if (!planned) continue;
+      if (!ps) { left += planned * R.stepsPer[n] * stepMs; continue; }
+      const live = n === R.phaseName, done = live ? R.scenarios - ps.s0 : ps.done, ms = live ? now - R.phaseT0 : ps.ms;
+      const remaining = Math.max(0, planned - done);
+      const per = done >= 3 ? ms / done : R.stepsPer[n] * stepMs;
+      left += remaining * per;
+    }
+    return left;
+  }
   function progress(R) {
-    if (!panel) return; const t = R.phaseTotal || 1, done = R.phase ? Math.min(1, (R.phaseDone = (R.phaseDone || 0)) / t) : 0;
-    $('#devStatus', panel).textContent = (RUN.on ? 'Running · ' : 'Finished · ') + (R.phase || '') + ' · ' + R.scenarios + ' scenarios · ' + R.steps + ' steps · ' + R.issues.length + ' issue(s)';
+    if (!panel) return;
+    const total = Math.max(1, R.total || expected(R)), pct = RUN.on ? Math.min(99.9, R.scenarios / total * 100) : (R.finished ? 100 : 0);
+    $('#devBar', panel).style.width = pct + '%'; $('#devPct', panel).textContent = (pct >= 10 || !RUN.on ? Math.round(pct) : r1(pct)) + '%';
+    $('#devStatus', panel).textContent = (RUN.on ? 'Running · ' : 'Finished · ') + (R.phase || '') + ' · ' + R.scenarios + ' of ' + total + ' scenarios · ' + R.steps + ' steps · ' + R.issues.length + ' issue(s)';
     $('#devStatus', panel).dataset.cur = R.cur || '';
-    $('#devBar', panel).style.width = Math.min(100, (R.scenarios / Math.max(1, expected(R))) * 100) + '%';
+    const eta = $('#devEta', panel);
+    if (RUN.on) {
+      const left = estimate(R), fin = Date.now() + left;
+      R.finishAt = R.finishAt && R.scenarios > 5 ? R.finishAt * 0.85 + fin * 0.15 : fin;   /* smoothed, so the clock time does not jitter */
+      eta.textContent = R.scenarios < 3 ? 'estimating the finishing time…' : 'about ' + fmtDur(R.finishAt - Date.now()) + ' left · done around ' + clock(R.finishAt) + ' · elapsed ' + fmtDur(Date.now() - R.started);
+    } else if (R.finished) eta.textContent = (R.stopped ? 'stopped' : 'finished') + ' at ' + clock(R.finished) + ' · took ' + fmtDur(R.finished - R.started);
+    const ph = Object.keys(R.plan).filter(n => R.plan[n]).map(n => { const ps = R.phases[n], done = !ps ? 0 : n === R.phaseName && RUN.on ? R.scenarios - ps.s0 : ps.done, p = R.plan[n]; return `<tr><td>${esc(n)}</td><td>${Math.min(done, p)} / ${p}</td><td><div class="bar"><i style="width:${Math.min(100, done / p * 100)}%;display:block"></i></div></td></tr>`; }).join('');
+    $('#devPhases', panel).innerHTML = ph ? `<table>${ph}</table>` : '';
+    liveRender();
+  }
+  /* the live analysis: what exactly is being tested at this moment, and why */
+  function liveRender() {
+    if (!panel || panel.hidden) return; const el = $('#devLive', panel); if (!el) return;
+    const L = LIVE, R = RUN.report;
+    if (!R || (!RUN.on && L.stage === 'idle')) { el.innerHTML = ''; return; }
+    const c = L.ctl, val = L.value;
+    const exp = [];
+    if (c && c.kind === 'field' && val !== undefined) exp.push('the box ends up showing a valid number or its old value');
+    if (c && /^(lock:|btn:#btnRot|btn:#btnFlip|btn:#btnScale|btn:#xf)/.test(c.id)) exp.push('side lengths / angles stay consistent with the locks');
+    if (c && c.kind === 'gesture') exp.push('the pointer never leaves a NaN corner behind');
+    const row = (k, v) => v === '' || v === undefined || v === null ? '' : `<tr><td>${k}</td><td>${v}</td></tr>`;
+    const chips = L.cats.length ? L.cats.map(x => `<span class="chip ${x.bad ? 'bad' : 'ok'}" title="${esc(x.what)}">${x.bad ? '✗' : '✓'} ${esc(x.cat)}</span>`).join('') : '<span class="note">pending — runs after the step settles</span>';
+    const au = L.audit ? `${L.audit.total} calculations re-derived (${L.audit.tested.model} model, ${L.audit.tested.identity} identities, ${L.audit.tested.display} displayed values) · <b class="${L.audit.failed ? 'bad' : 'ok'}">${L.audit.failed ? L.audit.failed + ' FAILED' : 'all agree'}</b> · ${r1(L.audit.ms)} ms${L.audit.degenerate ? ' · flat triangle, only the basics apply' : ''}` : '';
+    const fl = L.flow.length ? L.flow.map(x => `<div class="${x.ok ? 'ok' : 'bad'}">${x.ok ? '✓' : '✗'} ${esc(x.name)}</div>`).join('') : '';
+    el.innerHTML = `<h4>Testing now</h4><div class="live"><table>` +
+      row('Phase', esc(L.phase) + (L.phaseTotal ? ' · ' + (R.phases[L.phase] ? Math.min(L.phaseTotal, R.scenarios - R.phases[L.phase].s0) : 0) + ' of ' + L.phaseTotal : '')) +
+      row('Scenario', esc(L.scenario) + (L.stepTotal ? ' — step ' + L.stepNo + ' of ' + L.stepTotal : '')) +
+      row('Stage', esc(L.stage)) +
+      row('Control', c ? `<b>${esc(c.label)}</b> <span class="note">${esc(c.kind)} · ${esc(c.id)}</span>` : '') +
+      row('Value', val !== undefined ? `<code>${esc(JSON.stringify(String(val).slice(0, 40)))}</code> — ${esc(classifyValue(val))}` : '') +
+      row('Purpose', L.purpose ? esc('To ' + L.purpose + '.') : '') +
+      row('Expecting', exp.length ? esc(exp.join('; ')) : '') +
+      row('Changed', L.diff ? (L.diff.length ? esc(L.diff.join(', ')) : '<span class="warn">nothing changed on screen</span>') : '') +
+      row('Response', L.ms ? Math.round(L.ms) + ' ms' + (L.fr ? ' · frames avg ' + L.fr.avg + ' ms, p95 ' + L.fr.p95 + ' ms, worst ' + L.fr.max + ' ms' : '') : '') +
+      row('Calc audit', au) +
+      row('Checks', chips) +
+      row('Flow checks', fl) +
+      row('Problems so far', R.issues.length ? `<span class="bad">${R.issues.length}</span>` : '<span class="ok">none</span>') +
+      `</table><div class="trace">${L.log.slice(-14).reverse().map(x => `<div class="${x.problems ? 'bad' : ''}">${x.at}s · ${esc(x.step)}${x.changed && x.changed.length ? ' → ' + esc(x.changed.join(', ')) : ''}${x.ms ? ' · ' + x.ms + ' ms' : ''}${x.problems ? ' · ' + x.problems + ' problem(s)' : ''}</div>`).join('')}</div></div>`;
   }
   const expected = R => { const M = MODES[R.mode]; return R.controls * 1.4 + M.pairs + M.combos + M.seqs + FLOWS.length * M.loops; };
   function text(R) {
@@ -445,6 +629,7 @@
     L.push('', 'FLOWS'); R.flows.forEach(f => L.push('- ' + f.name + ': ' + f.passed + '/' + f.checks + (f.fails.length ? '  FAILED: ' + f.fails.join(' | ') : '')));
     L.push('', 'SMOOTHNESS BY KIND'); R.sections.forEach(s => L.push('- ' + s.name + ': ' + s.grade.word + ' (p95 ' + s.p95 + ' ms, worst ' + s.max + ' ms)'));
     L.push('', 'SLOWEST CONTROLS'); R.slowest.forEach(s => L.push('- ' + s.label + ': p95 ' + s.p95 + ' ms (' + s.uses + ' uses)'));
+    L.push('', 'TESTER TRACE (last 40 steps)'); (R.trace || []).slice(-40).forEach(x => L.push('- ' + x.at + 's ' + x.step + (x.changed.length ? ' -> ' + x.changed.join(', ') : '') + (x.problems ? ' [' + x.problems + ' problem(s)]' : '')));
     L.push('', 'DID NOTHING'); R.noop.forEach(s => L.push('- ' + s.label + ' (' + s.uses + ' uses)'));
     return L.join('\n');
   }
