@@ -9,6 +9,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Triangle Thing</title>
 <link rel="stylesheet" href="fa/css/all.min.css">
+<link rel="stylesheet" href="icon_motion.css">
 <link rel="preload" href="fa/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 :root{
@@ -425,6 +426,54 @@ body.view-only #exitViewOnly{
   #searchWrap{width:140px}
 }
 
+/* ---------------- Sidebar, in the Shop Tool Sim style ---------------- */
+:root{--raise:#1b1d20;--raise-2:#24272b;--side-bg:#131416;--side-line:#222428;--side-ink:#ececee;--c0:#5b93ea;--c1:#5fcf8a;--c2:#e8b547;--c3:#a78bfa;--c4:#f472b6;--c5:#fb923c;--c6:#94a3b8}
+:root[data-theme="light"]{--raise:#eceef2;--raise-2:#e0e3e9;--side-bg:#fbfbfd;--side-line:#e4e4ea;--side-ink:#17171a;--c0:#2f63c9;--c1:#1e9455;--c2:#b97d0c;--c3:#6d4fd6;--c4:#c2377f;--c5:#d4640f;--c6:#5f6b7c}
+#sidebar{background:var(--side-bg);border-right:1px solid var(--side-line)}
+.side-logo{flex:0 0 auto;padding:20px 18px 14px;text-align:center}
+.side-logo .logo-mark{margin:0;font-family:'Bebas Neue','Inter',sans-serif;font-size:2.35rem;font-weight:400;letter-spacing:.055em;line-height:.9;color:#e4e6ea;display:flex;align-items:center;justify-content:center;gap:.28em;user-select:none}
+:root[data-theme="light"] .side-logo .logo-mark{color:#17171a}
+.side-logo .logo-bot{letter-spacing:.1em;text-indent:.1em}
+@supports (-webkit-text-stroke:1px black){ .side-logo .logo-bot{-webkit-text-stroke:1.4px #e4e6ea} :root[data-theme="light"] .side-logo .logo-bot{-webkit-text-stroke:1.4px #17171a} }
+.logo-rule{width:100%;max-width:210px;height:1.5px;margin:12px auto 8px;background:linear-gradient(90deg,transparent 0%,var(--side-ink) 50%,transparent 100%);opacity:.35}
+.logo-foot{display:flex;align-items:center;justify-content:center;min-height:22px}
+.logo-range{color:var(--txt-3);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.side-scroll{padding-bottom:0}
+.sec{--sc:var(--c6);border-bottom:1px solid var(--side-line);background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 22%,transparent) 0%,color-mix(in srgb,var(--sc) 8%,transparent) 45%,transparent 100%);box-shadow:inset 3px 0 0 color-mix(in srgb,var(--sc) 75%,transparent)}
+.sec::before{display:none}
+.sec{display:flow-root}
+.sec.cat-0{--sc:var(--c0)}.sec.cat-1{--sc:var(--c1)}.sec.cat-2{--sc:var(--c2)}.sec.cat-3{--sc:var(--c3)}.sec.cat-4{--sc:var(--c4)}.sec.cat-5{--sc:var(--c5)}.sec.cat-6{--sc:var(--c6)}
+.sec-head{position:relative;margin:16px 18px 0;padding:0 0 9px;gap:9px;color:color-mix(in srgb,var(--sc) 55%,var(--side-ink))}
+.sec-head:hover{background:transparent;color:color-mix(in srgb,var(--sc) 35%,var(--side-ink))}
+.sec-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--sc) 0%,color-mix(in srgb,var(--sc) 45%,#5b93ea) 42%,transparent 100%)}
+.sec-head i.ico{font-size:12px;width:14px;color:var(--sc)}
+.sec-head span{font-family:"Roboto","Inter",system-ui,sans-serif;font-style:italic;font-weight:700;font-size:13px;letter-spacing:.1em;line-height:1.2}
+.sec-head i.chev{color:var(--sc)}
+.sec-body{padding:12px 18px 16px;gap:4px}
+.row{background:var(--raise);border-radius:6px;padding:6px 10px;gap:10px;font-size:12px}
+.row.clickable:hover{background:var(--raise-2)}
+.row .k{color:var(--txt-2)}
+.row .v{font-weight:600;color:var(--side-ink)}
+.row .v.dim{font-weight:500}
+.tblock{margin-top:2px;background:var(--raise);border-radius:8px;padding:6px 8px}
+.tblock .thdr{border-bottom-color:var(--side-line)}
+.trow:hover{background:var(--raise-2)}
+.trow .c{font-weight:600;color:var(--side-ink)}
+.chip{border:0;border-radius:6px;background:var(--raise);color:var(--txt-2);font-weight:600;padding:5px 10px}
+.chip.on{background:var(--side-ink);color:var(--side-bg)}
+.audit-bar{border-top:1px solid var(--side-line);padding:9px 18px;font-weight:500}
+.audit-bar::before{content:none}
+.side-foot{border-top:1px solid var(--side-line);padding:10px 18px;gap:12px}
+.pf-lbl{font-weight:700;letter-spacing:.1em}
+.stepper button{background:var(--raise);border:0;width:24px;height:24px;color:var(--txt)}
+.stepper button:hover{background:var(--raise-2)}
+.stepper .val{background:var(--raise);border:0;width:26px;height:24px;font-weight:600}
+.toggle2{border:0;border-radius:6px;background:var(--raise)}
+.toggle2 button{height:24px;background:var(--raise);font-weight:600;color:var(--txt-2)}
+.toggle2 button:hover{background:var(--raise-2)}
+.toggle2 button.on{background:var(--side-ink);color:var(--side-bg)}
+.toggle2 button+button{border-left:0}
+
 /* ---------------- Leader arrows (drawn when labels overlap) ---------------- */
 #leaders{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 #leaders .ld{opacity:0;transition:opacity .18s var(--ease)}
@@ -504,6 +553,15 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
 
 <div id="appBody">
   <aside id="sidebar">
+    <header class="side-logo" aria-hidden="true">
+      <div class="logo-mark">
+        <span class="logo-brk">[</span>
+        <span class="logo-stack"><span class="logo-top">Triangle</span><span class="logo-bot">Thing</span></span>
+        <span class="logo-brk">]</span>
+      </div>
+      <div class="logo-rule"></div>
+      <div class="logo-foot"><span class="logo-range">3 sides · 3 angles · live math</span></div>
+    </header>
     <div class="side-scroll" id="stats"></div>
     <button class="audit-bar" id="auditBar" data-state="idle" data-tip-pos="top-start" data-tip="Every number in this panel is re-derived a second way and compared — click for the details" aria-label="Calculation audit"><i class="fa-solid fa-shield-halved"></i><span class="at" id="auditText">Verifying calculations…</span><span class="am" id="auditMeta"></span></button>
     <div class="side-foot">
