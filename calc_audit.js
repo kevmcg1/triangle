@@ -22,9 +22,11 @@ function calcAudit(D) {
   /* a position can't be known better than the floating-point spacing of the coordinates themselves, however small the triangle is */
   const pos = sc + 1e-6 * Math.max(...P.map(q => Math.max(Math.abs(q.x), Math.abs(q.y))));
   /* thinner than about one part in 1e9 and even the stable Heron formula runs out of digits: only the basics apply */
-  const degenerate = !(D.area > 1e-9 * sc * sc) || !(minSide > 1e-9 * sc);
   /* ill-conditioned slivers lose digits in every formula, even correct ones: widen the tolerance with how thin the triangle is */
-  const cond = Math.min(1e12, Math.max(1, sc * sc / Math.max(D.area, 1e-300)));   /* about 1 / sin(thinnest angle) */
+  const mag0 = Math.max(...P.map(q => Math.max(Math.abs(q.x), Math.abs(q.y))));
+  /* about 1 / sin(thinnest angle), made worse when the triangle is small and far from the origin (its sides are differences of big numbers) */
+  const cond = Math.min(1e15, Math.max(1, sc * sc / Math.max(D.area, 1e-300)) * (1 + mag0 / sc));
+  const degenerate = !(D.area > 1e-9 * sc * sc) || !(minSide > 1e-9 * sc) || cond > 1e10 || mag0 > 1e7 * sc;   /* a triangle far smaller than its distance from the origin is mostly rounding noise */
   const TOL = Math.min(1e-2, 1e-9 * cond);
   const group = (g, kind) => (label, expected, actual, o) => {
     o = o || {};
@@ -141,7 +143,7 @@ function calcAudit(D) {
           if (Math.abs(ex.cos) < 1e-7 && (fn === 'tan' || fn === 'sec') || !Number.isFinite(want)) continue;
           if (Math.abs(want) > 1e8) continue;
         }
-        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: rightRule ? Math.PI / 180 * Math.pow(10, -S.prec) + 1e-8 : 1e-8 * Math.min(cond, 1e4) });
+        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: rightRule ? Math.PI / 180 * Math.pow(10, -S.prec) + 1e-8 : Math.min(1e-2, 1e-9 * cond) });
       }
       ident('Trigonometry', 'sin² + cos² = 1 at ' + names[i], 1, ex.sin ** 2 + ex.cos ** 2, { tol: 1e-12 });
       ident('Trigonometry', 'Law of Sines ' + low[i] + ' / sin ' + names[i] + ' = 2R', 2 * D.R, sides[i] / Math.sin(D.ang[i]), { tol: 1e-8 * cond });

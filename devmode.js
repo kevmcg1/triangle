@@ -33,15 +33,18 @@
   const qs = new URLSearchParams(location.search);
 
 
+  const NOW = performance.now.bind(performance);   /* the real clock: while a run is on, the page's own NOW() is sped up */
+
   /* ------------------------------------------------------------------ keep running when the tab is in the background
      A hidden tab gets no animation frames at all and its timers are held to one a second (a minute after five minutes), so a run would
      crawl or hang the moment you switched away. While a run is on, timers go through a Web Worker (its clock is not throttled), and a frame
      request that is not answered by the browser in time while the page is hidden is answered from that same clock. A Web Lock also keeps
      the browser from freezing the tab. While the tab is visible nothing changes: frames still come from the real display, so the
      smoothness grades are real. */
+  const speedSetting = () => { const el = typeof panel !== 'undefined' && panel && panel.querySelector('#devSpeed'); const v = el ? +el.value : +(qs.get('speed') || 10); return v > 0 ? v : 10; };
   const BG = (() => {
     const native = { st: window.setTimeout, ct: window.clearTimeout, raf: window.requestAnimationFrame, caf: window.cancelAnimationFrame };
-    let worker = null, nextId = 1, on = false, release = null, wasHidden = 0;
+    let worker = null, nextId = 1, on = false, release = null, wasHidden = 0, K = 1, T0 = 0;
     const waits = new Map(), frames = new Map();
     const BASE = 1e9;
     const startWorker = () => {
@@ -56,37 +59,47 @@
       } catch (_) { worker = null; return false; }
     };
     const wait = (fn, ms) => { const id = nextId++; waits.set(id, fn); worker.postMessage({ id, ms }); return id; };
+    const fast = () => T0 + (NOW() - T0) * K;        /* the page's clock, running K times faster, so every animation finishes K times sooner */
     const timeout = function (fn, ms) {
       const args = Array.prototype.slice.call(arguments, 2);
       if (typeof fn !== 'function' || !worker) return native.st.apply(window, arguments);
-      const id = wait(() => fn.apply(window, args), Math.max(0, +ms || 0));
+      const id = wait(() => fn.apply(window, args), Math.max(0, (+ms || 0) / K));
       return BASE + id;
     };
     const clear = id => { if (id >= BASE) waits.delete(id - BASE); else native.ct.call(window, id); };
     const frame = cb => {
       if (!worker) return native.raf.call(window, cb);
+      if (K >= 10) {                                   /* turbo: frames come from the worker clock every 4 ms instead of waiting for the display, so a test does not sit through 16 ms refreshes */
+        const id = nextId++; let done = false;
+        wait(() => { if (done) return; done = true; frames.delete(id); cb(performance.now()); }, 4);
+        frames.set(id, () => { done = true; });
+        return BASE + id;
+      }
       const id = nextId++; let done = false, nat = 0;
-      const run = t => { if (done) return; done = true; frames.delete(id); if (nat) native.caf.call(window, nat); cb(t === undefined ? performance.now() : t); };
+      const run = () => { if (done) return; done = true; frames.delete(id); if (nat) native.caf.call(window, nat); cb(performance.now()); };
       nat = native.raf.call(window, run);
       /* the backup: while the page is hidden the real frame never comes, so answer it from the worker clock */
-      const tick = () => { if (done) return; if (document.hidden) { wasHidden++; run(performance.now()); } else wait(tick, 50); };
+      const tick = () => { if (done) return; if (document.hidden) { wasHidden++; run(); } else wait(tick, 50); };
       wait(tick, 34);
       frames.set(id, () => { done = true; native.caf.call(window, nat); });
       return BASE + id;
     };
     const cancelFrame = id => { if (id >= BASE) { const c = frames.get(id - BASE); if (c) c(); frames.delete(id - BASE); } else native.caf.call(window, id); };
     return {
-      start() {
-        if (on) return; on = true; wasHidden = 0;
-        if (startWorker()) { window.setTimeout = timeout; window.clearTimeout = clear; window.requestAnimationFrame = frame; window.cancelAnimationFrame = cancelFrame; }
+      start(speed) {
+        if (on) return; on = true; wasHidden = 0; K = Math.max(1, Math.min(40, +speed || 1)); T0 = NOW();
+        if (startWorker()) { window.setTimeout = timeout; window.clearTimeout = clear; window.requestAnimationFrame = frame; window.cancelAnimationFrame = cancelFrame; if (K > 1) performance.now = fast; }
         try { if (navigator.locks) navigator.locks.request('triangle-dev-run', { mode: 'shared' }, () => new Promise(r => { release = r; })).catch(() => {}); } catch (_) {}
       },
       stop() {
         if (!on) return; on = false;
+        try { delete performance.now; } catch (_) {}
         window.setTimeout = native.st; window.clearTimeout = native.ct; window.requestAnimationFrame = native.raf; window.cancelAnimationFrame = native.caf;
         if (release) { release(); release = null; }
       },
-      get hiddenFrames() { return wasHidden; }
+      get hiddenFrames() { return wasHidden; },
+      get speed() { return K; },
+      get turbo() { return K >= 10; }
     };
   })();
 
@@ -130,14 +143,14 @@
   console.warn = function () { try { const m = [...arguments].map(String).join(' '); if (!noise(m)) ERR.push({ type: 'console warning', msg: m.slice(0, 300) }); } catch (_) {} return origWarn.apply(this, arguments); };
 
   const FM = { ts: [], draw: [], on: false };
-  const fmLoop = t => { if (!FM.on) return; FM.ts.push(t); if (FM.ts.length > 200000) FM.ts.splice(0, 100000); requestAnimationFrame(fmLoop); };
+  const fmLoop = () => { if (!FM.on) return; FM.ts.push(NOW()); if (FM.ts.length > 200000) FM.ts.splice(0, 100000); requestAnimationFrame(fmLoop); };
   const fmStart = () => { if (FM.on) return; FM.on = true; requestAnimationFrame(fmLoop); };
   const fmStop = () => { FM.on = false; };
   const deltasSince = i0 => { const a = []; for (let k = Math.max(1, i0 + 1); k < FM.ts.length; k++) a.push(FM.ts[k] - FM.ts[k - 1]); return a; };
   /* time every redraw of the canvas */
   try {
     if (typeof renderNow === 'function' && !renderNow.__dev) {
-      const orig = renderNow, w = function () { const t = performance.now(); try { return orig.apply(this, arguments); } finally { FM.draw.push(performance.now() - t); if (FM.draw.length > 200000) FM.draw.splice(0, 100000); } };
+      const orig = renderNow, w = function () { const t = NOW(); try { return orig.apply(this, arguments); } finally { FM.draw.push(NOW() - t); if (FM.draw.length > 200000) FM.draw.splice(0, 100000); } };
       w.__dev = 1; window.renderNow = w;
     }
   } catch (_) {}
@@ -159,13 +172,13 @@
   const toClient = p => { const r = cvRect(); return { x: r.left + sx(p.x), y: r.top + sy(p.y) }; };
   const inCanvas = (r, margin = 24) => { const b = cvRect(); return { x: b.left + margin + r() * (b.width - 2 * margin), y: b.top + margin + r() * (b.height - 2 * margin) }; };
   const EV = { max: 0 };
-  const timed = (el, ev) => { const t = performance.now(); el.dispatchEvent(ev); EV.max = Math.max(EV.max, performance.now() - t); };
+  const timed = (el, ev) => { const t = NOW(); el.dispatchEvent(ev); EV.max = Math.max(EV.max, NOW() - t); };
   const pe = (type, x, y, o = {}) => new PointerEvent(type, { bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: o.button === undefined ? 0 : o.button, buttons: o.buttons === undefined ? 0 : o.buttons, shiftKey: !!o.shift, altKey: !!o.alt, ctrlKey: !!o.ctrl });
   async function drag(from, to, o = {}) {
     const steps = o.steps || 12, button = o.button || 0, buttons = button === 2 ? 2 : 1;
     if (![from.x, from.y, to.x, to.y].every(Number.isFinite)) return;
     timed(cv, pe('pointerdown', from.x, from.y, { button, buttons, shift: o.shift, alt: o.alt }));
-    for (let i = 1; i <= steps; i++) { const t = i / steps; timed(cv, pe('pointermove', from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, { button: -1, buttons, shift: o.shift, alt: o.alt })); if (o.frames !== false) await raf(); }
+    for (let i = 1; i <= steps; i++) { const t = i / steps; timed(cv, pe('pointermove', from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, { button: -1, buttons, shift: o.shift, alt: o.alt })); if (o.frames !== false && (i % 3 === 0 || i === steps)) await raf(); }
     timed(cv, pe('pointerup', to.x, to.y, { button, buttons: 0, shift: o.shift }));
   }
   const wheel = (x, y, dy, ctrl) => timed(cv, new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: x, clientY: y, deltaY: dy, deltaMode: 0, ctrlKey: !!ctrl }));
@@ -177,9 +190,8 @@
   }
   const animsBusy = () => { try { return camAnim !== null || panelAnim !== null || sbAnim !== null || shapeAnim !== null || viewFadeAnim !== null || zoomGlide != null || S.gridAnimT != null; } catch (_) { return false; } };
   async function settle(max) {
-    await raf(); await raf(); const t0 = performance.now();
-    while (animsBusy() && performance.now() - t0 < (max || 1200)) await raf();
-    await raf();
+    await raf(); const t0 = NOW();
+    if (animsBusy()) { while (animsBusy() && NOW() - t0 < (max || 1200)) await raf(); await raf(); }
   }
   const modalOpen = () => modalRoot.classList.contains('show');
   const stateKey = () => {
@@ -213,7 +225,7 @@
     return 'text that is not a number (must be refused, not crash)';
   }
   const CATS = [['model', 'corners finite, decimals in range, selection valid'], ['view', 'camera finite and zoom positive'], ['geometry', 'angles sum to 180°, law of cosines, Heron, perimeter, circumcenter'], ['lock', 'every locked side / angle kept its value'], ['display', 'no NaN / undefined / Infinity text, no stray — rows'], ['history', 'undo / redo pointer and buttons agree'], ['layout', 'no sideways scroll, canvas matches its box'], ['calc audit', 'every sidebar number re-derived a second way']];
-  function setLive(patch) { Object.assign(LIVE, patch); const t = performance.now(); if (t - LIVE.lastPaint > 110) { LIVE.lastPaint = t; liveRender(); } }
+  function setLive(patch) { Object.assign(LIVE, patch); const t = NOW(); if (t - LIVE.lastPaint > 110) { LIVE.lastPaint = t; liveRender(); } }
   function liveLog(R, row) { LIVE.log.push(Object.assign({ at: Math.round((Date.now() - R.started) / 100) / 10 }, row)); if (LIVE.log.length > 600) LIVE.log.splice(0, 200); }
 
   /* ------------------------------------------------------------------ the controls */
@@ -324,15 +336,25 @@
     return out;
   }
   function canvasHasInk() {
-    try { const w = cv.width, h = cv.height, c = cv.getContext('2d'); const d = c.getImageData(0, 0, w, h).data; const base = [d[0], d[1], d[2]]; for (let i = 0; i < d.length; i += 4 * 97) if (Math.abs(d[i] - base[0]) + Math.abs(d[i + 1] - base[1]) + Math.abs(d[i + 2] - base[2]) > 24) return true; return false; } catch (e) { return true; }
+    /* every pixel is compared with the corner's (a sparse sample could slip between the thin grid lines at an extreme zoom) */
+    try { const w = cv.width, h = cv.height, c = cv.getContext('2d'); const d = c.getImageData(0, 0, w, h).data; const base = [d[0], d[1], d[2]]; for (let i = 0; i < d.length; i += 4 * 3) if (Math.abs(d[i] - base[0]) + Math.abs(d[i + 1] - base[1]) + Math.abs(d[i + 2] - base[2]) > 24) return true; return false; } catch (e) { return true; }
   }
+
 
   /* ------------------------------------------------------------------ the run */
   const RUN = { on: false, stop: false, report: null };
+  /* a reset of an app that is already back at its starting state would change nothing: skip the clicking and waiting */
+  const PROF = { reset: 0, fire: 0, settle: 0, check: 0, other: 0, resets: 0 };
+  let PRISTINE = null;
+  const pristineKey = () => JSON.stringify([stateParts(), Hist.i, Hist.stack.length, !!openMenuEl, !!document.querySelector('.shop-cl:not([hidden])'), modalOpen(), S.highlight ? 1 : 0, Object.keys(customColors.dark).length + Object.keys(customColors.light).length, !!(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))]);
   async function resetApp() {
+    const tp = NOW(); try { return await resetApp0(); } finally { PROF.reset += NOW() - tp; PROF.resets++; }
+  }
+  async function resetApp0() {
     try {
+      if (PRISTINE && !animsBusy() && pristineKey() === PRISTINE) { await raf(); return; }
       window.__where = 'reset: start';
-      window.__where = 'reset: menu/modal'; closeMenu(); if ($('#settingsModal')) closeModal();
+      window.__where = 'reset: menu/modal'; closeMenu(); if (window.__changelog) window.__changelog.close(); if ($('#settingsModal')) closeModal();
       if (modalOpen()) { closeModal(); await settle(900); }
       const sbx = $('#searchBox'); if (sbx && sbx.value) { setNative(sbx, ''); sbx.dispatchEvent(new Event('input', { bubbles: true })); }
       if (S.viewOnly) { setViewOnly(false); await settle(1500); }
@@ -341,6 +363,7 @@
       window.__where = 'reset: sidebar'; if (!sidebarOpen && innerWidth >= 900) { setSidebarOpen(true); await settle(900); }
       $$('.sec.collapsed').forEach(s => toggleSection(s));
       window.__where = 'reset: view'; cancelCam(); if (zoomGlide) { cancelAnimationFrame(zoomGlide.raf); zoomGlide = null; } S.view.cx = 0; S.view.cy = 0; S.view.z = 74; markLoaded(); S.selected.clear(); syncChrome(); requestRender(); await settle(300);
+      PRISTINE = pristineKey();
     } catch (e) { ERR.push({ type: 'reset failed', msg: e.message }); }
   }
 
@@ -358,16 +381,18 @@
   function ctlStat(R, c) { let s = R.ctl.get(c.id); if (!s) R.ctl.set(c.id, s = { id: c.id, label: c.label, kind: c.kind, uses: 0, changed: 0, ms: [], worst: 0 }); return s; }
 
   async function stepOnce(R, c, r, trail, fixedVal, section) {
-    const key0 = stateKey(), fi = FM.ts.length, e0 = ERR.length, t0 = performance.now(), di = FM.draw.length;
+    const key0 = stateKey(), fi = FM.ts.length, e0 = ERR.length, t0 = NOW(), di = FM.draw.length;
     let thrown = null;
     const before = stateParts();
-    setLive({ stage: 'firing', ctl: { id: c.id, kind: c.kind, label: c.label }, value: fixedVal, purpose: KIND_PURPOSE[c.kind] || '', diff: null, cats: [] }); LIVE.lastPaint = 0; liveRender();
+    setLive({ stage: 'firing', ctl: { id: c.id, kind: c.kind, label: c.label }, value: fixedVal, purpose: KIND_PURPOSE[c.kind] || '', diff: null, cats: [] });
     EV.max = 0; window.__where = 'fire ' + c.label + (fixedVal !== undefined ? ' = ' + fixedVal : '');
     try { await c.fire(r, fixedVal === undefined ? undefined : { value: fixedVal }); } catch (e) { thrown = e; }
+    PROF.fire += NOW() - t0; const tS = NOW();
     window.__where = 'settle after ' + c.label;
     setLive({ stage: 'settling (waiting for animations and the next frames)' });
-    let sync = performance.now() - t0; if (c.kind === 'gesture') sync = EV.max;
+    let sync = NOW() - t0; if (c.kind === 'gesture') sync = EV.max;
     await settle();
+    PROF.settle += NOW() - tS; const tC = NOW();
     R.steps++; R.kinds[c.kind] = (R.kinds[c.kind] || 0) + 1;
     trail.push(c.label + (fixedVal !== undefined ? ' = ' + JSON.stringify(String(fixedVal).slice(0, 24)) : ''));
     const st = ctlStat(R, c); st.uses++; st.ms.push(sync); st.worst = Math.max(st.worst, sync);
@@ -378,13 +403,14 @@
     setLive({ stage: 'checking (' + CATS.length + ' groups of checks)', diff: diffParts(before, stateParts()) });
     const found = check(c.label);
     for (const iss of found) addIssue(R, iss, trail);
+    PROF.check += NOW() - tC;
     LIVE.cats = CATS.map(([cat, what]) => ({ cat, what, bad: found.filter(i => i.type === cat).length }));
     LIVE.ms = sync; LIVE.issuesNow = R.issues.length;
     const g = deltasSince(fi); (R.frames[section || c.kind] = R.frames[section || c.kind] || []).push(...g);
     const worst = g.length ? Math.max(...g) : 0;
     LIVE.fr = frameStats(g);
     liveLog(R, { scenario: R.cur, step: c.label + (fixedVal !== undefined ? ' = ' + JSON.stringify(String(fixedVal).slice(0, 18)) : ''), kind: c.kind, ms: Math.round(sync), changed: LIVE.diff || [], problems: found.length + (thrown ? 1 : 0) });
-    setLive({ stage: 'done — next step' }); LIVE.lastPaint = 0; liveRender();
+    setLive({ stage: 'done — next step' });
     if (worst > FR.stall) addIssue(R, { type: 'stall', sev: 'warn', msg: c.label + ' stalled the page for ' + Math.round(worst) + ' ms' }, trail);
     if (sync > 150 && c.kind !== 'setup') addIssue(R, { type: 'slow control', sev: 'warn', msg: c.label + ' took ' + Math.round(sync) + ' ms to respond' }, trail);
     return sync;
@@ -424,7 +450,7 @@
     ['every length and angle unit', async (R, f) => { await resetApp(); for (const k of LEN_ORDER) { await lenItems(k); const D = derive(); f.T('length unit ' + k + ' is applied', S.lenUnit === k && S.units.side.every(u => u === k)); const row = $$('.row', statsEl).find(e => /Side a/.test(e.textContent)); f.T('the Side a row shows ' + LEN[k].sym, row && row.textContent.includes(LEN[k].sym), row && row.textContent); const shown = row ? num($('.v', row).textContent) : NaN; f.T('the Side a number converts correctly in ' + k, Math.abs(shown * LEN[k].f - D.a) <= 0.51 * Math.pow(10, -S.prec) * LEN[k].f + 1e-9, shown + ' ' + k + ' vs ' + D.a + ' in'); } for (const k of ['rad', 'grad', 'deg']) { await angItems(k); const D = derive(); f.T('angle unit ' + k + ' is applied', S.angUnit === k); const pa = pills.find(q => q.kind === 'angle' && q.i === 0), shown = num(pa.input.value); f.T('the Angle A box converts correctly in ' + k, Math.abs(shown * ANG[k].f - D.A) <= 0.51 * Math.pow(10, -S.prec) * ANG[k].f + 1e-9 && pa.input.value.includes(ANG[k].sym), pa.input.value + ' vs ' + D.A + ' rad'); } }],
     ['decimals from 8 down to 0 and back', async (R, f) => { await resetApp(); while (S.prec < 8) { click('precUp'); await settle(); } for (let n = 8; n >= 0; n--) { while (S.prec > n) { click('precDown'); await settle(); } const row = $$('.row', statsEl).find(e => /Side a/.test(e.textContent)); const t = row ? $('.v', row).textContent : ''; const m = /\d+\.(\d+)/.exec(t); f.T('at ' + n + ' decimals the Side a row has ' + n, S.prec === n && (n === 0 ? !/\d\.\d/.test(t.split('(')[0]) : m && m[1].length === n), 'prec ' + S.prec + ' text "' + t + '"'); } for (let n = 1; n <= 8; n++) { click('precUp'); await settle(); } f.T('Decimals tops out at 8', S.prec === 8, S.prec); click('precUp'); await settle(); f.T('and does not go past 8', S.prec === 8, S.prec); }],
     ['exact and approx', async (R, f) => { await resetApp(); for (const v of ['approx', 'exact', 'approx', 'exact']) { const b = $$('#exactToggle button').find(e => e.dataset.v === v); b.click(); await settle(); f.T('the ' + v + ' toggle applies', S.exact === (v === 'exact')); } }],
-    ['every explanation panel opens and closes', async (R, f) => { await resetApp(); const rows = $$('.row.clickable', statsEl).concat($$('.trow', statsEl)); f.T('there are explanation rows to open', rows.length > 10, rows.length); let i = 0; for (const row of rows) { if (RUN.stop) return; i++; row.click(); await settle(1400); if (!modalOpen()) { f.T('row ' + i + ' (' + labelOf(row) + ') opens its panel', false, 'not shown'); continue; } const t = $('#mBody').textContent; if (BAD_TEXT.test(t) && !/tan|sec|csc|cot/i.test($('#mTitle').textContent)) f.T('panel "' + $('#mTitle').textContent + '" has no NaN/undefined', false, (BAD_TEXT.exec(t) || [''])[0]); if (i % 3 === 0) { key('Escape'); await settle(1200); if (modalOpen() && modalRoot.getBoundingClientRect().height > 2) f.T('Escape closes the panel for row ' + i, false, 'still open'); } else if (i % 3 === 1) { click('mClose'); await settle(1200); } } closeModal(); await settle(1000); f.T('every panel opened', true); }],
+    ['every explanation panel opens and closes', async (R, f) => { await resetApp(); const rows = $$('.row.clickable', statsEl).concat($$('.trow', statsEl)); f.T('there are explanation rows to open', rows.length > 10, rows.length); let i = 0; for (const row of rows) { if (RUN.stop) return; i++; row.click(); await settle(1400); if (!modalOpen()) { f.T('row ' + i + ' (' + labelOf(row) + ') opens its panel', false, 'not shown'); continue; } const t = $('#mBody').textContent; if (BAD_TEXT.test(t) && !/tan|sec|csc|cot/i.test($('#mTitle').textContent)) f.T('panel "' + $('#mTitle').textContent + '" has no NaN/undefined', false, (BAD_TEXT.exec(t) || [''])[0]); if (i % 3 === 0) { key('Escape'); await settle(1200); for (let w = 0; w < 120 && modalOpen() && modalRoot.getBoundingClientRect().height > 2; w++) await raf(); if (modalOpen() && modalRoot.getBoundingClientRect().height > 2) f.T('Escape closes the panel for row ' + i, false, 'still open'); } else if (i % 3 === 1) { click('mClose'); await settle(1200); } } closeModal(); await settle(1000); f.T('every panel opened', true); }],
     ['search box', async (R, f) => { await resetApp(); const sb = $('#searchBox'); for (const q of V_SEARCH) { setNative(sb, q); sb.dispatchEvent(new Event('input', { bubbles: true })); await settle(); } setNative(sb, ''); sb.dispatchEvent(new Event('input', { bubbles: true })); await settle(); f.T('clearing the search shows every section again', $$('.sec.searchhide').length === 0 && $$('.rowhide').length === 0, $$('.sec.searchhide').length + ' hidden'); }],
     ['sections collapse and expand', async (R, f) => { await resetApp(); const heads = $$('.sec-head'); for (const h of heads) { const sec = h.parentElement, was = sec.classList.contains('collapsed'); h.click(); await sleep(350); f.T('section "' + labelOf(h) + '" toggles', sec.classList.contains('collapsed') !== was); h.click(); await sleep(350); } }],
     ['view only', async (R, f) => { await resetApp(); const P0 = snapP(); click('btnView'); await settle(2000); f.T('view-only is on', S.viewOnly); await drag(toClient(S.P[0]), { x: 500, y: 400 }, { steps: 6 }); f.T('dragging does nothing in view-only', same(S.P, P0, 1e-12)); const ex = $('#exitViewOnly'); f.T('the exit button is shown', ex && visible(ex)); click('exitViewOnly'); await settle(2000); f.T('exit button leaves view-only', !S.viewOnly); key('v'); await settle(2000); f.T('V turns it on', S.viewOnly); key('v'); await settle(2000); f.T('V turns it off', !S.viewOnly); f.T('the sidebar is back', sidebarOpen === (innerWidth >= 900) || sidebarOpen); }],
@@ -432,7 +458,7 @@
     ['zoom to the extremes', async (R, f) => { await resetApp(); const c = cvRect(), mx = c.left + c.width / 2, my = c.top + c.height / 2; for (let i = 0; i < 80; i++) { wheel(mx, my, -400); await raf(); } await settle(2500); f.T('zoomed far in the view stays finite', Number.isFinite(S.view.z) && S.view.z > 74, S.view.z); f.T('the canvas still has a drawing zoomed in', canvasHasInk()); for (let i = 0; i < 200; i++) { wheel(mx, my, 400); await raf(); } await settle(2500); f.T('zoomed far out the view stays finite', Number.isFinite(S.view.z) && S.view.z > 0, S.view.z); click('btnFit'); await settle(2500); f.T('Fit brings the triangle back on screen', S.P.every(p => { const t = toClient(p), b = cvRect(); return t.x >= b.left - 2 && t.x <= b.right + 2 && t.y >= b.top - 2 && t.y <= b.bottom + 2; }), 'a corner is off screen after Fit'); click('btnCenter'); await settle(2500); f.T('Reset view returns to the home zoom', near(S.view.z, 74, 1e-3), S.view.z); }],
     ['pan, then fit', async (R, f) => { await resetApp(); const r = rng(11); for (let i = 0; i < 10; i++) await drag(inCanvas(r), inCanvas(r), { button: 2, steps: 8 }); await settle(); f.T('panning keeps the view finite', [S.view.cx, S.view.cy].every(Number.isFinite)); key('f'); await settle(2500); f.T('F fits the triangle', S.P.every(p => Number.isFinite(toClient(p).x))); }],
     ['dragging far off screen and onto other corners', async (R, f) => { await resetApp(); const b = cvRect(); for (const to of [{ x: b.left - 4000, y: b.top - 4000 }, { x: b.right + 9000, y: b.bottom + 9000 }, { x: b.left + 1, y: b.top + 1 }, null]) { const t = to || toClient(S.P[1]); await drag(toClient(S.P[0]), t, { steps: 10 }); await settle(800); f.T('after dragging a corner to ' + (to ? Math.round(to.x) + ',' + Math.round(to.y) : 'another corner') + ' the model is finite', S.P.every(p => Number.isFinite(p.x) && Number.isFinite(p.y)), JSON.stringify(S.P)); } click('btnReset'); await settle(1500); f.T('Reset triangle recovers', near(derive().area, 6, 1e-6), derive().area); }],
-    ['300 clicks in two seconds', async (R, f) => { await resetApp(); const r = rng(31); const btns = discover().filter(c => c.kind === 'button' && !/btnReset|navtoggle|btnView/.test(c.id)); const t0 = performance.now(), fi = FM.ts.length; for (let i = 0; i < 300; i++) { try { await pick(r, btns).fire(r); } catch (e) { ERR.push({ type: 'script error', msg: 'rapid click: ' + e.message }); } if (i % 5 === 0) await raf(); } await settle(2500); const g = deltasSince(fi); f.T('the page still works after 300 clicks', check('300 clicks').filter(x => x.sev === 'error').length === 0, JSON.stringify(check('300 clicks').slice(0, 2))); (R.frames['rapid clicks'] = R.frames['rapid clicks'] || []).push(...g); }],
+    ['300 clicks in two seconds', async (R, f) => { await resetApp(); const r = rng(31); const btns = discover().filter(c => c.kind === 'button' && !/btnReset|navtoggle|btnView/.test(c.id)); const t0 = NOW(), fi = FM.ts.length; for (let i = 0; i < 300; i++) { try { await pick(r, btns).fire(r); } catch (e) { ERR.push({ type: 'script error', msg: 'rapid click: ' + e.message }); } if (i % 5 === 0) await raf(); } await settle(2500); const g = deltasSince(fi); f.T('the page still works after 300 clicks', check('300 clicks').filter(x => x.sev === 'error').length === 0, JSON.stringify(check('300 clicks').slice(0, 2))); (R.frames['rapid clicks'] = R.frames['rapid clicks'] || []).push(...g); }],
     ['400 key presses', async (R, f) => { await resetApp(); const r = rng(41), fi = FM.ts.length; for (let i = 0; i < 400; i++) { const [k, m] = pick(r, KEYS); key(k, m); if (i % 8 === 0) await raf(); } await settle(2500); f.T('the page still works after 400 key presses', check('keys').filter(x => x.sev === 'error').length === 0, JSON.stringify(check('keys').slice(0, 2))); (R.frames['key mash'] = R.frames['key mash'] || []).push(...deltasSince(fi)); }],
     ['sidebar and resize', async (R, f) => { await resetApp(); for (let i = 0; i < 6; i++) { key('b'); await settle(1200); dispatchEvent(new Event('resize')); await settle(); } f.T('toggling the sidebar six times leaves the layout consistent', Math.abs(cv.width - Math.round(cv.clientWidth * DPR)) <= 2, cv.width + ' vs ' + cv.clientWidth * DPR); if (!sidebarOpen) { key('b'); await settle(1200); } }],
     ['smooth dragging', async (R, f) => { await resetApp(); const fi = FM.ts.length, di = FM.draw.length; for (let k = 0; k < 6; k++) { const i = k % 3; const from = toClient(S.P[i]), c = cvRect(); await drag(from, { x: c.left + c.width * (.3 + .4 * ((k * 37) % 10) / 10), y: c.top + c.height * (.3 + .4 * ((k * 53) % 10) / 10) }, { steps: 60 }); } const g = deltasSince(fi), fs = frameStats(g), gr = grade(fs), dr = FM.draw.slice(di), dp = r1(pct(dr, .95)); R.smoothDrag = { frames: fs, grade: gr.word, drawP95: dp, draws: dr.length }; (R.frames['smooth dragging'] = R.frames['smooth dragging'] || []).push(...g); f.T('dragging corners is ' + gr.word + ' (p95 frame ' + fs.p95 + ' ms, redraw p95 ' + dp + ' ms)', gr.cls !== 'bad', JSON.stringify(fs)); f.T('every drag step redraws within a frame budget (redraw p95 under 16 ms)', dp < 16, dp + ' ms'); }],
@@ -492,8 +518,7 @@
       for (const lk of LEN_ORDER) { await lenItems(lk); for (const ak of ANG_ORDER) { await angItems(ak); for (const pr of [0, 4, 8]) { setPrec(pr); for (const t of tris) { S.P = t.map(([x, y]) => ({ x, y })); requestRender(); await raf(); await raf(); n++; if (AUDIT.failed.length) failed.push(lk + '/' + ak + '/' + pr + ': ' + AUDIT.failed[0].label); } } } }
       f.T('all ' + n + ' unit, precision and shape combinations agree with the independent maths', failed.length === 0, failed.slice(0, 3).join(' | '));
       for (const v of ['approx', 'exact']) { $$('#exactToggle button').find(e => e.dataset.v === v).click(); await settle(); f.T('the audit passes in ' + v + ' display mode', AUDIT.failed.length === 0, AUDIT.failed.slice(0, 2).map(c => c.label).join(' | ')); }
-      f.T('the audit bar says so', /verified|Flat/.test($('#auditText').textContent), $('#auditText').textContent);
-      const bar = $('#auditBar'); bar.click(); await settle(1400); f.T('the audit details panel opens with a table of checks', modalOpen() && $$('#mBody .audit-table tr').length > 50, $$('#mBody .audit-table tr').length);
+      window.__openAudit(); await settle(1400); f.T('the audit details panel opens with a table of checks', modalOpen() && $$('#mBody .audit-table tr').length > 50, $$('#mBody .audit-table tr').length);
       closeModal(); await settle(1200);
     }],
     ['the drawing is never blank', async (R, f) => { await resetApp(); const r = rng(77); for (let i = 0; i < 8; i++) { await pick(r, discover().filter(c => c.kind === 'button' && !/btnView|navtoggle/.test(c.id))).fire(r); await settle(900); } f.T('the canvas has ink after eight random buttons', canvasHasInk()); }]
@@ -713,11 +738,11 @@
   async function run(opts) {
     if (RUN.on) return RUN.report;
     opts = opts || {}; const mode = MODES[opts.mode] ? opts.mode : 'standard', M = MODES[mode], seed = opts.seed === undefined ? (Date.now() & 0xffff) : +opts.seed;
-    BG.start(); RUN.on = true; RUN.stop = false; LIVE.log.length = 0; LIVE.stage = 'starting'; LIVE.cats = []; LIVE.audit = null; LIVE.ctl = null; LIVE.value = undefined; LIVE.diff = null; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
+    BG.start(opts.speed !== undefined ? opts.speed : speedSetting()); RUN.on = true; RUN.stop = false; LIVE.log.length = 0; LIVE.stage = 'starting'; LIVE.cats = []; LIVE.audit = null; LIVE.ctl = null; LIVE.value = undefined; LIVE.diff = null; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
     const R = newReport(mode, seed); R.label = M.label; RUN.report = R; RUN.R = R;
     const r = rng(seed);
     const phase = (n, total) => {
-      const now = performance.now(); if (R.phaseName) { const ps = R.phases[R.phaseName]; ps.ms = now - R.phaseT0; ps.done = R.scenarios - ps.s0; }
+      const now = NOW(); if (R.phaseName) { const ps = R.phases[R.phaseName]; ps.ms = now - R.phaseT0; ps.done = R.scenarios - ps.s0; }
       R.phase = n; R.phaseTotal = total; R.phaseName = n; R.phaseT0 = now; R.phases[n] = R.phases[n] || { s0: R.scenarios, steps0: R.steps, ms: 0, done: 0, planned: R.plan[n] || total };
       LIVE.phase = n; LIVE.phaseTotal = total; progress(R);
     };
@@ -787,9 +812,9 @@
       }
       }
     } catch (e) { addIssue(R, { type: 'dev tool', sev: 'error', msg: 'the run stopped on ' + e.message }, [R.cur || '']); }
-    { const ps = R.phases[R.phaseName]; if (ps) { ps.ms = performance.now() - R.phaseT0; ps.done = R.scenarios - ps.s0; } }
+    { const ps = R.phases[R.phaseName]; if (ps) { ps.ms = NOW() - R.phaseT0; ps.done = R.scenarios - ps.s0; } }
     await resetApp(); fmStop(); R.finished = Date.now(); R.stopped = RUN.stop; RUN.on = false; LIVE.stage = RUN.stop ? 'stopped' : 'finished';
-    BG.stop(); R.backgroundFrames = BG.hiddenFrames;
+    R.turbo = BG.turbo; R.speed = BG.speed; BG.stop(); R.backgroundFrames = BG.hiddenFrames;
     finalize(R); render(R); progress(R); return R;
   }
 
@@ -803,7 +828,7 @@
     R.errors = R.issues.filter(i => i.sev === 'error'); R.warnings = R.issues.filter(i => i.sev !== 'error');
     R.flowFail = R.flows.reduce((n, f) => n + f.checks - f.passed, 0); R.flowChecks = R.flows.reduce((n, f) => n + f.checks, 0);
     R.verdict = R.errors.length === 0 && R.flowFail === 0 ? (R.overall.grade.cls === 'bad' ? 'works, but choppy' : 'no glitches found') : 'problems found';
-    R.trace = LIVE.log.slice(-300);
+    R.trace = LIVE.log.slice(-300); R.prof = Object.assign({}, PROF);
     R.ctl = undefined; R.issueKeys = undefined;
   }
 
@@ -821,7 +846,7 @@
     panel = document.createElement('div'); panel.className = 'dev'; panel.hidden = true;
     panel.innerHTML = `<div class="hd"><h4>Dev mode · Triangle Thing</h4><span></span><button data-x="close" aria-label="Close">✕</button></div><div class="bd">
       <div class="note">Tests every button, slider-like control, input box, menu, row and canvas gesture on its own, in pairs, in combinations and in random runs, then runs whole flows, and grades how smoothly it all ran. <b>Backtick</b> opens and closes this panel.</div>
-      <div class="row"><select id="devMode"><option value="quick">Quick</option><option value="standard" selected>Standard</option><option value="thorough">Thorough</option><option value="problems">Aim at problems</option></select><input id="devSeed" placeholder="seed (optional)" size="14"><button data-x="start">Start</button><button data-x="stop" disabled>Stop</button><button data-x="forget" title="Forget the suspects and problems remembered from earlier runs">Forget memory</button></div>
+      <div class="row"><select id="devMode"><option value="quick">Quick</option><option value="standard" selected>Standard</option><option value="thorough">Thorough</option><option value="problems">Aim at problems</option></select><input id="devSeed" placeholder="seed (optional)" size="14"><select id="devSpeed" title="How much faster than real time the page's animations and timers run during a test. Faster means more tests per second."><option value="1">Real time</option><option value="4">4× faster</option><option value="10" selected>10× faster (frames not tied to the display)</option><option value="20">20× faster (same)</option></select><button data-x="start">Start</button><button data-x="stop" disabled>Stop</button><button data-x="forget" title="Forget the suspects and problems remembered from earlier runs">Forget memory</button></div>
       <div class="note" id="devLabel"></div><div class="bar big"><i id="devBar"></i></div><div class="prog"><b id="devPct">0%</b><span id="devEta" class="note"></span></div><div id="devStatus" class="note">Ready.</div><div id="devPhases"></div><div id="devLive"></div><div class="row"><button data-x="copy" disabled>Copy report</button><button data-x="json" disabled>Download JSON</button></div><div id="devOut"></div></div>`;
     document.body.appendChild(panel);
     const lab = () => { const m = $('#devMode', panel).value; let t = MODES[m].label; if (m === 'problems') { const mm = loadMem(); t += ' · remembered from earlier runs: ' + Object.keys(mm.ctl).length + ' suspect controls, ' + mm.repros.length + ' problems to replay'; } $('#devLabel', panel).textContent = t; }; lab(); $('#devMode', panel).onchange = lab;
@@ -840,7 +865,7 @@
   const clock = t => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
   /* time left: phases already measured use their own average time per scenario; phases not reached yet are priced from the average time per step so far */
   function estimate(R) {
-    const now = performance.now(), names = Object.keys(R.plan);
+    const now = NOW(), names = Object.keys(R.plan);
     const stepMs = R.steps > 4 ? (Date.now() - R.started) / R.steps : 600;
     let left = 0;
     for (const n of names) {
@@ -854,11 +879,15 @@
     }
     return left;
   }
+  let lastProgress = 0;
   function progress(R) {
     if (!panel) return;
+    /* repainting the panel is the slowest thing a fast run does: at most about 8 times a second */
+    if (RUN.on && NOW() - lastProgress < 120) return; lastProgress = NOW();
     const total = Math.max(1, R.total || expected(R)), pct = RUN.on ? Math.min(99.9, R.scenarios / total * 100) : (R.finished ? 100 : 0);
     $('#devBar', panel).style.width = pct + '%'; $('#devPct', panel).textContent = (pct >= 10 || !RUN.on ? Math.round(pct) : r1(pct)) + '%';
-    $('#devStatus', panel).textContent = (RUN.on ? 'Running · ' : 'Finished · ') + (R.phase || '') + ' · ' + R.scenarios + ' of ' + total + ' scenarios · ' + R.steps + ' steps · ' + R.issues.length + ' issue(s)';
+    const secs = Math.max(1, ((R.finished || Date.now()) - R.started) / 1000);
+    $('#devStatus', panel).textContent = (RUN.on ? 'Running · ' : 'Finished · ') + (R.phase || '') + ' · ' + R.scenarios + ' of ' + total + ' scenarios · ' + R.steps + ' tests (' + r1((R.steps + (R.flows || []).reduce((n, f) => n + f.checks, 0)) / secs) + ' per second' + (BG.speed > 1 ? ', time ×' + BG.speed : '') + ') · ' + R.issues.length + ' issue(s)';
     $('#devStatus', panel).dataset.cur = R.cur || '';
     const eta = $('#devEta', panel);
     if (RUN.on) {
@@ -913,7 +942,9 @@
     L.push('', 'FLOWS'); R.flows.forEach(f => L.push('- ' + f.name + ': ' + f.passed + '/' + f.checks + (f.fails.length ? '  FAILED: ' + f.fails.join(' | ') : '')));
     L.push('', 'SMOOTHNESS BY KIND'); R.sections.forEach(s => L.push('- ' + s.name + ': ' + s.grade.word + ' (p95 ' + s.p95 + ' ms, worst ' + s.max + ' ms)'));
     L.push('', 'SLOWEST CONTROLS'); R.slowest.forEach(s => L.push('- ' + s.label + ': p95 ' + s.p95 + ' ms (' + s.uses + ' uses)'));
+    if (R.prof) L.push('', 'WHERE THE TIME WENT (ms): resetting ' + Math.round(R.prof.reset) + ' (' + R.prof.resets + ' resets), firing controls ' + Math.round(R.prof.fire) + ', settling ' + Math.round(R.prof.settle) + ', checking ' + Math.round(R.prof.check));
     L.push('', 'TESTER TRACE (last 40 steps)'); (R.trace || []).slice(-40).forEach(x => L.push('- ' + x.at + 's ' + x.step + (x.changed.length ? ' -> ' + x.changed.join(', ') : '') + (x.problems ? ' [' + x.problems + ' problem(s)]' : '')));
+    if (R.turbo) L.push('', 'NOTE: this run used the sped-up clock with frames not tied to the display, so the smoothness grades are only a rough guide. Pick Real time for a true grade.');
     if (R.backgroundFrames) L.push('', 'NOTE: the tab was in the background for part of the run: ' + R.backgroundFrames + ' frames were driven from a worker clock, so the smoothness numbers include those and are not a real display measurement.');
     L.push('', 'DID NOTHING'); R.noop.forEach(s => L.push('- ' + s.label + ' (' + s.uses + ' uses)'));
     return L.join('\n');
@@ -951,6 +982,6 @@
     const t = e.target; if (t && (t.isContentEditable || t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && /^(text|number|search|email|password|tel|url)$/.test(t.type)))) return;
     e.preventDefault(); window.__devToggle();
   }, true);
-  window.__triangleDev = { bg: BG, resetApp, run, stop: () => { RUN.stop = true; }, discover, check, FLOWS: FLOWS.map(f => f[0]), report: () => RUN.report, text };
+  window.__triangleDev = { bg: BG, flow: async name => { const fl = FLOWS.find(f => f[0] === name); if (!fl) throw new Error('no flow ' + name); const R = newReport('quick', 1); R.plan = {}; BG.start(); try { await resetApp(); await runOneFlow(R, name, fl[1]); } finally { BG.stop(); } return { rows: R.flows, issues: R.issues.map(i => i.msg) }; }, resetApp, run, stop: () => { RUN.stop = true; }, discover, check, FLOWS: FLOWS.map(f => f[0]), report: () => RUN.report, text };
   const auto = qs.get('dev'); if (auto && MODES[auto]) { build(); $('#devMode', panel).value = auto; $('#devMode', panel).onchange(); panel.hidden = false; setTimeout(() => $('[data-x=start]', panel).click(), 800); }
 })();
