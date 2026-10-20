@@ -2,8 +2,12 @@
 // To release: add an entry to the top of `changelog`, set `version` to match, and raise the ?v=N on its <script> tag in index.html.
 // Keep each version to three sentences at most.
 window.__TRIANGLE = {
-  version: '1.4.1',
+  version: '1.4.2',
   changelog: [
+    { v: '1.4.2', date: '2026-10-20', title: 'Dev mode aims at problems', items: [
+      'Dev mode has a new Aim at problems mode: it remembers what broke before, replays old problems, spends most of its time on the likeliest suspects, and shrinks each failure to its shortest recipe.',
+      'Tests now run about ten times a second, and the calculation check line at the bottom of the sidebar is gone (the checks still run quietly in Dev mode).'
+    ] },
     { v: '1.4.1', date: '2026-10-20', title: 'Tidier logo, steadier dev mode', items: [
       'The logo in the top-left corner is now on one line, like the one in Shop Tool Sim.',
       'Dev mode keeps running when the tab is in the background or another window is in front.'
@@ -14,7 +18,7 @@ window.__TRIANGLE = {
       'A What’s new button with this changelog, styled like the one in Shop Tool Sim.'
     ] },
     { v: '1.3.0', date: '2026-10-20', title: 'Checked maths, pivots and a new look', items: [
-      'Every number in the sidebar is now re-worked a second way after each change and checked, with a status line you can open for the full table.',
+      'Every number in the sidebar is now re-worked a second way after each change and checked, and Dev mode reports any disagreement.',
       'New Transform panel for rotation, position and scale about any pivot you pick, and arrows that point overlapping labels at what they describe.',
       'The sidebar now looks like Shop Tool Sim’s, every icon has its own hover animation, and the logo is stacked Triangle over Thing.'
     ] },

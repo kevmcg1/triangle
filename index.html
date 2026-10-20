@@ -485,8 +485,6 @@ body.view-only #exitViewOnly{
 .trow .c{font-weight:600;color:var(--side-ink)}
 .chip{border:0;border-radius:6px;background:var(--raise);color:var(--txt-2);font-weight:600;padding:5px 10px}
 .chip.on{background:var(--side-ink);color:var(--side-bg)}
-.audit-bar{border-top:1px solid var(--side-line);padding:9px 18px;font-weight:500}
-.audit-bar::before{content:none}
 .side-foot{border-top:1px solid var(--side-line);padding:10px 18px;gap:12px}
 .pf-lbl{font-weight:700;letter-spacing:.1em}
 .stepper button{background:var(--raise);border:0;width:24px;height:24px;color:var(--txt)}
@@ -541,7 +539,6 @@ html.mobile .row{padding:10px 12px;font-size:13px}
 html.mobile .trow{padding:7px 2px}
 html.mobile .trow .c,html.mobile .trow .fn{font-size:12px}
 html.mobile .chip{padding:8px 12px;font-size:11px}
-html.mobile .audit-bar{padding:12px 18px;font-size:12px}
 html.mobile .side-foot{padding:10px 16px;flex-wrap:nowrap;justify-content:space-between;gap:8px}
 html.mobile .pf-lbl{font-size:9px}
 html.mobile .stepper button{width:36px;height:34px;font-size:12px}
@@ -602,8 +599,7 @@ html.mobile .copy-btn{width:32px;height:30px}
   html.mobile #tabbar button i{font-size:15px}
   html.mobile #sidebar{top:calc(var(--hdr-h) + var(--st) + 4px)}
   html.mobile #sideSearch{display:none}
-  html.mobile .audit-bar{padding:6px 16px}
-  html.mobile .side-foot{padding:6px 16px}
+    html.mobile .side-foot{padding:6px 16px}
   html.mobile .hdr-logo{font-size:15px}
   html.mobile #sidebar{padding-top:16px}
   html.mobile #grpTransform{grid-template-columns:repeat(6,1fr)!important}
@@ -626,12 +622,6 @@ html.mobile .copy-btn{width:32px;height:30px}
 #leaders .ld.locked polygon{fill:var(--lock)}
 
 /* ---------------- Calculation audit ---------------- */
-.audit-bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;width:100%;padding:7px 14px;background:transparent;border:0;border-top:1px solid var(--line);color:var(--txt-2);font-size:10.5px;cursor:pointer;text-align:left}
-.audit-bar:hover{background:var(--panel-2);color:var(--txt)}
-.audit-bar i{font-size:11px;color:#7bd389}
-.audit-bar[data-state="fail"] i,.audit-bar[data-state="fail"] .at{color:var(--lock)}
-.audit-bar[data-state="warn"] i{color:#f5c542}
-.audit-bar .am{margin-left:auto;color:var(--txt-3);font-variant-numeric:tabular-nums;white-space:nowrap}
 .audit-sum{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
 .audit-sum b{color:var(--txt)}
 .audit-table{width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}
@@ -704,7 +694,6 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
     <div id="sideSearch" hidden></div>
     <div class="side-scroll" id="stats"></div>
     <div class="side-license">Triangle Thing is released under GitHub’s <a href="https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/cc0-1.0.txt" target="_blank" rel="license noopener noreferrer">Creative Commons Zero v1.0 Universal</a> license. All rights reserved.</div>
-    <button class="audit-bar" id="auditBar" data-state="idle" data-tip-pos="top-start" data-tip="Every number in this panel is re-derived a second way and compared — click for the details" aria-label="Calculation audit"><i class="fa-solid fa-shield-halved"></i><span class="at" id="auditText">Verifying calculations…</span><span class="am" id="auditMeta"></span></button>
     <div class="side-foot">
       <div class="pf-group"><span class="pf-lbl">Decimals</span>
         <div class="stepper">
@@ -885,7 +874,8 @@ function niceRatio(v, maxDen) {
   for (let den = 1; den <= maxDen; den++) {
     const num = Math.round(av * den);
     if (num === 0) continue;
-    if (Math.abs(av - num / den) < 1e-9 * Math.max(1, av)) {
+    /* tight enough that a big, ordinary number (499994.18776) is never shown as a nearby fraction (7999907/16): float noise is ~1e-16, so 1e-12 still catches every genuine fraction */
+    if (Math.abs(av - num / den) < 1e-12 * Math.max(1, av)) {
       const g = gcdInt(num, den);
       return { num: sign * (num / g), den: den / g };
     }
@@ -1421,6 +1411,7 @@ function setGrid(on) {
   S.grid = on;
   if (S.gridAnimT) cancelAnimationFrame(S.gridAnimT);
   const from = S.gridAnim, to = on ? 1 : 0;
+  if (from === to) { S.gridAnimT = null; requestRender(); return; } /* already there: nothing to fade */
   const t0 = performance.now(), dur = 1800;
   const ease = t => 1 - Math.pow(1 - t, 3);
   const step = now => {
@@ -3398,7 +3389,7 @@ function renderNow() {
     if (!S.viewOnly) {
       safeStep("updateStats", () => updateStats(D));
       /* re-derive every sidebar number a second way and compare — runs on every change, see calc_audit.js */
-      safeStep("calcAudit", () => { calcAudit(D); syncAuditBar(); });
+      safeStep("calcAudit", () => { calcAudit(D); }); /* runs silently on every change; Dev mode reports any disagreement */
       safeStep("xform", () => syncXform(D));
       /* applySearchFilter deliberately isn't run here — it depends only
          on the search box text and the (static) row labels, neither of
@@ -3903,19 +3894,6 @@ document.getElementById("xfToggle").addEventListener("click", () => xfEls.box.cl
 /* =======================================================================
    Calculation audit — sidebar status line and the details panel (the maths itself lives in calc_audit.js)
    ======================================================================= */
-function syncAuditBar() {
-  const bar = document.getElementById("auditBar"), A = AUDIT;
-  const state = A.failed.length ? "fail" : A.degenerate ? "warn" : "ok";
-  const text = A.failed.length ? A.failed.length + " of " + A.total + " calculation checks FAILED" :
-    A.degenerate ? "Flat triangle — " + A.total + " checks passed, the rest don't apply" :
-    "All " + A.total + " calculations verified";
-  const meta = A.failed.length ? "" : "max error " + (A.maxErr === 0 ? "0" : A.maxErr.toExponential(1));
-  if (bar.dataset.state !== state) bar.dataset.state = state;
-  const icon = state === "fail" ? "fa-triangle-exclamation" : state === "warn" ? "fa-circle-exclamation" : "fa-shield-halved";
-  const ic = bar.querySelector("i"); if (!ic.classList.contains(icon)) ic.className = "fa-solid " + icon;
-  const t = document.getElementById("auditText"); if (t.textContent !== text) t.textContent = text;
-  const m = document.getElementById("auditMeta"); if (m.textContent !== meta) m.textContent = meta;
-}
 function auditNum(v) {
   if (!Number.isFinite(v)) return String(v);
   if (v === 0) return "0";
@@ -3940,7 +3918,7 @@ function openAudit(live) {
   html += "</table>";
   if (live) paintModalContent("Calculation audit", html); else openModal("Calculation audit", html);
 }
-document.getElementById("auditBar").addEventListener("click", () => openAudit());
+window.__openAudit = () => openAudit(); /* the full table of checks, for debugging */
 
 /* =======================================================================
    Toolbar / chrome
@@ -4276,7 +4254,7 @@ if (window.__mobile) {
   (portrait.addEventListener ? portrait.addEventListener.bind(portrait, "change") : portrait.addListener.bind(portrait))(() => setTimeout(() => fitView(undefined, 300), 250));
 }
 </script>
-<script src="version.js?v=2"></script>
+<script src="version.js?v=3"></script>
 <script src="changelog.js?v=1"></script>
 <script src="devmode.js"></script>
 </body>
