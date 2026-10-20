@@ -28,6 +28,64 @@
   if (window.__triangleDev) return;
   const qs = new URLSearchParams(location.search);
 
+
+  /* ------------------------------------------------------------------ keep running when the tab is in the background
+     A hidden tab gets no animation frames at all and its timers are held to one a second (a minute after five minutes), so a run would
+     crawl or hang the moment you switched away. While a run is on, timers go through a Web Worker (its clock is not throttled), and a frame
+     request that is not answered by the browser in time while the page is hidden is answered from that same clock. A Web Lock also keeps
+     the browser from freezing the tab. While the tab is visible nothing changes: frames still come from the real display, so the
+     smoothness grades are real. */
+  const BG = (() => {
+    const native = { st: window.setTimeout, ct: window.clearTimeout, raf: window.requestAnimationFrame, caf: window.cancelAnimationFrame };
+    let worker = null, nextId = 1, on = false, release = null, wasHidden = 0;
+    const waits = new Map(), frames = new Map();
+    const BASE = 1e9;
+    const startWorker = () => {
+      if (worker) return true;
+      try {
+        const src = 'self.onmessage=function(e){var d=e.data;setTimeout(function(){self.postMessage(d.id)},d.ms)}';
+        const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+        worker = new Worker(url);
+        worker.onmessage = e => { const f = waits.get(e.data); if (f) { waits.delete(e.data); f(); } };
+        worker.onerror = () => { worker = null; };
+        return true;
+      } catch (_) { worker = null; return false; }
+    };
+    const wait = (fn, ms) => { const id = nextId++; waits.set(id, fn); worker.postMessage({ id, ms }); return id; };
+    const timeout = function (fn, ms) {
+      const args = Array.prototype.slice.call(arguments, 2);
+      if (typeof fn !== 'function' || !worker) return native.st.apply(window, arguments);
+      const id = wait(() => fn.apply(window, args), Math.max(0, +ms || 0));
+      return BASE + id;
+    };
+    const clear = id => { if (id >= BASE) waits.delete(id - BASE); else native.ct.call(window, id); };
+    const frame = cb => {
+      if (!worker) return native.raf.call(window, cb);
+      const id = nextId++; let done = false, nat = 0;
+      const run = t => { if (done) return; done = true; frames.delete(id); if (nat) native.caf.call(window, nat); cb(t === undefined ? performance.now() : t); };
+      nat = native.raf.call(window, run);
+      /* the backup: while the page is hidden the real frame never comes, so answer it from the worker clock */
+      const tick = () => { if (done) return; if (document.hidden) { wasHidden++; run(performance.now()); } else wait(tick, 50); };
+      wait(tick, 34);
+      frames.set(id, () => { done = true; native.caf.call(window, nat); });
+      return BASE + id;
+    };
+    const cancelFrame = id => { if (id >= BASE) { const c = frames.get(id - BASE); if (c) c(); frames.delete(id - BASE); } else native.caf.call(window, id); };
+    return {
+      start() {
+        if (on) return; on = true; wasHidden = 0;
+        if (startWorker()) { window.setTimeout = timeout; window.clearTimeout = clear; window.requestAnimationFrame = frame; window.cancelAnimationFrame = cancelFrame; }
+        try { if (navigator.locks) navigator.locks.request('triangle-dev-run', { mode: 'shared' }, () => new Promise(r => { release = r; })).catch(() => {}); } catch (_) {}
+      },
+      stop() {
+        if (!on) return; on = false;
+        window.setTimeout = native.st; window.clearTimeout = native.ct; window.requestAnimationFrame = native.raf; window.cancelAnimationFrame = native.caf;
+        if (release) { release(); release = null; }
+      },
+      get hiddenFrames() { return wasHidden; }
+    };
+  })();
+
   /* ------------------------------------------------------------------ small helpers */
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const raf = () => new Promise(r => requestAnimationFrame(r));
@@ -438,7 +496,7 @@
   async function run(opts) {
     if (RUN.on) return RUN.report;
     opts = opts || {}; const mode = MODES[opts.mode] ? opts.mode : 'standard', M = MODES[mode], seed = opts.seed === undefined ? (Date.now() & 0xffff) : +opts.seed;
-    RUN.on = true; RUN.stop = false; LIVE.log.length = 0; LIVE.stage = 'starting'; LIVE.cats = []; LIVE.audit = null; LIVE.ctl = null; LIVE.value = undefined; LIVE.diff = null; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
+    BG.start(); RUN.on = true; RUN.stop = false; LIVE.log.length = 0; LIVE.stage = 'starting'; LIVE.cats = []; LIVE.audit = null; LIVE.ctl = null; LIVE.value = undefined; LIVE.diff = null; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
     const R = newReport(mode, seed); R.label = M.label; RUN.report = R; RUN.R = R;
     const r = rng(seed);
     const phase = (n, total) => {
@@ -512,6 +570,7 @@
     } catch (e) { addIssue(R, { type: 'dev tool', sev: 'error', msg: 'the run stopped on ' + e.message }, [R.cur || '']); }
     { const ps = R.phases[R.phaseName]; if (ps) { ps.ms = performance.now() - R.phaseT0; ps.done = R.scenarios - ps.s0; } }
     await resetApp(); fmStop(); R.finished = Date.now(); R.stopped = RUN.stop; RUN.on = false; LIVE.stage = RUN.stop ? 'stopped' : 'finished';
+    BG.stop(); R.backgroundFrames = BG.hiddenFrames;
     finalize(R); render(R); progress(R); return R;
   }
 
@@ -630,6 +689,7 @@
     L.push('', 'SMOOTHNESS BY KIND'); R.sections.forEach(s => L.push('- ' + s.name + ': ' + s.grade.word + ' (p95 ' + s.p95 + ' ms, worst ' + s.max + ' ms)'));
     L.push('', 'SLOWEST CONTROLS'); R.slowest.forEach(s => L.push('- ' + s.label + ': p95 ' + s.p95 + ' ms (' + s.uses + ' uses)'));
     L.push('', 'TESTER TRACE (last 40 steps)'); (R.trace || []).slice(-40).forEach(x => L.push('- ' + x.at + 's ' + x.step + (x.changed.length ? ' -> ' + x.changed.join(', ') : '') + (x.problems ? ' [' + x.problems + ' problem(s)]' : '')));
+    if (R.backgroundFrames) L.push('', 'NOTE: the tab was in the background for part of the run: ' + R.backgroundFrames + ' frames were driven from a worker clock, so the smoothness numbers include those and are not a real display measurement.');
     L.push('', 'DID NOTHING'); R.noop.forEach(s => L.push('- ' + s.label + ' (' + s.uses + ' uses)'));
     return L.join('\n');
   }
@@ -639,6 +699,7 @@
     const iss = i => `<div class="iss"><b class="${i.sev === 'error' ? 'bad' : 'warn'}">${esc(i.type)}</b> ×${i.count} · ${esc(i.msg)}<small>replay: seed ${R.seed} · ${esc(i.scenario || '')}<br>steps: ${esc(i.steps.join(' → '))}</small></div>`;
     $('#devOut', panel).innerHTML = `<h4 class="${cls}">${esc(R.verdict)}</h4>
       <div class="note">${R.controls} controls · ${R.scenarios} scenarios (${R.coverage.singles} single, ${R.coverage.pairs} pairs, ${R.coverage.combos} toggle combinations, ${R.coverage.seqs} random runs, ${R.coverage.flows} flows) · ${R.steps} steps · ${R.values} typed values · ${Math.round((R.finished - R.started) / 1000)} s</div>
+      ${R.backgroundFrames ? `<div class="note">The tab was in the background for part of this run (${R.backgroundFrames} frames came from a worker clock), so smoothness numbers include those.</div>` : ''}
       <h4>Smoothness</h4><div class="${R.overall.grade.cls}"><b>${esc(R.overall.grade.word)}</b> · frame avg ${R.overall.avg} ms, p95 ${R.overall.p95} ms, worst ${R.overall.max} ms · ${R.overall.over50} frames over 50 ms, ${R.overall.over100} over 100 ms · redraw p95 ${R.draw.p95} ms</div>
       <table><tr><th>kind of step</th><th>grade</th><th>p95</th><th>worst</th></tr>${R.sections.map(s => `<tr><td>${esc(s.name)}</td><td class="${s.grade.cls}">${esc(s.grade.word)}</td><td>${s.p95} ms</td><td>${s.max} ms</td></tr>`).join('')}</table>
       <h4>Problems (${R.errors.length})</h4>${R.errors.map(iss).join('') || '<div class="ok">None.</div>'}
@@ -655,6 +716,6 @@
     const t = e.target; if (t && (t.isContentEditable || t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && /^(text|number|search|email|password|tel|url)$/.test(t.type)))) return;
     e.preventDefault(); window.__devToggle();
   }, true);
-  window.__triangleDev = { resetApp, run, stop: () => { RUN.stop = true; }, discover, check, FLOWS: FLOWS.map(f => f[0]), report: () => RUN.report, text };
+  window.__triangleDev = { bg: BG, resetApp, run, stop: () => { RUN.stop = true; }, discover, check, FLOWS: FLOWS.map(f => f[0]), report: () => RUN.report, text };
   const auto = qs.get('dev'); if (auto && MODES[auto]) { build(); $('#devMode', panel).value = auto; $('#devMode', panel).onchange(); panel.hidden = false; setTimeout(() => $('[data-x=start]', panel).click(), 800); }
 })();
