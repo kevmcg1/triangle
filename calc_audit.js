@@ -21,7 +21,8 @@ function calcAudit(D) {
   const minSide = Math.min(D.a, D.b, D.c);
   /* a position can't be known better than the floating-point spacing of the coordinates themselves, however small the triangle is */
   const pos = sc + 1e-6 * Math.max(...P.map(q => Math.max(Math.abs(q.x), Math.abs(q.y))));
-  const degenerate = !(D.area > 1e-12 * sc * sc) || !(minSide > 1e-9 * sc);
+  /* thinner than about one part in 1e9 and even the stable Heron formula runs out of digits: only the basics apply */
+  const degenerate = !(D.area > 1e-9 * sc * sc) || !(minSide > 1e-9 * sc);
   /* ill-conditioned slivers lose digits in every formula, even correct ones: widen the tolerance with how thin the triangle is */
   const cond = Math.min(1e12, Math.max(1, sc * sc / Math.max(D.area, 1e-300)));   /* about 1 / sin(thinnest angle) */
   const TOL = Math.min(1e-2, 1e-9 * cond);
@@ -41,7 +42,7 @@ function calcAudit(D) {
 
   const [pa, pb, pc] = P, V = [pa, pb, pc];
   const names = ['A', 'B', 'C'], low = ['a', 'b', 'c'];
-  const side = (i) => Math.sqrt((V[(i + 1) % 3].x - V[(i + 2) % 3].x) ** 2 + (V[(i + 1) % 3].y - V[(i + 2) % 3].y) ** 2);
+  const side = (i) => Math.hypot(V[(i + 1) % 3].x - V[(i + 2) % 3].x, V[(i + 1) % 3].y - V[(i + 2) % 3].y);   /* hypot, so sides of 1e-302 don't underflow when squared */
   const a = side(0), b = side(1), c = side(2), s = (a + b + c) / 2;
   const sides = [a, b, c];
 
@@ -131,12 +132,16 @@ function calcAudit(D) {
       for (const fn of ['sin', 'cos', 'tan', 'csc', 'sec', 'cot']) {
         const got = trigRatio(td[i], fn);
         let want = fn === 'tan' ? Math.tan(ang[i]) : fn === 'csc' ? 1 / ex.sin : fn === 'sec' ? 1 / ex.cos : fn === 'cot' ? ex.cos / ex.sin : ex[fn];
+        /* the app calls an angle right when it READS 90 at the current decimals, and then uses the exact right-triangle ratios: the ratios and
+           the true sin / cos of the angle can differ by up to half a unit of the last printed place */
+        const rightRule = td[i].mode !== 'general';
+        if (rightRule && (!Number.isFinite(got) || Math.abs(want) > 1e3)) continue;
         if (!Number.isFinite(got) || Math.abs(want) > 1e8 || Math.abs(ex.cos) < 1e-9 && (fn === 'tan' || fn === 'sec')) {
           /* only really undefined where the function is: tan / sec at 90° */
           if (Math.abs(ex.cos) < 1e-7 && (fn === 'tan' || fn === 'sec') || !Number.isFinite(want)) continue;
           if (Math.abs(want) > 1e8) continue;
         }
-        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: 1e-8 * Math.min(cond, 1e4) });
+        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: rightRule ? Math.PI / 180 * Math.pow(10, -S.prec) + 1e-8 : 1e-8 * Math.min(cond, 1e4) });
       }
       ident('Trigonometry', 'sin² + cos² = 1 at ' + names[i], 1, ex.sin ** 2 + ex.cos ** 2, { tol: 1e-12 });
       ident('Trigonometry', 'Law of Sines ' + low[i] + ' / sin ' + names[i] + ' = 2R', 2 * D.R, sides[i] / Math.sin(D.ang[i]), { tol: 1e-8 * cond });

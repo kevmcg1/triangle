@@ -15,6 +15,10 @@
 //                   decimal setting, every explanation panel, the search box, view-only, the theme, the settings panel, zooming to
 //                   the extremes, dragging far off screen, 300 clicks in two seconds, 400 key presses, and smooth dragging
 //
+// "Aim at problems" is a fourth mode: it remembers what went wrong in earlier runs (in this browser), scouts for the controls most likely to
+// break, replays old problems to see if they are fixed, then spends most of its time hammering the suspects (awkward values, risky starting
+// states, partners and chains built around them, mutations of anything that failed) and finally shrinks each failure to its shortest recipe.
+//
 // While it runs the panel shows a progress bar with the time it should finish, and a live analysis of exactly what is being tested right now
 // (the control, the value, why, what changed, which checks ran, the calculation audit, and a trail of recent steps).
 //
@@ -100,6 +104,7 @@
   const hashStr = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) | 0; return h; };
 
   const MODES = {
+    problems: { label: 'Aim at problems: scouts for suspects, replays old problems, then spends about 85% of its time on the controls and states most likely to break, and shrinks every failure to its shortest recipe', budget: 360, scoutShare: .14, probe: 3, vals: 6, pairs: 0, combos: 0, seqs: 0, loops: 0 },
     thorough: { label: 'Thorough: every control with every awkward value, 2500 pairs, 256 toggle combinations, 1000 random runs, every flow 3 times', pairs: 2500, combos: 256, seqs: 1000, probe: 6, loops: 3, vals: 99 },
     standard: { label: 'Standard: every control with 8 awkward values, 600 pairs, 64 toggle combinations, 300 random runs, every flow twice',           pairs: 600,  combos: 64,  seqs: 300,  probe: 4, loops: 2, vals: 8 },
     quick:    { label: 'Quick: every control, 80 pairs, 12 toggle combinations, 40 random runs, every flow once',                                        pairs: 80,   combos: 12,  seqs: 40,   probe: 3, loops: 1, vals: 3 }
@@ -345,8 +350,10 @@
   function addIssue(R, iss, trail) {
     const key = iss.type + '|' + iss.msg.replace(/[0-9.e+-]+/g, '#').slice(0, 90);
     let e = R.issueKeys.get(key);
-    if (!e) { e = { type: iss.type, sev: iss.sev, msg: iss.msg, count: 0, steps: trail.slice(-12), scenario: R.cur }; R.issueKeys.set(key, e); R.issues.push(e); }
+    if (!e) { e = { type: iss.type, sev: iss.sev, msg: iss.msg, count: 0, steps: trail.slice(-12), scenario: R.cur, key, repro: R.repro ? R.repro.slice() : undefined }; R.issueKeys.set(key, e); R.issues.push(e); }
     e.count++;
+    /* what the aimed mode learns from: real problems weigh most, slow / stall warnings a little, impossible lock combinations not at all */
+    if (iss.sev === 'error') R.hits = (R.hits || 0) + 1; else if (iss.type !== 'lock' && iss.type !== 'console warning') R.soft = (R.soft || 0) + 1;
   }
   function ctlStat(R, c) { let s = R.ctl.get(c.id); if (!s) R.ctl.set(c.id, s = { id: c.id, label: c.label, kind: c.kind, uses: 0, changed: 0, ms: [], worst: 0 }); return s; }
 
@@ -379,7 +386,7 @@
     liveLog(R, { scenario: R.cur, step: c.label + (fixedVal !== undefined ? ' = ' + JSON.stringify(String(fixedVal).slice(0, 18)) : ''), kind: c.kind, ms: Math.round(sync), changed: LIVE.diff || [], problems: found.length + (thrown ? 1 : 0) });
     setLive({ stage: 'done — next step' }); LIVE.lastPaint = 0; liveRender();
     if (worst > FR.stall) addIssue(R, { type: 'stall', sev: 'warn', msg: c.label + ' stalled the page for ' + Math.round(worst) + ' ms' }, trail);
-    if (sync > 150) addIssue(R, { type: 'slow control', sev: 'warn', msg: c.label + ' took ' + Math.round(sync) + ' ms to respond' }, trail);
+    if (sync > 150 && c.kind !== 'setup') addIssue(R, { type: 'slow control', sev: 'warn', msg: c.label + ' took ' + Math.round(sync) + ' ms to respond' }, trail);
     return sync;
   }
 
@@ -492,6 +499,216 @@
     ['the drawing is never blank', async (R, f) => { await resetApp(); const r = rng(77); for (let i = 0; i < 8; i++) { await pick(r, discover().filter(c => c.kind === 'button' && !/btnView|navtoggle/.test(c.id))).fire(r); await settle(900); } f.T('the canvas has ink after eight random buttons', canvasHasInk()); }]
   ];
 
+  /* ------------------------------------------------------------------ aim at problems */
+  const STORE = 'triangleDevProblems.v1';
+  const loadMem = () => { try { const o = JSON.parse(localStorage.getItem(STORE)); return o && typeof o === 'object' ? o : { ctl: {}, repros: [], flows: [] }; } catch (_) { return { ctl: {}, repros: [], flows: [] }; } };
+  const saveMem = o => { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (_) {} };
+  /* how likely each kind of control is to hide a bug, before anything has been learned */
+  const PRIOR = c => c.kind === 'field' ? 5 : c.kind === 'gesture' ? 4 : /^lock:/.test(c.id) ? 4 : /btn:#(btnRot|btnFlip|btnScale|xf)/.test(c.id) ? 3.5 : c.kind === 'menu' ? 2 : c.toggle ? 2 : c.kind === 'row' ? 1 : c.kind === 'key' ? 1 : 2;
+  /* nastier typed values than the ordinary lists: the odd things a real keyboard produces */
+  const FUZZ = ['1e-300', '1e300', '-0', '0.0000001', '9'.repeat(30), '1/0', '1,5,5', '1e', 'e5', '--5', '5 5', '0x10', '1_000', "5'6\"", '1 ft 6', '   ', '٣', '\u0000', '.', '-.', '+', '1e999', '-1e999', '3 mm 4', '90.00000000001', '179.99999999', '0.00001°', '1e-12 rad'];
+  const fuzzValue = (r, c, last) => {
+    const base = c.values && c.values.length ? c.values : FUZZ, roll = r();
+    if (roll < .45) return pick(r, FUZZ);
+    if (roll < .6 && last !== undefined && last !== '') return String(last) + pick(r, [' mm', ' in', '°', ' rad', 'e3', 'e-3', '0', '.5', ' ft', ' km']);
+    if (roll < .7) return String(Math.round((r() - .5) * 2e4) / 100) + pick(r, ['', ' in', ' mm', ' cm']);
+    return pick(r, base);
+  };
+  /* risky starting states: each is a control of its own, so a failing recipe replays exactly */
+  const SETUPS = [
+    ['two angles locked', async () => { for (const i of [0, 1]) { const p = pills.find(q => q.kind === 'angle' && q.i === i); if (p && !S.lock.angle[i]) p.lockBtn.click(); } }],
+    ['two sides locked', async () => { for (const i of [0, 1]) { const p = pills.find(q => q.kind === 'side' && q.i === i); if (p && !S.lock.side[i]) p.lockBtn.click(); } }],
+    ['a side and an angle locked', async () => { const a = pills.find(q => q.kind === 'side' && q.i === 2), b = pills.find(q => q.kind === 'angle' && q.i === 0); if (a && !S.lock.side[2]) a.lockBtn.click(); if (b && !S.lock.angle[0]) b.lockBtn.click(); }],
+    ['everything locked', async () => { for (const p of pills) if (!S.lock[p.kind][p.i]) p.lockBtn.click(); }],
+    ['a thin sliver triangle', async () => { S.P = [{ x: -5, y: 0 }, { x: 5, y: 0 }, { x: 1, y: 0.002 }]; markLoaded(); requestRender(); }],
+    ['a nearly flat triangle', async () => { S.P = [{ x: -3, y: 0 }, { x: 3, y: 1e-9 }, { x: 0, y: 0 }]; markLoaded(); requestRender(); }],
+    ['an enormous triangle', async () => { S.P = [{ x: 0, y: 0 }, { x: 4e8, y: 0 }, { x: 0, y: 3e8 }]; markLoaded(); fitView(undefined, 0); requestRender(); }],
+    ['a microscopic triangle far from the origin', async () => { S.P = [{ x: 7, y: -3 }, { x: 7 + 4e-7, y: -3 }, { x: 7, y: -3 + 3e-7 }]; markLoaded(); fitView(undefined, 0); requestRender(); }],
+    ['zoomed far in', async () => { S.view.z = 1e6; requestRender(); }],
+    ['zoomed far out', async () => { S.view.z = 1e-3; requestRender(); }],
+    ['0 decimals', async () => { setPrec(0); }],
+    ['8 decimals', async () => { setPrec(8); }],
+    ['kilometers and gradians', async () => { await lenItems('km'); await angItems('grad'); }],
+    ['millimeters and radians, approx display', async () => { await lenItems('mm'); await angItems('rad'); const b = $$('#exactToggle button').find(e => e.dataset.v === 'approx'); if (b) b.click(); }],
+    ['an isosceles right triangle', async () => { S.P = [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 0, y: 4 }]; markLoaded(); requestRender(); }],
+    ['an equilateral triangle', async () => { S.P = [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 2, y: 2 * Math.sqrt(3) }]; markLoaded(); requestRender(); }],
+    ['a custom pivot far away', async () => { setPivotMode('custom'); const b = toBary({ x: 25, y: -40 }); if (b) { S.pivot.bary = b; requestRender(); } }],
+    ['the circumcenter as pivot', async () => { setPivotMode('circum'); }],
+    ['an explanation panel open', async () => { const row = $$('.row.clickable', statsEl)[3]; if (row) row.click(); await settle(900); }],
+    ['two corners selected', async () => { S.selected.clear(); S.selected.add(0); S.selected.add(1); requestRender(); }],
+    ['the light theme', async () => { if (S.theme !== 'light') click('btnTheme'); }]
+  ].map(([label, fn]) => ({ id: 'setup:' + label, kind: 'setup', label: 'start from ' + label, fire: async () => { await fn(); await settle(300); } }));
+  const SETUP_MAP = new Map(SETUPS.map(c => [c.id, c]));
+
+  async function runProblems(R, opts, M, r, C0, phase) {
+    const mem = loadMem();
+    R.mem0 = { suspects: Object.keys(mem.ctl).length, repros: mem.repros.length };
+    R.rr = rng(R.seed ^ 0x5bd1e995);
+    const total = opts.budget || M.budget; R.total = total;
+    const scoutN = Math.round(total * M.scoutShare), replayN = Math.min(mem.repros.length + mem.flows.length, Math.round(total * .1));
+    const shrinkN = 24, huntN = Math.max(20, total - scoutN - replayN - shrinkN);
+    R.plan = { 'scouting': scoutN, 'replaying old problems': replayN, 'hunting': huntN, 'shrinking repros': shrinkN };
+    R.stepsPer = { 'scouting': 1, 'replaying old problems': 4, 'hunting': 4, 'shrinking repros': 4 };
+    const P = R.problems = { memory: R.mem0, scoutN, aimed: 0, explore: 0, replay: [], minimal: [], suspects: [], types: {}, flowsRerun: [] };
+    /* suspicion per control: what earlier runs remembered (fading), what the prior says, and what this run finds */
+    const sus = new Map();
+    const get = c => { let x = sus.get(c.id); if (!x) { const m = mem.ctl[c.id]; x = { c, id: c.id, label: c.label, kind: c.kind, prior: PRIOR(c), mem: m ? m.score * .7 : 0, found: 0, hits: 0, soft: 0, uses: 0, bad: {} }; sus.set(c.id, x); } return x; };
+    const weight = x => Math.pow(.5 + x.prior * .35 + x.mem + x.found, 1.6);
+    const roulette = (list, wf) => { let t = 0; const w = list.map(x => { const v = wf(x); t += v; return v; }); let k = R.rr() * t; for (let i = 0; i < list.length; i++) { k -= w[i]; if (k <= 0) return list[i]; } return list[list.length - 1]; };
+    const fresh = () => discover().filter(c => c.kind !== 'key' || R.rr() < .5);
+    const learn = (steps, hit, soft, lastC) => {
+      for (const st of steps) { const c = st.c; if (!c || c.kind === 'setup') continue; const x = get(c); x.uses++; if (hit) { x.found += 1.6; x.hits += hit; if (st.v !== undefined) x.bad[st.v] = (x.bad[st.v] || 0) + 1; } else if (soft) x.found += .4; }
+      if (lastC && hit) get(lastC).found += 2.4;
+    };
+    const pool = mem.repros.map(x => ({ steps: x.repro, key: x.key, from: 'memory' }));
+    const sig = o => o.map(x => x.id + '=' + x.v).join('>');
+
+    /* one scenario of resolved steps [{ c, v, seed? }]: returns what it cost and what it found */
+    async function go(name, steps, section, keepGoing) {
+      R.scenarios++; R.cur = name; LIVE.scenario = name; LIVE.stepTotal = steps.length; LIVE.flow = []; LIVE.stepNo = 0;
+      const trail = [], done = []; const h0 = R.hits || 0, s0 = R.soft || 0; let n = 0;
+      for (const st of steps) {
+        if (RUN.stop) break;
+        LIVE.stepNo = ++n;
+        const seed = st.seed === undefined ? Math.floor(R.rr() * 1e9) : st.seed;
+        done.push({ id: st.c.id, v: st.v, seed });
+        R.repro = done.slice();
+        await stepOnce(R, st.c, rng(seed), trail, st.v, section);
+        if (!keepGoing && (R.hits || 0) > h0 + 6) break;     /* a scenario that is already on fire needs no more steps */
+      }
+      R.repro = null; progress(R);
+      return { hit: (R.hits || 0) - h0, soft: (R.soft || 0) - s0, done };
+    }
+    const asSteps = (done, cs) => done.map(d => ({ c: cs.get(d.id), v: d.v, seed: d.seed }));
+    const ctlMap = () => { const m = new Map(SETUP_MAP); for (const c of discover()) m.set(c.id, c); return m; };
+    const withSetups = (cs, steps) => { if (R.rr() < .55) { const n = R.rr() < .25 ? 2 : 1; const pre = []; for (let i = 0; i < n; i++) pre.push({ c: pick(R.rr, SETUPS) }); return pre.concat(steps); } return steps; };
+    const stepFor = (c, last) => ({ c, v: c.values || c.kind === 'field' ? fuzzValue(R.rr, c, last) : undefined });
+    const fieldsOf = cs => cs.filter(c => c.kind === 'field');
+
+    try {
+      await resetApp();
+      /* ---------------- scouting: the likeliest suspects first, a little of everything else */
+      phase('scouting', scoutN);
+      {
+        const cs = discover(); for (const c of cs) get(c);
+        const order = [...sus.values()].filter(x => cs.some(c => c.id === x.id)).sort((a, b) => (b.prior + b.mem * 2 + (b.uses ? 0 : 1.5) + R.rr()) - (a.prior + a.mem * 2 + (a.uses ? 0 : 1.5) + R.rr()));
+        let used = 0;
+        for (const x of order) {
+          if (used >= scoutN || RUN.stop) break;
+          await resetApp(); const cur = discover(), c = cur.find(q => q.id === x.id); if (!c) continue;
+          const vals = c.kind === 'field' ? [fuzzValue(R.rr, c), fuzzValue(R.rr, c)] : [undefined];
+          for (const v of vals) { if (used >= scoutN || RUN.stop) break; const res = await go('scout: ' + c.label + (v !== undefined ? ' = ' + JSON.stringify(String(v).slice(0, 18)) : ''), [{ c, v }], 'scouting'); used++; learn([{ c, v }], res.hit, res.soft, c); if (res.hit) pool.push({ steps: res.done, key: null, from: 'scout' }); }
+        }
+      }
+      /* ---------------- replaying old problems: are they still there? */
+      phase('replaying old problems', replayN);
+      {
+        const keep = [];
+        for (const old of mem.repros.slice(0, replayN)) {
+          if (RUN.stop) break;
+          await resetApp(); const cs = ctlMap();
+          if (!old.repro.every(d => cs.has(d.id))) { keep.push(old); R.scenarios++; continue; }
+          const res = await go('replay: ' + old.msg.slice(0, 60), asSteps(old.repro, cs), 'replaying', true);
+          const again = res.hit > 0;
+          P.replay.push({ msg: old.msg, type: old.type, still: again, steps: old.repro.length });
+          if (again) { old.seen = (old.seen || 1) + 1; keep.push(old); learn(asSteps(old.repro, cs), 1, 0, null); pool.push({ steps: old.repro, key: old.key, from: 'memory' }); }
+        }
+        mem.repros = keep.concat(mem.repros.slice(replayN));
+        /* flows that failed before get another go */
+        for (const name of mem.flows.slice(0, Math.max(0, replayN - P.replay.length))) {
+          const fl = FLOWS.find(f => f[0] === name); if (!fl || RUN.stop) continue;
+          const before = R.hits || 0; await runOneFlow(R, name, fl[1]); P.flowsRerun.push({ name, still: (R.hits || 0) > before });
+        }
+      }
+      /* ---------------- hunting: nearly everything goes to the suspects */
+      phase('hunting', huntN);
+      {
+        const target = R.scenarios + huntN;
+        while (R.scenarios < target && !RUN.stop) {
+          await resetApp(); const cs = discover(); for (const c of cs) get(c);
+          const live = [...sus.values()].filter(x => cs.some(c => c.id === x.id)).map(x => (x.c = cs.find(c => c.id === x.id), x));
+          const cm = new Map(SETUP_MAP); cs.forEach(c => cm.set(c.id, c));
+          const roll = R.rr(); let kind, steps = [];
+          if (roll < .14) {                                                      /* explore: something with no suspicion, to find new suspects */
+            kind = 'explore'; P.explore++;
+            steps = withSetups(cs, Array.from({ length: 3 + Math.floor(R.rr() * 5) }, () => stepFor(pick(R.rr, cs))));
+          } else if (roll < .26 && pool.length) {                                /* mutate a recipe that already failed */
+            kind = 'mutate'; const base = pick(R.rr, pool); P.aimed++;
+            const st = base.steps.filter(d => cm.has(d.id)).map(d => ({ c: cm.get(d.id), v: d.v, seed: d.seed }));
+            if (!st.length) { kind = 'chain'; } else {
+              const how = Math.floor(R.rr() * 6);
+              if (how === 0 && st.length > 1) st.splice(Math.floor(R.rr() * st.length), 1);
+              else if (how === 1) { const i = Math.floor(R.rr() * st.length); if (st[i].c.kind === 'field') st[i] = { c: st[i].c, v: fuzzValue(R.rr, st[i].c, st[i].v) }; else st.splice(i, 0, { ...st[i], seed: undefined }); }
+              else if (how === 2 && st.length > 1) { const i = Math.floor(R.rr() * (st.length - 1)); [st[i], st[i + 1]] = [st[i + 1], st[i]]; }
+              else if (how === 3) st.push(stepFor(roulette(live, weight).c));
+              else if (how === 4) st.push(...st.slice(-2).map(x => ({ ...x, seed: undefined })));
+              else st.forEach(x => { x.seed = undefined; });
+              steps = st;
+            }
+          }
+          if (!steps.length) {
+            P.aimed++;
+            const x = roulette(live, weight), c = x.c;
+            if (roll < .5) {                                                     /* a suspect and a partner, in either order */
+              kind = 'pair'; const partner = R.rr() < .5 ? roulette(live, weight).c : pick(R.rr, cs);
+              const a = stepFor(c), b = stepFor(partner, a.v);
+              steps = withSetups(cs, R.rr() < .5 ? [a, b] : [b, a]);
+            } else if (roll < .72 && c.kind === 'field') {                       /* hammer one field with value after value */
+              kind = 'fuzz'; let last; steps = Array.from({ length: 3 + Math.floor(R.rr() * 4) }, () => { const st = { c, v: fuzzValue(R.rr, c, last) }; last = st.v; return st; });
+              steps = withSetups(cs, steps);
+            } else {                                                             /* a chain built mostly from suspects */
+              kind = 'chain'; steps = Array.from({ length: 4 + Math.floor(R.rr() * 5) }, () => stepFor(R.rr() < .65 ? roulette(live, weight).c : pick(R.rr, cs)));
+              steps = withSetups(cs, steps);
+            }
+          }
+          P.types[kind] = (P.types[kind] || 0) + 1;
+          const res = await go('hunt (' + kind + '): ' + steps.map(s => s.c.label).join(' > ').slice(0, 90), steps, 'hunting');
+          learn(steps, res.hit, res.soft, steps[steps.length - 1] && steps[steps.length - 1].c);
+          if (res.hit && !pool.some(q => sig(q.steps) === sig(res.done))) pool.push({ steps: res.done, key: null, from: 'hunt' });
+        }
+      }
+      /* ---------------- shrinking: the shortest recipe for each failure */
+      phase('shrinking repros', shrinkN);
+      {
+        const errs = R.issues.filter(i => i.sev === 'error' && i.repro && i.repro.length > 1).sort((a, b) => b.count - a.count).slice(0, 6);
+        let budget = shrinkN;
+        for (const iss of errs) {
+          if (RUN.stop || budget <= 0) break;
+          let cur = iss.repro.slice(), i = 0;
+          while (i < cur.length - 1 && budget > 0 && !RUN.stop) {
+            const trial = cur.slice(0, i).concat(cur.slice(i + 1));
+            await resetApp(); const cs = ctlMap(); if (!trial.every(d => cs.has(d.id))) { i++; continue; }
+            const e = R.issueKeys.get(iss.key), c0 = e ? e.count : 0; budget--;
+            await go('shrink: ' + iss.msg.slice(0, 50), asSteps(trial, cs), 'shrinking', true);
+            if ((R.issueKeys.get(iss.key) || { count: 0 }).count > c0) cur = trial; else i++;
+          }
+          iss.minimal = cur; P.minimal.push({ msg: iss.msg, from: iss.repro.length, to: cur.length, steps: cur.map(d => d.id + (d.v !== undefined ? ' = ' + JSON.stringify(String(d.v).slice(0, 24)) : '')) });
+        }
+      }
+    } finally {
+      /* what to remember for next time */
+      for (const x of sus.values()) { const old = mem.ctl[x.id] ? mem.ctl[x.id].score * .75 : 0, now = x.found; const score = Math.round((old + now) * 100) / 100; if (score > .2) mem.ctl[x.id] = { score, label: x.label, hits: (mem.ctl[x.id] ? mem.ctl[x.id].hits : 0) + x.hits }; else delete mem.ctl[x.id]; }
+      for (const i of R.issues) if (i.sev === 'error' && (i.minimal || i.repro) && i.type !== 'dev tool') { const rp = i.minimal || i.repro; if (!mem.repros.some(q => q.key === i.key)) mem.repros.unshift({ key: i.key, msg: i.msg, type: i.type, repro: rp, seen: 1 }); }
+      mem.repros = mem.repros.slice(0, 40);
+      mem.flows = [...new Set(R.flows.filter(f => f.passed < f.checks).map(f => f.name).concat(P.flowsRerun.filter(f => f.still).map(f => f.name)))].slice(0, 10);
+      saveMem(mem);
+      P.suspects = [...sus.values()].filter(x => x.uses || x.mem).map(x => ({ id: x.id, label: x.label, kind: x.kind, score: Math.round((x.mem + x.found) * 100) / 100, hits: x.hits, uses: x.uses, remembered: x.mem > 0, values: Object.entries(x.bad).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]) })).sort((a, b) => b.score - a.score).slice(0, 12);
+      const aimedN = P.aimed, exploreN = P.explore; P.share = aimedN + exploreN ? Math.round(aimedN / (aimedN + exploreN + scoutN) * 100) : 0;
+      P.share = Math.round((R.scenarios - scoutN - P.explore) / Math.max(1, R.scenarios) * 100);
+    }
+  }
+  /* one whole flow, counted and checked like the main run does */
+  async function runOneFlow(R, name, fn) {
+    R.cur = 'flow: ' + name; LIVE.scenario = R.cur; LIVE.ctl = { id: 'flow', kind: 'flow', label: name }; LIVE.value = undefined; LIVE.diff = null; LIVE.stepNo = 0; LIVE.stepTotal = 0;
+    const f = flowTools(R), e0 = ERR.length, fi = FM.ts.length;
+    try { await fn(R, f); } catch (e) { f.T(name + ' ran to the end', false, e.message); }
+    for (let k = e0; k < ERR.length; k++) addIssue(R, { type: ERR[k].type, sev: ERR[k].type === 'console warning' ? 'warn' : 'error', msg: ERR[k].msg }, [R.cur]);
+    for (const iss of check('after flow ' + name)) addIssue(R, iss, [R.cur]);
+    const passed = f.out.filter(x => x.ok).length; let row = R.flows.find(x => x.name === name); if (!row) R.flows.push(row = { name, checks: 0, passed: 0, fails: [] });
+    row.checks += f.out.length; row.passed += passed; f.out.filter(x => !x.ok).forEach(x => { if (row.fails.length < 6) row.fails.push(x.name + (x.detail ? ': ' + x.detail : '')); });
+    R.coverage.flows++; R.scenarios++; (R.frames['flows'] = R.frames['flows'] || []).push(...deltasSince(fi)); progress(R);
+  }
+
   /* ------------------------------------------------------------------ the whole run */
   async function run(opts) {
     if (RUN.on) return RUN.report;
@@ -513,6 +730,7 @@
         R.total = Object.values(R.plan).reduce((a, b) => a + b, 0);
         /* rough steps per scenario in each phase, used only until that phase has been measured */
         R.stepsPer = { 'one by one': 1, 'pairs': 2, 'toggle combinations': 2 + M.probe, 'random runs': 6.5, 'flows': 3 }; }
+      if (mode === 'problems') { await runProblems(R, opts, M, r, C0, phase); } else {
       /* ---- one by one ---- */
       phase('one by one', C0.length);
       for (const c0 of C0) {
@@ -567,6 +785,7 @@
           R.coverage.flows++; R.scenarios++; (R.frames['flows'] = R.frames['flows'] || []).push(...deltasSince(fi)); progress(R);
         }
       }
+      }
     } catch (e) { addIssue(R, { type: 'dev tool', sev: 'error', msg: 'the run stopped on ' + e.message }, [R.cur || '']); }
     { const ps = R.phases[R.phaseName]; if (ps) { ps.ms = performance.now() - R.phaseT0; ps.done = R.scenarios - ps.s0; } }
     await resetApp(); fmStop(); R.finished = Date.now(); R.stopped = RUN.stop; RUN.on = false; LIVE.stage = RUN.stop ? 'stopped' : 'finished';
@@ -602,15 +821,16 @@
     panel = document.createElement('div'); panel.className = 'dev'; panel.hidden = true;
     panel.innerHTML = `<div class="hd"><h4>Dev mode · Triangle Thing</h4><span></span><button data-x="close" aria-label="Close">✕</button></div><div class="bd">
       <div class="note">Tests every button, slider-like control, input box, menu, row and canvas gesture on its own, in pairs, in combinations and in random runs, then runs whole flows, and grades how smoothly it all ran. <b>Backtick</b> opens and closes this panel.</div>
-      <div class="row"><select id="devMode"><option value="quick">Quick</option><option value="standard" selected>Standard</option><option value="thorough">Thorough</option></select><input id="devSeed" placeholder="seed (optional)" size="14"><button data-x="start">Start</button><button data-x="stop" disabled>Stop</button></div>
+      <div class="row"><select id="devMode"><option value="quick">Quick</option><option value="standard" selected>Standard</option><option value="thorough">Thorough</option><option value="problems">Aim at problems</option></select><input id="devSeed" placeholder="seed (optional)" size="14"><button data-x="start">Start</button><button data-x="stop" disabled>Stop</button><button data-x="forget" title="Forget the suspects and problems remembered from earlier runs">Forget memory</button></div>
       <div class="note" id="devLabel"></div><div class="bar big"><i id="devBar"></i></div><div class="prog"><b id="devPct">0%</b><span id="devEta" class="note"></span></div><div id="devStatus" class="note">Ready.</div><div id="devPhases"></div><div id="devLive"></div><div class="row"><button data-x="copy" disabled>Copy report</button><button data-x="json" disabled>Download JSON</button></div><div id="devOut"></div></div>`;
     document.body.appendChild(panel);
-    const lab = () => { $('#devLabel', panel).textContent = MODES[$('#devMode', panel).value].label; }; lab(); $('#devMode', panel).onchange = lab;
+    const lab = () => { const m = $('#devMode', panel).value; let t = MODES[m].label; if (m === 'problems') { const mm = loadMem(); t += ' · remembered from earlier runs: ' + Object.keys(mm.ctl).length + ' suspect controls, ' + mm.repros.length + ' problems to replay'; } $('#devLabel', panel).textContent = t; }; lab(); $('#devMode', panel).onchange = lab;
     panel.addEventListener('click', e => {
       const x = e.target.dataset && e.target.dataset.x; if (!x) return;
       if (x === 'close') panel.hidden = true;
       if (x === 'start') { $('[data-x=start]', panel).disabled = true; $('[data-x=stop]', panel).disabled = false; $('#devOut', panel).innerHTML = ''; run({ mode: $('#devMode', panel).value, seed: $('#devSeed', panel).value || undefined }).then(() => { $('[data-x=start]', panel).disabled = false; $('[data-x=stop]', panel).disabled = true; $('[data-x=copy]', panel).disabled = false; $('[data-x=json]', panel).disabled = false; }); }
       if (x === 'stop') RUN.stop = true;
+      if (x === 'forget') { try { localStorage.removeItem(STORE); } catch (_) {} $('#devMode', panel).onchange(); }
       if (x === 'copy' && RUN.report) navigator.clipboard && navigator.clipboard.writeText(text(RUN.report)).catch(() => {});
       if (x === 'json' && RUN.report) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(RUN.report, (k, v) => v instanceof Map ? undefined : v, 1)], { type: 'application/json' })); a.download = 'triangle-dev-report.json'; a.click(); }
     });
@@ -683,6 +903,11 @@
   const expected = R => { const M = MODES[R.mode]; return R.controls * 1.4 + M.pairs + M.combos + M.seqs + FLOWS.length * M.loops; };
   function text(R) {
     const L = ['TRIANGLE THING DEV REPORT', R.verdict.toUpperCase(), 'mode ' + R.mode + ' · seed ' + R.seed + ' · ' + R.controls + ' controls · ' + R.scenarios + ' scenarios · ' + R.steps + ' steps · ' + Math.round((R.finished - R.started) / 1000) + ' s', 'Smoothness: ' + R.overall.grade.word + ' (avg ' + R.overall.avg + ' ms, p95 ' + R.overall.p95 + ' ms, worst ' + R.overall.max + ' ms, ' + R.overall.over100 + ' frames over 100 ms)', 'Redraw: p50 ' + R.draw.p50 + ' ms, p95 ' + R.draw.p95 + ' ms', ''];
+    if (R.problems) { const P = R.problems; L.push('AIMED AT PROBLEMS: ' + P.share + '% of ' + R.scenarios + ' scenarios on suspects (' + Object.entries(P.types).map(([k, v]) => k + ' ' + v).join(', ') + '); memory at start: ' + P.memory.suspects + ' suspects, ' + P.memory.repros + ' old problems');
+      L.push('Suspects:'); P.suspects.forEach(x => L.push('- ' + x.label + ' score ' + x.score + ', ' + x.hits + ' problem(s)' + (x.values.length ? ', values ' + x.values.map(v => JSON.stringify(String(v).slice(0, 18))).join(' ') : '')));
+      if (P.replay.length) { L.push('Old problems replayed:'); P.replay.forEach(x => L.push('- ' + (x.still ? 'STILL FAILING' : 'fixed') + ' [' + x.type + '] ' + x.msg.slice(0, 110))); }
+      if (P.minimal.length) { L.push('Shortest recipes:'); P.minimal.forEach(x => L.push('- ' + x.msg.slice(0, 110) + ' (' + x.from + ' -> ' + x.to + ' steps): ' + x.steps.join(' > '))); }
+      L.push(''); }
     L.push('PROBLEMS (' + R.errors.length + ')'); R.errors.forEach(i => L.push('- [' + i.type + '] x' + i.count + ' ' + i.msg + '\n    steps: ' + i.steps.join(' > ')));
     L.push('', 'WARNINGS (' + R.warnings.length + ')'); R.warnings.forEach(i => L.push('- [' + i.type + '] x' + i.count + ' ' + i.msg));
     L.push('', 'FLOWS'); R.flows.forEach(f => L.push('- ' + f.name + ': ' + f.passed + '/' + f.checks + (f.fails.length ? '  FAILED: ' + f.fails.join(' | ') : '')));
@@ -693,6 +918,15 @@
     L.push('', 'DID NOTHING'); R.noop.forEach(s => L.push('- ' + s.label + ' (' + s.uses + ' uses)'));
     return L.join('\n');
   }
+  function problemsHtml(R) {
+    const P = R.problems, share = P.share;
+    const types = Object.entries(P.types).map(([k, v]) => k + ' ' + v).join(', ');
+    return `<h4>Aimed at problems</h4>
+      <div class="note">${share}% of the ${R.scenarios} scenarios went to suspects (${esc(types)}); the rest scouted or explored. Memory at the start: ${P.memory.suspects} suspect controls, ${P.memory.repros} old problems.</div>
+      <table><tr><th>suspect</th><th>score</th><th>problems</th><th>worst values</th></tr>${P.suspects.map(x => `<tr><td>${esc(x.label)}${x.remembered ? ' <span class="note">(remembered)</span>' : ''}</td><td>${x.score}</td><td class="${x.hits ? 'bad' : ''}">${x.hits}</td><td>${esc(x.values.map(v => JSON.stringify(String(v).slice(0, 18))).join(' '))}</td></tr>`).join('') || '<tr><td colspan="4" class="ok">Nothing looked suspicious.</td></tr>'}</table>
+      ${P.replay.length ? `<h4>Old problems, replayed</h4>${P.replay.map(x => `<div class="${x.still ? 'bad' : 'ok'}">${x.still ? 'still failing' : 'fixed'} · [${esc(x.type)}] ${esc(x.msg.slice(0, 110))}</div>`).join('')}` : ''}
+      ${P.minimal.length ? `<h4>Shortest recipes</h4>${P.minimal.map(x => `<div class="iss"><b>${esc(x.msg.slice(0, 120))}</b><small>${x.from} steps shrunk to ${x.to}: ${esc(x.steps.join(' → '))}</small></div>`).join('')}` : ''}`;
+  }
   function render(R) {
     if (!panel) return;
     const cls = R.errors.length || R.flowFail ? 'bad' : R.overall.grade.cls === 'bad' ? 'warn' : 'ok';
@@ -700,6 +934,7 @@
     $('#devOut', panel).innerHTML = `<h4 class="${cls}">${esc(R.verdict)}</h4>
       <div class="note">${R.controls} controls · ${R.scenarios} scenarios (${R.coverage.singles} single, ${R.coverage.pairs} pairs, ${R.coverage.combos} toggle combinations, ${R.coverage.seqs} random runs, ${R.coverage.flows} flows) · ${R.steps} steps · ${R.values} typed values · ${Math.round((R.finished - R.started) / 1000)} s</div>
       ${R.backgroundFrames ? `<div class="note">The tab was in the background for part of this run (${R.backgroundFrames} frames came from a worker clock), so smoothness numbers include those.</div>` : ''}
+      ${R.problems ? problemsHtml(R) : ''}
       <h4>Smoothness</h4><div class="${R.overall.grade.cls}"><b>${esc(R.overall.grade.word)}</b> · frame avg ${R.overall.avg} ms, p95 ${R.overall.p95} ms, worst ${R.overall.max} ms · ${R.overall.over50} frames over 50 ms, ${R.overall.over100} over 100 ms · redraw p95 ${R.draw.p95} ms</div>
       <table><tr><th>kind of step</th><th>grade</th><th>p95</th><th>worst</th></tr>${R.sections.map(s => `<tr><td>${esc(s.name)}</td><td class="${s.grade.cls}">${esc(s.grade.word)}</td><td>${s.p95} ms</td><td>${s.max} ms</td></tr>`).join('')}</table>
       <h4>Problems (${R.errors.length})</h4>${R.errors.map(iss).join('') || '<div class="ok">None.</div>'}
