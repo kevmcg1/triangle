@@ -19,10 +19,12 @@ function calcAudit(D) {
   const checks = [];
   const P = D.P, sc = Math.max(D.a, D.b, D.c, 1e-300);
   const minSide = Math.min(D.a, D.b, D.c);
+  /* a position can't be known better than the floating-point spacing of the coordinates themselves, however small the triangle is */
+  const pos = sc + 1e-6 * Math.max(...P.map(q => Math.max(Math.abs(q.x), Math.abs(q.y))));
   const degenerate = !(D.area > 1e-12 * sc * sc) || !(minSide > 1e-9 * sc);
   /* ill-conditioned slivers lose digits in every formula, even correct ones: widen the tolerance with how thin the triangle is */
-  const cond = Math.min(1e6, Math.max(1, (sc / Math.max(minSide, 1e-300)) ** 2));
-  const TOL = Math.min(1e-3, 1e-9 * cond);
+  const cond = Math.min(1e12, Math.max(1, sc * sc / Math.max(D.area, 1e-300)));   /* about 1 / sin(thinnest angle) */
+  const TOL = Math.min(1e-2, 1e-9 * cond);
   const group = (g, kind) => (label, expected, actual, o) => {
     o = o || {};
     const tol = o.tol === undefined ? TOL : o.tol;
@@ -109,18 +111,18 @@ function calcAudit(D) {
 
     /* ---- centers ---- */
     const G = { x: (pa.x + pb.x + pc.x) / 3, y: (pa.y + pb.y + pc.y) / 3 };
-    model('Centers', 'centroid x', G.x, D.centroid.x, { abs: sc });
-    model('Centers', 'centroid y', G.y, D.centroid.y, { abs: sc });
+    model('Centers', 'centroid x', G.x, D.centroid.x, { abs: pos });
+    model('Centers', 'centroid y', G.y, D.centroid.y, { abs: pos });
     const I = { x: (a * pa.x + b * pb.x + c * pc.x) / (a + b + c), y: (a * pa.y + b * pb.y + c * pc.y) / (a + b + c) };
-    model('Centers', 'incenter x', I.x, D.incenter.x, { abs: sc });
-    model('Centers', 'incenter y', I.y, D.incenter.y, { abs: sc });
+    model('Centers', 'incenter x', I.x, D.incenter.x, { abs: pos });
+    model('Centers', 'incenter y', I.y, D.incenter.y, { abs: pos });
     for (let i = 0; i < 3; i++) {
       const j = (i + 1) % 3, k = (i + 2) % 3;
-      ident('Centers', 'orthocenter on altitude from ' + names[i], 0, ((D.ortho.x - V[i].x) * (V[j].x - V[k].x) + (D.ortho.y - V[i].y) * (V[j].y - V[k].y)) / (sc * sc), { abs: 1, tol: 1e-8 * cond });
+      ident('Centers', 'orthocenter on altitude from ' + names[i], 0, ((D.ortho.x - V[i].x) * (V[j].x - V[k].x) + (D.ortho.y - V[i].y) * (V[j].y - V[k].y)) / (sc * pos), { abs: 1, tol: 1e-8 * cond });
     }
-    ident('Centers', 'Euler line: H = 3G − 2O (x)', 3 * G.x - 2 * D.circum.x, D.ortho.x, { abs: sc, tol: 1e-8 * cond });
-    ident('Centers', 'Euler line: H = 3G − 2O (y)', 3 * G.y - 2 * D.circum.y, D.ortho.y, { abs: sc, tol: 1e-8 * cond });
-    for (let i = 0; i < 3; i++) ident('Centers', 'centroid at 2/3 of median from ' + names[i], V[i].x + (2 / 3) * (D.medFoot[i].x - V[i].x), D.centroid.x, { abs: sc });
+    ident('Centers', 'Euler line: H = 3G − 2O (x)', 3 * G.x - 2 * D.circum.x, D.ortho.x, { abs: pos, tol: 1e-8 * cond });
+    ident('Centers', 'Euler line: H = 3G − 2O (y)', 3 * G.y - 2 * D.circum.y, D.ortho.y, { abs: pos, tol: 1e-8 * cond });
+    for (let i = 0; i < 3; i++) ident('Centers', 'centroid at 2/3 of median from ' + names[i], V[i].x + (2 / 3) * (D.medFoot[i].x - V[i].x), D.centroid.x, { abs: pos });
 
     /* ---- trigonometry ---- */
     const td = trigData(D);

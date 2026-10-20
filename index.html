@@ -1117,12 +1117,11 @@ function derive() {
   const r = area / s;
 
   const [pa, pb, pc] = P;
-  const d = 2 * (pa.x * (pb.y - pc.y) + pb.x * (pc.y - pa.y) + pc.x * (pa.y - pb.y));
-  const sa = pa.x * pa.x + pa.y * pa.y, sb = pb.x * pb.x + pb.y * pb.y, sc = pc.x * pc.x + pc.y * pc.y;
-  const circum = {
-    x: (sa * (pb.y - pc.y) + sb * (pc.y - pa.y) + sc * (pa.y - pb.y)) / d,
-    y: (sa * (pc.x - pb.x) + sb * (pa.x - pc.x) + sc * (pb.x - pa.x)) / d
-  };
+  /* circumcenter, worked out relative to corner A: using absolute coordinates squares numbers like 5.4 and subtracts them to find a
+     circle 1e-7 wide, which loses every digit — translating first keeps the sums the size of the triangle itself */
+  const bx = pb.x - pa.x, by = pb.y - pa.y, cx = pc.x - pa.x, cy = pc.y - pa.y;
+  const d = 2 * (bx * cy - by * cx), bb = bx * bx + by * by, cc = cx * cx + cy * cy;
+  const circum = { x: pa.x + (cy * bb - by * cc) / d, y: pa.y + (bx * cc - cx * bb) / d };
   const centroid = { x: (pa.x + pb.x + pc.x) / 3, y: (pa.y + pb.y + pc.y) / 3 };
   const incenter = { x: (a * pa.x + b * pb.x + c * pc.x) / per, y: (a * pa.y + b * pb.y + c * pc.y) / per };
   const ortho = { x: pa.x + pb.x + pc.x - 2 * circum.x, y: pa.y + pb.y + pc.y - 2 * circum.y };

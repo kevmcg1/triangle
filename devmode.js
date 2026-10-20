@@ -454,7 +454,7 @@
         R.plan = { 'one by one': ctls.reduce((n, c) => n + (c.values ? Math.min(c.values.length, M.vals) : 1), 0), 'pairs': only ? 0 : Math.min(M.pairs, C0.length * C0.length), 'toggle combinations': only ? 0 : Math.min(M.combos, 1 << nTog), 'random runs': only ? 0 : M.seqs, 'flows': only ? 0 : FLOWS.length * M.loops };
         R.total = Object.values(R.plan).reduce((a, b) => a + b, 0);
         /* rough steps per scenario in each phase, used only until that phase has been measured */
-        R.stepsPer = { 'one by one': 1, 'pairs': 2, 'toggle combinations': 2 + M.probe, 'random runs': 6.5, 'flows': 30 }; }
+        R.stepsPer = { 'one by one': 1, 'pairs': 2, 'toggle combinations': 2 + M.probe, 'random runs': 6.5, 'flows': 3 }; }
       /* ---- one by one ---- */
       phase('one by one', C0.length);
       for (const c0 of C0) {
