@@ -9,6 +9,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Triangle Thing</title>
 <link rel="stylesheet" href="fa/css/all.min.css">
+<link rel="stylesheet" href="icon_motion.css">
 <link rel="preload" href="fa/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 :root{
@@ -60,8 +61,6 @@ input,button,select{font-family:inherit}
   flex:0 0 44px;height:44px;background:var(--header);border-bottom:1px solid var(--line);
   display:flex;align-items:center;gap:10px;padding:0 14px;z-index:30;
 }
-#appHeader .mark{width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--line-2);border-radius:6px;font-size:9px;color:var(--txt-2)}
-#appHeader h1{font-size:12.5px;font-weight:700;letter-spacing:.06em}
 #appHeader .flexgap{flex:1}
 #searchWrap{position:relative;width:220px}
 #searchWrap i{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--txt-3)}
@@ -94,17 +93,16 @@ input,button,select{font-family:inherit}
 }
 .side-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:24px}
 
-/* Logo at the top of the sidebar (same mark as Shop Tool Sim): bracketed two-line stack, solid line on top, outlined italic line below */
-.side-logo{flex:0 0 auto;padding:20px 18px 14px;text-align:center}
-.logo-mark{margin:0;font-family:'Bebas Neue','Inter',sans-serif;font-size:2.35rem;font-weight:400;letter-spacing:.055em;line-height:.9;color:#e4e6ea;display:flex;align-items:center;justify-content:center;gap:.28em;user-select:none}
+/* Logo at the top left (same mark as Shop Tool Sim): bracketed two-line stack, solid line on top, outlined italic line below */
+.hdr-logo{margin:0;display:flex;align-items:center;gap:.22em;font-family:'Bebas Neue','Inter',sans-serif;font-size:1.75rem;font-weight:400;letter-spacing:.055em;line-height:.86;color:#e4e6ea;user-select:none;height:100%}
 .logo-stack{display:flex;flex-direction:column;align-items:center;gap:.06em}
 .logo-top{display:block;white-space:nowrap}
-.logo-bot{display:block;font-style:italic;text-transform:uppercase;letter-spacing:.1em;text-indent:.1em;color:#6d737c;white-space:nowrap}
-@supports (-webkit-text-stroke:1px black){ .logo-bot{color:transparent;-webkit-text-stroke:1.4px #e4e6ea} }
+.logo-bot{display:block;font-style:italic;text-transform:uppercase;letter-spacing:.2em;text-indent:.2em;color:#6d737c;white-space:nowrap}
+@supports (-webkit-text-stroke:1px black){ .logo-bot{color:transparent;-webkit-text-stroke:.9px #e4e6ea} }
 .logo-brk{display:block;font-size:1.55em;line-height:.78;color:#e8c547;opacity:.85}
-:root[data-theme="light"] .logo-mark{color:#17171a}
+:root[data-theme="light"] .hdr-logo{color:#17171a}
 :root[data-theme="light"] .logo-bot{color:#8c8c96}
-@supports (-webkit-text-stroke:1px black){ :root[data-theme="light"] .logo-bot{color:transparent;-webkit-text-stroke:1.4px #17171a} }
+@supports (-webkit-text-stroke:1px black){ :root[data-theme="light"] .logo-bot{color:transparent;-webkit-text-stroke:.9px #17171a} }
 :root[data-theme="light"] .logo-brk{color:#c9a227}
 
 .sec{border-bottom:1px solid var(--line);position:relative}
@@ -427,6 +425,100 @@ body.view-only #exitViewOnly{
   #sidebar{position:absolute;left:0;top:0;bottom:0;z-index:20;box-shadow:0 0 48px rgba(0,0,0,.7);width:352px}
   #searchWrap{width:140px}
 }
+
+/* ---------------- Sidebar, in the Shop Tool Sim style ---------------- */
+:root{--raise:#1b1d20;--raise-2:#24272b;--side-bg:#131416;--side-line:#222428;--side-ink:#ececee;--c0:#5b93ea;--c1:#5fcf8a;--c2:#e8b547;--c3:#a78bfa;--c4:#f472b6;--c5:#fb923c;--c6:#94a3b8}
+:root[data-theme="light"]{--raise:#eceef2;--raise-2:#e0e3e9;--side-bg:#fbfbfd;--side-line:#e4e4ea;--side-ink:#17171a;--c0:#2f63c9;--c1:#1e9455;--c2:#b97d0c;--c3:#6d4fd6;--c4:#c2377f;--c5:#d4640f;--c6:#5f6b7c}
+#sidebar{background:var(--side-bg);border-right:1px solid var(--side-line)}
+.side-logo{flex:0 0 auto;padding:20px 18px 14px;text-align:center}
+.side-logo .logo-mark{margin:0;font-family:'Bebas Neue','Inter',sans-serif;font-size:2.35rem;font-weight:400;letter-spacing:.055em;line-height:.9;color:#e4e6ea;display:flex;align-items:center;justify-content:center;gap:.28em;user-select:none}
+:root[data-theme="light"] .side-logo .logo-mark{color:#17171a}
+.side-logo .logo-bot{letter-spacing:.1em;text-indent:.1em}
+@supports (-webkit-text-stroke:1px black){ .side-logo .logo-bot{-webkit-text-stroke:1.4px #e4e6ea} :root[data-theme="light"] .side-logo .logo-bot{-webkit-text-stroke:1.4px #17171a} }
+.logo-rule{width:100%;max-width:210px;height:1.5px;margin:12px auto 8px;background:linear-gradient(90deg,transparent 0%,var(--side-ink) 50%,transparent 100%);opacity:.35}
+.logo-foot{display:flex;align-items:center;justify-content:center;min-height:22px}
+.logo-range{color:var(--txt-3);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.side-scroll{padding-bottom:0}
+.sec{--sc:var(--c6);border-bottom:1px solid var(--side-line);background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 22%,transparent) 0%,color-mix(in srgb,var(--sc) 8%,transparent) 45%,transparent 100%);box-shadow:inset 3px 0 0 color-mix(in srgb,var(--sc) 75%,transparent)}
+.sec::before{display:none}
+.sec{display:flow-root}
+.sec.cat-0{--sc:var(--c0)}.sec.cat-1{--sc:var(--c1)}.sec.cat-2{--sc:var(--c2)}.sec.cat-3{--sc:var(--c3)}.sec.cat-4{--sc:var(--c4)}.sec.cat-5{--sc:var(--c5)}.sec.cat-6{--sc:var(--c6)}
+.sec-head{position:relative;margin:16px 18px 0;padding:0 0 9px;gap:9px;color:color-mix(in srgb,var(--sc) 55%,var(--side-ink))}
+.sec-head:hover{background:transparent;color:color-mix(in srgb,var(--sc) 35%,var(--side-ink))}
+.sec-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--sc) 0%,color-mix(in srgb,var(--sc) 45%,#5b93ea) 42%,transparent 100%)}
+.sec-head i.ico{font-size:12px;width:14px;color:var(--sc)}
+.sec-head span{font-family:"Roboto","Inter",system-ui,sans-serif;font-style:italic;font-weight:700;font-size:13px;letter-spacing:.1em;line-height:1.2}
+.sec-head i.chev{color:var(--sc)}
+.sec-body{padding:12px 18px 16px;gap:4px}
+.row{background:var(--raise);border-radius:6px;padding:6px 10px;gap:10px;font-size:12px}
+.row.clickable:hover{background:var(--raise-2)}
+.row .k{color:var(--txt-2)}
+.row .v{font-weight:600;color:var(--side-ink)}
+.row .v.dim{font-weight:500}
+.tblock{margin-top:2px;background:var(--raise);border-radius:8px;padding:6px 8px}
+.tblock .thdr{border-bottom-color:var(--side-line)}
+.trow:hover{background:var(--raise-2)}
+.trow .c{font-weight:600;color:var(--side-ink)}
+.chip{border:0;border-radius:6px;background:var(--raise);color:var(--txt-2);font-weight:600;padding:5px 10px}
+.chip.on{background:var(--side-ink);color:var(--side-bg)}
+.audit-bar{border-top:1px solid var(--side-line);padding:9px 18px;font-weight:500}
+.audit-bar::before{content:none}
+.side-foot{border-top:1px solid var(--side-line);padding:10px 18px;gap:12px}
+.pf-lbl{font-weight:700;letter-spacing:.1em}
+.stepper button{background:var(--raise);border:0;width:24px;height:24px;color:var(--txt)}
+.stepper button:hover{background:var(--raise-2)}
+.stepper .val{background:var(--raise);border:0;width:26px;height:24px;font-weight:600}
+.toggle2{border:0;border-radius:6px;background:var(--raise)}
+.toggle2 button{height:24px;background:var(--raise);font-weight:600;color:var(--txt-2)}
+.toggle2 button:hover{background:var(--raise-2)}
+.toggle2 button.on{background:var(--side-ink);color:var(--side-bg)}
+.toggle2 button+button{border-left:0}
+
+/* ---------------- Leader arrows (drawn when labels overlap) ---------------- */
+#leaders{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+#leaders .ld{opacity:0;transition:opacity .18s var(--ease)}
+#leaders .ld.on{opacity:.95}
+#leaders line{stroke:var(--txt-2);stroke-width:1.3;stroke-linecap:round}
+#leaders polygon{fill:var(--txt-2)}
+#leaders .ld.locked line{stroke:var(--lock)}
+#leaders .ld.locked polygon{fill:var(--lock)}
+
+/* ---------------- Calculation audit ---------------- */
+.audit-bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;width:100%;padding:7px 14px;background:transparent;border:0;border-top:1px solid var(--line);color:var(--txt-2);font-size:10.5px;cursor:pointer;text-align:left}
+.audit-bar:hover{background:var(--panel-2);color:var(--txt)}
+.audit-bar i{font-size:11px;color:#7bd389}
+.audit-bar[data-state="fail"] i,.audit-bar[data-state="fail"] .at{color:var(--lock)}
+.audit-bar[data-state="warn"] i{color:#f5c542}
+.audit-bar .am{margin-left:auto;color:var(--txt-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.audit-sum{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px}
+.audit-sum b{color:var(--txt)}
+.audit-table{width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}
+.audit-table th{position:sticky;top:0;background:var(--panel);text-align:left;color:var(--txt-3);font-weight:600;padding:3px 6px;border-bottom:1px solid var(--line-2)}
+.audit-table td{padding:2px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.audit-table td.n{text-align:right;white-space:nowrap}
+.audit-table tr.fail td{color:var(--lock)}
+.audit-table tr.gh td{background:var(--panel-2);color:var(--txt);font-weight:600;letter-spacing:.04em}
+.audit-ok{color:#7bd389}.audit-bad{color:var(--lock)}
+
+/* ---------------- Transform panel (rotation / position / scale / pivot), bottom left ---------------- */
+#xform{position:absolute;left:12px;bottom:46px;z-index:4;width:262px;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:11px;color:var(--txt-2);transition:opacity .3s var(--ease),visibility 0s linear 0s}
+body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s var(--ease),visibility 0s linear .3s}
+#xform .xf-head{display:flex;align-items:center;gap:7px;width:100%;height:28px;padding:0 10px;background:transparent;border:0;color:var(--txt-2);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;cursor:pointer}
+#xform .xf-head:hover{color:var(--txt)}
+#xform .xf-head .chev{margin-left:auto;transition:transform .2s var(--ease)}
+#xform.collapsed .xf-head .chev{transform:rotate(180deg)}
+#xform .xf-body{padding:2px 10px 10px;display:grid;gap:6px}
+#xform.collapsed .xf-body{display:none}
+.xf-row{display:flex;align-items:center;gap:5px}
+.xf-row[hidden]{display:none}
+.xf-row .xl{flex:0 0 54px;font-size:10px;color:var(--txt-3)}
+.xf-row input{flex:1;min-width:0;width:0;height:24px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;color:var(--txt);font:500 11px 'Inter',sans-serif;padding:0 6px;outline:0;font-variant-numeric:tabular-nums}
+.xf-row input:focus{border-color:var(--txt-3)}
+.xf-row input.bad{border-color:var(--lock)}
+.xf-row .xs{font-size:9.5px;color:var(--txt-3)}
+.xf-row .tbtn{height:24px;min-width:24px;padding:0 6px;font-size:10px}
+.xf-row .tbtn.pv{flex:1;justify-content:space-between}
+.xf-note{font-size:9.5px;color:var(--txt-3);line-height:1.35}
 </style>
 <style id="site-chrome">
 /* shared header and footer (same on every kevmcg1.github.io project): a strip linking back to the portfolio above the app, the license line below it */
@@ -445,8 +537,11 @@ body.view-only #exitViewOnly{
 <header class="site-head" role="banner"><a href="https://kevmcg1.github.io/portfolio" target="_top" aria-label="Back to the portfolio at kevmcg1.github.io">KEVMCG1.GITHUB.IO</a></header>
 
 <header id="appHeader">
-  <div class="mark"><i class="fa-solid fa-shapes"></i></div>
-  <h1>TRIANGLE THING</h1>
+  <h1 class="hdr-logo" aria-label="Triangle Thing">
+    <span class="logo-brk">[</span>
+    <span class="logo-stack"><span class="logo-top">Triangle</span><span class="logo-bot">Thing</span></span>
+    <span class="logo-brk">]</span>
+  </h1>
   <div class="flexgap"></div>
   <div id="searchWrap">
     <i class="fa-solid fa-magnifying-glass"></i>
@@ -464,8 +559,11 @@ body.view-only #exitViewOnly{
         <span class="logo-stack"><span class="logo-top">Triangle</span><span class="logo-bot">Thing</span></span>
         <span class="logo-brk">]</span>
       </div>
+      <div class="logo-rule"></div>
+      <div class="logo-foot"><span class="logo-range">3 sides · 3 angles · live math</span></div>
     </header>
     <div class="side-scroll" id="stats"></div>
+    <button class="audit-bar" id="auditBar" data-state="idle" data-tip-pos="top-start" data-tip="Every number in this panel is re-derived a second way and compared — click for the details" aria-label="Calculation audit"><i class="fa-solid fa-shield-halved"></i><span class="at" id="auditText">Verifying calculations…</span><span class="am" id="auditMeta"></span></button>
     <div class="side-foot">
       <div class="pf-group"><span class="pf-lbl">Decimals</span>
         <div class="stepper">
@@ -486,7 +584,7 @@ body.view-only #exitViewOnly{
   <main id="stage">
    <div id="viewport">
     <canvas id="cv"></canvas>
-    <div id="overlay"></div>
+    <div id="overlay"><svg id="leaders" aria-hidden="true"></svg></div>
 
     <button id="navtoggle" data-tip-pos="bottom-start" data-tip="Toggle stats panel" aria-label="Toggle stats panel"><i class="fa-solid fa-bars"></i></button>
 
@@ -522,6 +620,23 @@ body.view-only #exitViewOnly{
       <span class="h" data-tip-pos="top-end" data-tip="Right-drag (or middle-drag) to pan" aria-label="Right-drag (or middle-drag) to pan"><i class="fa-solid fa-hand"></i></span>
       <span class="h" data-tip-pos="top-end" data-tip="Scroll to zoom" aria-label="Scroll to zoom"><i class="fa-solid fa-magnifying-glass"></i></span>
     </div>
+    <div id="xform">
+      <button class="xf-head" id="xfToggle" aria-label="Transform: rotation, position, scale and pivot"><i class="fa-solid fa-arrows-up-down-left-right"></i>Transform<i class="fa-solid fa-chevron-down chev"></i></button>
+      <div class="xf-body">
+        <div class="xf-row"><span class="xl">Rotation</span>
+          <button class="tbtn" id="xfRotL" data-tip="Rotate counter-clockwise 15° about the pivot" aria-label="Rotate counter-clockwise 15° about the pivot"><i class="fa-solid fa-rotate-left"></i></button>
+          <input id="xfRot" type="text" spellcheck="false" autocomplete="off" aria-label="Rotation (direction of side a)">
+          <button class="tbtn" id="xfRotR" data-tip="Rotate clockwise 15° about the pivot" aria-label="Rotate clockwise 15° about the pivot"><i class="fa-solid fa-rotate-right"></i></button></div>
+        <div class="xf-row"><span class="xl">Position</span><span class="xs">x</span><input id="xfPx" type="text" spellcheck="false" autocomplete="off" aria-label="Pivot x position"><span class="xs">y</span><input id="xfPy" type="text" spellcheck="false" autocomplete="off" aria-label="Pivot y position"></div>
+        <div class="xf-row"><span class="xl">Scale</span>
+          <button class="tbtn" id="xfScDown" data-tip="Scale down 10% about the pivot" aria-label="Scale down 10% about the pivot"><i class="fa-solid fa-minus"></i></button>
+          <input id="xfSc" type="text" spellcheck="false" autocomplete="off" aria-label="Scale in percent">
+          <button class="tbtn" id="xfScUp" data-tip="Scale up 10% about the pivot" aria-label="Scale up 10% about the pivot"><i class="fa-solid fa-plus"></i></button></div>
+        <div class="xf-row"><span class="xl">Pivot</span><button class="tbtn pv" id="xfPivot" data-tip="Anchor point for rotation, position and scale" aria-label="Pivot point"><span id="xfPivotLbl">Centroid</span><i class="fa-solid fa-chevron-down" style="font-size:8px"></i></button></div>
+        <div class="xf-row" id="xfCustomRow" hidden><span class="xl">Pivot at</span><span class="xs">x</span><input id="xfCx" type="text" spellcheck="false" autocomplete="off" aria-label="Custom pivot x"><span class="xs">y</span><input id="xfCy" type="text" spellcheck="false" autocomplete="off" aria-label="Custom pivot y"></div>
+        <div class="xf-note" id="xfNote"></div>
+      </div>
+    </div>
     <div id="zoomtag">100%</div>
     <button id="exitViewOnly" data-tip-pos="bottom-end" data-tip="Exit view-only mode" aria-label="Exit view-only mode"><i class="fa-solid fa-eye-slash"></i><span>Exit view only</span></button>
    </div>
@@ -539,6 +654,7 @@ body.view-only #exitViewOnly{
 </footer>
 
 <footer class="foot"><span>Triangle Thing is released under GitHub’s <a href="https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/cc0-1.0.txt" target="_blank" rel="license noopener noreferrer">Creative Commons Zero v1.0 Universal</a> license. All rights reserved.</span></footer>
+<script src="calc_audit.js"></script>
 <script>
 "use strict";
 
@@ -918,6 +1034,8 @@ const S = {
   selected: new Set(),
   viewOnly: false, viewFade: 0, /* viewFade: 0 = full UI drawing, 1 = view-only's plain outline */
   hover: null, drag: null,
+  /* anchor for rotate / position / scale. "custom" is stored as barycentric weights so it rides along with the triangle through every drag */
+  pivot: { mode: "centroid", bary: [1 / 3, 1 / 3, 1 / 3] },
   activeExplain: null /* which explanation is open, if any — kept live-updated as the triangle changes */
 };
 
@@ -945,7 +1063,7 @@ function applyConstraints(proposedP, weights, extra, live, pinIdx) {
 const Hist = { stack: [], i: -1, timer: null, loaded: false };
 const snapshot = () => JSON.stringify({
   P: S.P, lock: S.lock, target: S.target, units: S.units,
-  lenUnit: S.lenUnit, angUnit: S.angUnit, prec: S.prec, exact: S.exact, grid: S.grid
+  lenUnit: S.lenUnit, angUnit: S.angUnit, prec: S.prec, exact: S.exact, grid: S.grid, pivot: S.pivot
 });
 function pushHistory() {
   if (Hist.timer) { clearTimeout(Hist.timer); Hist.timer = null; }
@@ -972,6 +1090,7 @@ function restore(json) {
   S.units  = { side: o.units.side.slice(),  angle: o.units.angle.slice() };
   S.lenUnit = o.lenUnit; S.angUnit = o.angUnit; S.prec = o.prec; S.exact = o.exact !== false; S.grid = o.grid;
   S.gridAnim = S.grid ? 1 : 0;
+  if (o.pivot) S.pivot = { mode: o.pivot.mode, bary: o.pivot.bary.slice() };
   syncChrome();
   ensureVisible();
   requestRender();
@@ -998,12 +1117,11 @@ function derive() {
   const r = area / s;
 
   const [pa, pb, pc] = P;
-  const d = 2 * (pa.x * (pb.y - pc.y) + pb.x * (pc.y - pa.y) + pc.x * (pa.y - pb.y));
-  const sa = pa.x * pa.x + pa.y * pa.y, sb = pb.x * pb.x + pb.y * pb.y, sc = pc.x * pc.x + pc.y * pc.y;
-  const circum = {
-    x: (sa * (pb.y - pc.y) + sb * (pc.y - pa.y) + sc * (pa.y - pb.y)) / d,
-    y: (sa * (pc.x - pb.x) + sb * (pa.x - pc.x) + sc * (pb.x - pa.x)) / d
-  };
+  /* circumcenter, worked out relative to corner A: using absolute coordinates squares numbers like 5.4 and subtracts them to find a
+     circle 1e-7 wide, which loses every digit — translating first keeps the sums the size of the triangle itself */
+  const bx = pb.x - pa.x, by = pb.y - pa.y, cx = pc.x - pa.x, cy = pc.y - pa.y;
+  const d = 2 * (bx * cy - by * cx), bb = bx * bx + by * by, cc = cx * cx + cy * cy;
+  const circum = { x: pa.x + (cy * bb - by * cc) / d, y: pa.y + (bx * cc - cx * bb) / d };
   const centroid = { x: (pa.x + pb.x + pc.x) / 3, y: (pa.y + pb.y + pc.y) / 3 };
   const incenter = { x: (a * pa.x + b * pb.x + c * pc.x) / per, y: (a * pa.y + b * pb.y + c * pc.y) / per };
   const ortho = { x: pa.x + pb.x + pc.x - 2 * circum.x, y: pa.y + pb.y + pc.y - 2 * circum.y };
@@ -1406,6 +1524,14 @@ function draw(D) {
 
   /* generic geometry highlight, driven by clicking a stat row */
   if (S.highlight) drawHighlight(D, S.highlight);
+
+  /* pivot marker: the anchor point rotate / position / scale work about (drag it when the pivot is "Custom point") */
+  { const q = toScreen(pivotWorld(D)), custom = S.pivot.mode === "custom", hot = (hv && hv.kind === "pivot") || (S.drag && S.drag.mode === "pivot");
+    ctx.save(); ctx.strokeStyle = blueColor; ctx.fillStyle = blueColor; ctx.lineWidth = hot ? 2 : 1.3; ctx.globalAlpha = custom ? 1 : 0.7;
+    ctx.beginPath(); ctx.arc(q.x, q.y, hot ? 8 : 6, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(q.x - 11, q.y); ctx.lineTo(q.x - 3, q.y); ctx.moveTo(q.x + 3, q.y); ctx.lineTo(q.x + 11, q.y);
+    ctx.moveTo(q.x, q.y - 11); ctx.lineTo(q.x, q.y - 3); ctx.moveTo(q.x, q.y + 3); ctx.lineTo(q.x, q.y + 11); ctx.stroke();
+    ctx.beginPath(); ctx.arc(q.x, q.y, 1.6, 0, TAU); ctx.fill(); ctx.restore(); }
 
   const names = ["A", "B", "C"];
   for (let i = 0; i < 3; i++) {
@@ -1884,7 +2010,7 @@ function layoutPills(D) {
     const hw = metrics[idx].w / 2, hh = metrics[idx].h / 2;
     if (S.lock[rec.kind][i] || rec.forceLockedVisual) syncLockRing(rec, metrics[idx].w, metrics[idx].h);
 
-    let px, py, dirx, diry;
+    let px, py, dirx, diry, tx, ty;
     if (rec.kind === "angle") {
       const j = (i + 1) % 3, k = (i + 2) % 3;
       let ux = p[j].x - p[i].x, uy = p[j].y - p[i].y;
@@ -1896,6 +2022,7 @@ function layoutPills(D) {
       bx /= lb; by /= lb;
       dirx = bx; diry = by;
       px = p[i].x + bx * 68; py = p[i].y + by * 68;
+      tx = p[i].x; ty = p[i].y;
     } else {
       const j = (i + 1) % 3, k = (i + 2) % 3;
       const u = p[j], w = p[k];
@@ -1904,6 +2031,7 @@ function layoutPills(D) {
       const lo = Math.hypot(ox, oy) || 1; ox /= lo; oy /= lo;
       dirx = ox; diry = oy;
       px = mx + ox * 42; py = my + oy * 42;
+      tx = mx; ty = my;
     }
 
     /* never let the pill's footprint touch ANY vertex's handle zone (and
@@ -1914,8 +2042,8 @@ function layoutPills(D) {
     const clear = pushClearOfObstacles(px, py, dirx, diry, hw, hh, p, VERTEX_HANDLE_CLEARANCE, edges, TRIANGLE_EDGE_CLEARANCE);
     px = clear.x; py = clear.y;
 
-    rec.el.style.left = px.toFixed(1) + "px";
-    rec.el.style.top  = py.toFixed(1) + "px";
+    /* positions are applied in pass 4, after overlapping labels have been pulled apart */
+    rec.pos = { x: px, y: py, hw, hh, tx, ty };
 
     const locked = S.lock[rec.kind][i];
     rec.el.classList.toggle("locked", locked || rec.forceLockedVisual);
@@ -1936,6 +2064,59 @@ function layoutPills(D) {
     if (tip === null) { if (rec.el.hasAttribute("data-tip")) rec.el.removeAttribute("data-tip"); }
     else if (rec.el.dataset.tip !== tip) rec.el.dataset.tip = tip;
   });
+
+  /* pass 4: labels that would sit on top of each other are pushed apart, and each one that had to move gets a leader arrow to the
+     vertex or side it describes, so it is still clear which label belongs to what */
+  const GAP = 6, crowded = new Set();
+  for (let it = 0; it < 40; it++) {
+    let moved = false;
+    for (let m = 0; m < pills.length; m++) for (let n = m + 1; n < pills.length; n++) {
+      const A = pills[m].pos, B = pills[n].pos;
+      const ox = A.hw + B.hw + GAP - Math.abs(A.x - B.x), oy = A.hh + B.hh + GAP - Math.abs(A.y - B.y);
+      if (ox <= 0 || oy <= 0) continue;
+      crowded.add(m); crowded.add(n); moved = true;
+      /* separate along the axis with the least overlap */
+      if (ox < oy) { const d = (A.x === B.x ? (m < n ? -1 : 1) : Math.sign(A.x - B.x)) * ox / 2; A.x += d; B.x -= d; }
+      else { const d = (A.y === B.y ? (m < n ? -1 : 1) : Math.sign(A.y - B.y)) * oy / 2; A.y += d; B.y -= d; }
+    }
+    if (!moved) break;
+  }
+  pills.forEach((rec, idx) => {
+    rec.el.style.left = rec.pos.x.toFixed(1) + "px";
+    rec.el.style.top  = rec.pos.y.toFixed(1) + "px";
+    drawLeader(rec, idx, crowded.has(idx));
+  });
+}
+
+const SVGNS = "http://www.w3.org/2000/svg";
+const leadersEl = document.getElementById("leaders");
+function drawLeader(rec, idx, on) {
+  if (!rec.leader) {
+    const g = document.createElementNS(SVGNS, "g"); g.setAttribute("class", "ld");
+    const ln = document.createElementNS(SVGNS, "line"), hd = document.createElementNS(SVGNS, "polygon");
+    g.appendChild(ln); g.appendChild(hd); leadersEl.appendChild(g);
+    rec.leader = { g, ln, hd, on: false, locked: false };
+  }
+  const L = rec.leader, P = rec.pos;
+  let show = on;
+  if (on) {
+    /* from the label's edge toward the thing it describes; stops short of a corner's handle, touches a side */
+    let dx = P.tx - P.x, dy = P.ty - P.y; const len = Math.hypot(dx, dy);
+    const stop = rec.kind === "angle" ? 9 : 2;
+    if (len < P.hh + stop + 10) show = false; /* the label already sits right on it */
+    else {
+      dx /= len; dy /= len;
+      /* where the ray leaves the label's rectangle */
+      const t = Math.min(dx ? P.hw / Math.abs(dx) : Infinity, dy ? P.hh / Math.abs(dy) : Infinity) + 2;
+      const x1 = P.x + dx * t, y1 = P.y + dy * t, x2 = P.tx - dx * stop, y2 = P.ty - dy * stop;
+      const hl = 8, hwid = 3.6, bx = x2 - dx * hl, by = y2 - dy * hl;
+      L.ln.setAttribute("x1", x1.toFixed(1)); L.ln.setAttribute("y1", y1.toFixed(1)); L.ln.setAttribute("x2", bx.toFixed(1)); L.ln.setAttribute("y2", by.toFixed(1));
+      L.hd.setAttribute("points", x2.toFixed(1) + "," + y2.toFixed(1) + " " + (bx - dy * hwid).toFixed(1) + "," + (by + dx * hwid).toFixed(1) + " " + (bx + dy * hwid).toFixed(1) + "," + (by - dx * hwid).toFixed(1));
+    }
+  }
+  if (show !== L.on) { L.on = show; L.g.classList.toggle("on", show); }
+  const lk = !!S.lock[rec.kind][rec.i];
+  if (lk !== L.locked) { L.locked = lk; L.g.classList.toggle("locked", lk); }
 }
 
 /* =======================================================================
@@ -2298,8 +2479,9 @@ function updateStats(D) {
   const alt = s => " <span class='alt'>(" + s + ")</span>";
   const L    = v => lenStr(v, U, d) + alt(lenStr(v, altLenUnit(v, U), d));
   const AREA = v => areaStr(v, U, d) + alt(areaStr(v, altLenUnit(Math.sqrt(Math.abs(v)), U), d));
+  /* the sidebar follows the Angle unit button: degrees or gradians, or radians with degrees alongside */
   const ANGLE = r => (S.angUnit === "rad" ? angStr(r, "rad", d) + alt(angStr(r, "deg", d))
-                                          : angStr(r, "deg", d) + alt(angStr(r, "rad", d)));
+                                          : angStr(r, S.angUnit, d) + alt(angStr(r, "rad", d)));
   const sc = Math.max(D.a, D.b, D.c);
   const PT = p => {
     const x = snapNoise(p.x, sc) / LEN[U].f, y = snapNoise(p.y, sc) / LEN[U].f;
@@ -3060,6 +3242,9 @@ function renderNow() {
     if (!S.viewOnly || S.viewFade < 1) safeStep("layoutPills", () => layoutPills(D));
     if (!S.viewOnly) {
       safeStep("updateStats", () => updateStats(D));
+      /* re-derive every sidebar number a second way and compare — runs on every change, see calc_audit.js */
+      safeStep("calcAudit", () => { calcAudit(D); syncAuditBar(); });
+      safeStep("xform", () => syncXform(D));
       /* applySearchFilter deliberately isn't run here — it depends only
          on the search box text and the (static) row labels, neither of
          which changes when the triangle does. It already has its own
@@ -3081,6 +3266,7 @@ function renderNow() {
       const a = S.activeExplain;
       if (a.kind === "stat") openExplain(a.id, true);
       else if (a.kind === "trig") openTrigExplain(a.fn, true);
+      else if (a.kind === "audit") openAudit(true);
     });
   }
 }
@@ -3102,6 +3288,7 @@ function pointInTri(p, q) {
 }
 function hitTest(m) {
   const p = S.P.map(toScreen);
+  if (S.pivot.mode === "custom") { const q = toScreen(pivotWorld()); if (Math.hypot(m.x - q.x, m.y - q.y) <= 12) return { kind: "pivot", i: -1 }; }
   for (let i = 0; i < 3; i++) if (Math.hypot(m.x - p[i].x, m.y - p[i].y) <= 15) return { kind: "vertex", i };
   for (let i = 0; i < 3; i++) {
     const r = distToSeg(m, p[(i + 1) % 3], p[(i + 2) % 3]);
@@ -3200,6 +3387,13 @@ cv.addEventListener("pointermove", e => {
 
   const w = toWorld(m);
   const dx = w.x - dg.startWorld.x, dy = w.y - dg.startWorld.y;
+
+  if (dg.mode === "pivot") {
+    const sp = e.shiftKey ? snapPoint(w) : w, b = toBary(sp);
+    if (b) S.pivot.bary = b;
+    requestRender();
+    return;
+  }
 
   if (dg.mode === "multi") {
     if (Math.hypot(dx, dy) > 1e-4) dg.moved = true;
@@ -3348,7 +3542,7 @@ function animateShapeTransform(paramFn, ms) {
   shapeAnim = requestAnimationFrame(step);
 }
 function rotateBy(a) {
-  const c = derive().centroid;
+  const c = pivotWorld();
   const start = S.P.map(v => ({ x: v.x, y: v.y }));
   animateShapeTransform(e => {
     const ang = a * e, cs = Math.cos(ang), sn = Math.sin(ang);
@@ -3356,7 +3550,7 @@ function rotateBy(a) {
   }, 420);
 }
 function flip(axis) {
-  const c = derive().centroid;
+  const c = pivotWorld();
   const start = S.P.map(v => ({ x: v.x, y: v.y }));
   animateShapeTransform(e => {
     /* the mirror factor sweeps 1 → -1 through 0, so the triangle
@@ -3367,7 +3561,7 @@ function flip(axis) {
   }, 420);
 }
 function scaleBy(factor) {
-  const c = derive().centroid;
+  const c = pivotWorld();
   const start = S.P.map(v => ({ x: v.x, y: v.y }));
   /* scaling is a similarity: every length × factor, every angle unchanged.
      Pressing scale is an explicit request to change the size, so a locked
@@ -3380,6 +3574,173 @@ function scaleBy(factor) {
     return start.map(p => ({ x: c.x + (p.x - c.x) * f, y: c.y + (p.y - c.y) * f }));
   }, 380);
 }
+
+/* =======================================================================
+   Pivot + transform panel (bottom left): rotation, position, scale — all about one chosen anchor point
+   ======================================================================= */
+const PIVOTS = [
+  ["centroid", "Centroid"], ["A", "Vertex A"], ["B", "Vertex B"], ["C", "Vertex C"],
+  ["incenter", "Incenter"], ["circum", "Circumcenter"], ["ortho", "Orthocenter"], ["origin", "Origin (0, 0)"], ["custom", "Custom point"]
+];
+const REF_PERIMETER = 12; /* the default 3-4-5 triangle: scale reads 100% there */
+function pivotWorld(D) {
+  const m = S.pivot.mode;
+  if (m === "A" || m === "B" || m === "C") return { x: S.P[m.charCodeAt(0) - 65].x, y: S.P[m.charCodeAt(0) - 65].y };
+  if (m === "origin") return { x: 0, y: 0 };
+  if (m === "custom") {
+    const b = S.pivot.bary;
+    return { x: b[0] * S.P[0].x + b[1] * S.P[1].x + b[2] * S.P[2].x, y: b[0] * S.P[0].y + b[1] * S.P[1].y + b[2] * S.P[2].y };
+  }
+  D = D || derive();
+  const q = m === "incenter" ? D.incenter : m === "circum" ? D.circum : m === "ortho" ? D.ortho : D.centroid;
+  /* a degenerate sliver has no circumcenter: fall back to the centroid instead of NaN */
+  return Number.isFinite(q.x) && Number.isFinite(q.y) ? { x: q.x, y: q.y } : { x: D.centroid.x, y: D.centroid.y };
+}
+function toBary(q) {
+  const [a, b, c] = S.P, d = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+  if (!(Math.abs(d) > 1e-12)) return null;
+  const l0 = ((b.y - c.y) * (q.x - c.x) + (c.x - b.x) * (q.y - c.y)) / d;
+  const l1 = ((c.y - a.y) * (q.x - c.x) + (a.x - c.x) * (q.y - c.y)) / d;
+  return [l0, l1, 1 - l0 - l1];
+}
+function setPivotMode(mode) {
+  if (mode === "custom" && S.pivot.mode !== "custom") { const b = toBary(pivotWorld()); S.pivot = { mode, bary: b || [1 / 3, 1 / 3, 1 / 3] }; }
+  else S.pivot = { mode, bary: S.pivot.bary.slice() };
+  pushHistory(); syncXform(); requestRender();
+}
+/* rotation reads as the direction of side a (B → C), counter-clockwise from the +x axis: 0° for the default triangle */
+const rotationNow = () => Math.atan2(S.P[2].y - S.P[1].y, S.P[2].x - S.P[1].x);
+const scaleNow = () => sidesOf(S.P).reduce((s, v) => s + v, 0) / REF_PERIMETER;
+const wrapPi = a => { let v = a % TAU; if (v > Math.PI) v -= TAU; else if (v <= -Math.PI) v += TAU; return v; };
+const mapPoints = fn => { cancelShapeAnim(); S.P = S.P.map(fn); ensureVisible(); requestRender(); pushHistorySoon(); };
+function xfRotateTo(target) {
+  const d = wrapPi(target - rotationNow()), c = pivotWorld(), cs = Math.cos(d), sn = Math.sin(d);
+  mapPoints(p => { const x = p.x - c.x, y = p.y - c.y; return { x: c.x + x * cs - y * sn, y: c.y + x * sn + y * cs }; });
+}
+function xfMoveTo(x, y) {
+  const c = pivotWorld(), dx = x - c.x, dy = y - c.y;
+  if (S.pivot.mode === "origin") return; /* the origin is fixed: there is no position to change */
+  mapPoints(p => ({ x: p.x + dx, y: p.y + dy }));
+}
+function xfScaleTo(pct) {
+  const f = (pct / 100) / scaleNow(), c = pivotWorld();
+  if (!(f > 0) || !Number.isFinite(f)) return;
+  /* same rule as the toolbar's scale buttons: a locked side's target scales with it */
+  for (let i = 0; i < 3; i++) if (S.lock.side[i]) S.target.side[i] *= f;
+  mapPoints(p => ({ x: c.x + (p.x - c.x) * f, y: c.y + (p.y - c.y) * f }));
+}
+const xfEls = { rot: document.getElementById("xfRot"), px: document.getElementById("xfPx"), py: document.getElementById("xfPy"), sc: document.getElementById("xfSc"),
+                cx: document.getElementById("xfCx"), cy: document.getElementById("xfCy"), row: document.getElementById("xfCustomRow"),
+                lbl: document.getElementById("xfPivotLbl"), note: document.getElementById("xfNote"), box: document.getElementById("xform") };
+function syncXform(D) {
+  const e = xfEls, a = document.activeElement, u = LEN[S.lenUnit], q = pivotWorld(D);
+  const sc = Math.max(...sidesOf(S.P), 1e-300);
+  const setv = (el, text) => { if (a !== el) el.value = text; el.classList.remove("bad"); };
+  setv(e.rot, fmt(rotationNow() / ANG[S.angUnit].f, S.prec) + (ANG[S.angUnit].tight ? "" : " ") + ANG[S.angUnit].sym);
+  setv(e.px, fmt(snapNoise(q.x, sc) / u.f, S.prec)); setv(e.py, fmt(snapNoise(q.y, sc) / u.f, S.prec));
+  setv(e.sc, fmt(scaleNow() * 100, Math.min(S.prec, 2)) + " %");
+  setv(e.cx, fmt(snapNoise(q.x, sc) / u.f, S.prec)); setv(e.cy, fmt(snapNoise(q.y, sc) / u.f, S.prec));
+  const label = PIVOTS.find(p => p[0] === S.pivot.mode)[1];
+  if (e.lbl.textContent !== label) e.lbl.textContent = label;
+  e.row.hidden = S.pivot.mode !== "custom";
+  const note = S.pivot.mode === "origin" ? "The origin is fixed, so Position can't move it. Pick another pivot to move the triangle." :
+    S.pivot.mode === "custom" ? "Drag the blue marker on the canvas, or type its x / y. Position moves the whole triangle by its pivot." :
+    "Rotation, position and scale all work about the blue pivot marker.";
+  if (e.note.textContent !== note) e.note.textContent = note;
+}
+function xfCommit(el, fn) {
+  const r = parseMeasure(el.value, el === xfEls.rot ? "angle" : "side", el === xfEls.rot ? S.angUnit : S.lenUnit);
+  if (!r) { el.classList.add("bad"); return; }
+  el.classList.remove("bad"); fn(r.value);
+}
+xfEls.rot.addEventListener("input", () => xfCommit(xfEls.rot, v => xfRotateTo(v)));
+[xfEls.px, xfEls.py].forEach(el => el.addEventListener("input", () => {
+  const rx = parseMeasure(xfEls.px.value, "side", S.lenUnit), ry = parseMeasure(xfEls.py.value, "side", S.lenUnit);
+  if (!rx || !ry) { el.classList.add("bad"); return; }
+  xfEls.px.classList.remove("bad"); xfEls.py.classList.remove("bad");
+  /* the box that isn't being typed in contributes the real, full-precision coordinate, not its rounded text (same rule as the corner pills) */
+  const q = pivotWorld();
+  xfMoveTo(el === xfEls.px ? rx.value : q.x, el === xfEls.py ? ry.value : q.y);
+}));
+xfEls.sc.addEventListener("input", () => {
+  const m = /^\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)\s*(%|x|×)?\s*$/i.exec(xfEls.sc.value);
+  if (!m) { xfEls.sc.classList.add("bad"); return; }
+  let v = parseFloat(m[1]); if (m[2] && m[2] !== "%") v *= 100; /* "2x" means 200% */
+  if (!(v > 0) || v > 1e9) { xfEls.sc.classList.add("bad"); return; }
+  xfEls.sc.classList.remove("bad"); xfScaleTo(v);
+});
+const xfCustomMove = () => {
+  const rx = parseMeasure(xfEls.cx.value, "side", S.lenUnit), ry = parseMeasure(xfEls.cy.value, "side", S.lenUnit);
+  if (!rx || !ry) return;
+  const b = toBary({ x: rx.value, y: ry.value }); if (b) { S.pivot.bary = b; requestRender(); pushHistorySoon(); }
+};
+xfEls.cx.addEventListener("input", xfCustomMove); xfEls.cy.addEventListener("input", xfCustomMove);
+[xfEls.rot, xfEls.px, xfEls.py, xfEls.sc, xfEls.cx, xfEls.cy].forEach(el => {
+  el.addEventListener("focus", () => el.select());
+  el.addEventListener("blur", () => { flushHistory(); requestRender(); });
+  el.addEventListener("keydown", ev => {
+    if (ev.key === "Enter" || ev.key === "Escape") { el.blur(); return; }
+    if (ev.key !== "ArrowUp" && ev.key !== "ArrowDown") return;
+    ev.preventDefault();
+    const dir = ev.key === "ArrowUp" ? 1 : -1, k = ev.shiftKey ? 10 : ev.altKey ? 0.1 : 1;
+    if (el === xfEls.rot) xfRotateTo(rotationNow() + dir * k * ANG[S.angUnit].f);
+    else if (el === xfEls.sc) xfScaleTo(scaleNow() * 100 + dir * k);
+    else if (el === xfEls.px || el === xfEls.cx) { const q = pivotWorld(); el === xfEls.cx ? xfCustomSet(q.x + dir * k * LEN[S.lenUnit].f, q.y) : xfMoveTo(q.x + dir * k * LEN[S.lenUnit].f, q.y); }
+    else { const q = pivotWorld(); el === xfEls.cy ? xfCustomSet(q.x, q.y + dir * k * LEN[S.lenUnit].f) : xfMoveTo(q.x, q.y + dir * k * LEN[S.lenUnit].f); }
+  });
+});
+function xfCustomSet(x, y) { const b = toBary({ x, y }); if (b) { S.pivot.bary = b; requestRender(); pushHistorySoon(); } }
+document.getElementById("xfRotL").addEventListener("click", () => rotateBy(radOf(15)));
+document.getElementById("xfRotR").addEventListener("click", () => rotateBy(-radOf(15)));
+document.getElementById("xfScUp").addEventListener("click", () => scaleBy(1.1));
+document.getElementById("xfScDown").addEventListener("click", () => scaleBy(1 / 1.1));
+document.getElementById("xfPivot").addEventListener("click", e => {
+  openMenu(e.currentTarget, PIVOTS.map(([k, name]) => ({ label: name, on: k === S.pivot.mode, click: () => setPivotMode(k) })), true);
+});
+if (window.innerWidth < 1100) xfEls.box.classList.add("collapsed");
+document.getElementById("xfToggle").addEventListener("click", () => xfEls.box.classList.toggle("collapsed"));
+
+/* =======================================================================
+   Calculation audit — sidebar status line and the details panel (the maths itself lives in calc_audit.js)
+   ======================================================================= */
+function syncAuditBar() {
+  const bar = document.getElementById("auditBar"), A = AUDIT;
+  const state = A.failed.length ? "fail" : A.degenerate ? "warn" : "ok";
+  const text = A.failed.length ? A.failed.length + " of " + A.total + " calculation checks FAILED" :
+    A.degenerate ? "Flat triangle — " + A.total + " checks passed, the rest don't apply" :
+    "All " + A.total + " calculations verified";
+  const meta = A.failed.length ? "" : "max error " + (A.maxErr === 0 ? "0" : A.maxErr.toExponential(1));
+  if (bar.dataset.state !== state) bar.dataset.state = state;
+  const icon = state === "fail" ? "fa-triangle-exclamation" : state === "warn" ? "fa-circle-exclamation" : "fa-shield-halved";
+  const ic = bar.querySelector("i"); if (!ic.classList.contains(icon)) ic.className = "fa-solid " + icon;
+  const t = document.getElementById("auditText"); if (t.textContent !== text) t.textContent = text;
+  const m = document.getElementById("auditMeta"); if (m.textContent !== meta) m.textContent = meta;
+}
+function auditNum(v) {
+  if (!Number.isFinite(v)) return String(v);
+  if (v === 0) return "0";
+  const a = Math.abs(v); return a >= 1e6 || a < 1e-4 ? v.toExponential(6) : String(+v.toPrecision(10));
+}
+function openAudit(live) {
+  const A = AUDIT;
+  if (!live) { S.highlight = null; S.activeExplain = { kind: "audit" }; requestRender(); }
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let html = '<div class="audit-sum"><span><b class="' + (A.failed.length ? "audit-bad" : "audit-ok") + '">' + A.passed + " / " + A.total + "</b> checks pass</span>" +
+    "<span>" + A.tested.model + " model · " + A.tested.identity + " identities · " + A.tested.display + " displayed values</span>" +
+    "<span>worst error <b>" + (A.maxErr ? A.maxErr.toExponential(2) : "0") + "</b></span><span>tolerance <b>" + A.tol.toExponential(0) + "</b>" + (A.cond > 1.5 ? " (thin triangle, loosened ×" + Math.round(A.cond) + ")" : "") + "</span><span>" + A.ms.toFixed(1) + " ms</span></div>" +
+    "<div class='note' style='margin-bottom:8px'>Each value is recomputed from the three corner coordinates by a different route (stable Heron, half-angle formula, Apollonius, Euler's OI² = R(R−2r) …), then compared; the “display” checks read back the text printed in the sidebar and compare it to the true value rounded to the Decimals setting.</div>" +
+    '<table class="audit-table"><tr><th>Check</th><th class="n">Expected</th><th class="n">Actual</th><th class="n">Error</th><th></th></tr>';
+  let g = "";
+  const list = A.failed.length ? A.failed.concat(A.checks.filter(c => c.pass)) : A.checks;
+  for (const c of list) {
+    const gk = c.group + " · " + c.kind;
+    if (gk !== g && !(A.failed.length && !c.pass && g === "failed")) { g = A.failed.length && !c.pass ? "failed" : gk; html += '<tr class="gh"><td colspan="5">' + esc(A.failed.length && !c.pass ? "Failed" : gk) + "</td></tr>"; }
+    html += '<tr class="' + (c.pass ? "" : "fail") + '"><td>' + esc(c.label) + (c.note ? " — " + esc(c.note) : "") + '</td><td class="n">' + auditNum(c.expected) + '</td><td class="n">' + auditNum(c.actual) + '</td><td class="n">' + (c.err === 0 ? "0" : c.err.toExponential(1)) + '</td><td>' + (c.pass ? "✓" : "✗") + "</td></tr>";
+  }
+  html += "</table>";
+  if (live) paintModalContent("Calculation audit", html); else openModal("Calculation audit", html);
+}
+document.getElementById("auditBar").addEventListener("click", () => openAudit());
 
 /* =======================================================================
    Toolbar / chrome
@@ -3403,7 +3764,7 @@ function syncChrome() {
 let openMenuEl = null;
 function closeMenu() { if (openMenuEl) { openMenuEl.remove(); openMenuEl = null; document.removeEventListener("pointerdown", menuOutside, true); } }
 function menuOutside(e) { if (openMenuEl && !openMenuEl.contains(e.target)) closeMenu(); }
-function openMenu(anchor, items) {
+function openMenu(anchor, items, up) {
   closeMenu();
   const el = document.createElement("div");
   el.className = "menu";
@@ -3416,7 +3777,7 @@ function openMenu(anchor, items) {
   });
   document.body.appendChild(el);
   const r = anchor.getBoundingClientRect();
-  el.style.top = (r.bottom + 6) + "px";
+  if (up) el.style.top = Math.max(8, r.top - el.offsetHeight - 6) + "px"; else el.style.top = (r.bottom + 6) + "px";
   let left = r.left;
   if (left + el.offsetWidth > window.innerWidth - 8) left = window.innerWidth - el.offsetWidth - 8;
   el.style.left = left + "px";
@@ -3494,6 +3855,7 @@ document.getElementById("btnReset").addEventListener("click", () => {
   S.units.angle = [S.angUnit, S.angUnit, S.angUnit];
   S.selected.clear();
   seedTriangle();
+  S.pivot = { mode: "centroid", bary: [1 / 3, 1 / 3, 1 / 3] };
   /* frame the fresh triangle straight away — the same fit as the Fit
      button (or, with an explanation open, the tighter fit that keeps it
      clear of the panel) — rather than the fixed home zoom, which could
