@@ -6,7 +6,30 @@
 
 <meta charset="utf-8">
 <meta name="robots" content="noai, noimageai">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101013">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Triangle">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+/* Which kind of device is this? Decided before anything paints, so the right layout is there from the first frame.
+   mobile = a phone (or ?mobile=1): the whole page becomes an app with a bottom tab bar and sheets.
+   touch  = any touch screen, tablets included: bigger handles and pinch / two-finger gestures, on top of whichever layout fits. */
+(function () {
+  var d = document.documentElement, u = navigator.userAgent, q = /[?&]mobile=(\d)/.exec(location.search);
+  var coarse = (window.matchMedia && matchMedia("(pointer:coarse)").matches) || navigator.maxTouchPoints > 1;
+  var phoneUA = /iPhone|iPod|Android.*Mobile|Mobile.*Android|Windows Phone/i.test(u);
+  var small = Math.min(screen.width, screen.height) <= 600;
+  var mobile = q ? q[1] === "1" : (phoneUA || (coarse && small));
+  var touch = q ? q[1] === "1" : (coarse || phoneUA);
+  if (mobile) d.classList.add("mobile");
+  if (touch) d.classList.add("touch");
+  window.__mobile = mobile; window.__touch = touch;
+})();
+</script>
 <title>Triangle Thing</title>
 <link rel="stylesheet" href="fa/css/all.min.css">
 <link rel="stylesheet" href="icon_motion.css">
@@ -422,7 +445,7 @@ body.view-only #exitViewOnly{
 .pill[data-tip]::after{white-space:normal;width:max-content;max-width:230px}
 
 @media (max-width:900px){
-  #sidebar{position:absolute;left:0;top:0;bottom:0;z-index:20;box-shadow:0 0 48px rgba(0,0,0,.7);width:352px}
+  html:not(.mobile) #sidebar{position:absolute;left:0;top:0;bottom:0;z-index:20;box-shadow:0 0 48px rgba(0,0,0,.7);width:352px}
   #searchWrap{width:140px}
 }
 
@@ -473,6 +496,124 @@ body.view-only #exitViewOnly{
 .toggle2 button:hover{background:var(--raise-2)}
 .toggle2 button.on{background:var(--side-ink);color:var(--side-bg)}
 .toggle2 button+button{border-left:0}
+
+/* ---------------- Phone app mode (html.mobile): bottom tab bar, sheets, safe areas ---------------- */
+#tabbar,#scrim,.side-license,.sheet-grab{display:none}
+html.touch,html.touch body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;touch-action:manipulation}
+html.touch [data-tip]::after{display:none!important}
+@supports (height:100dvh){ html.mobile,html.mobile body{height:100dvh} }
+html.mobile{--tab-h:58px;--hdr-h:50px;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px)}
+html.mobile body{padding-left:var(--sl);padding-right:var(--sr);background:var(--header)}
+html.mobile .site-head,html.mobile .foot,html.mobile #appFooter,html.mobile #cornerHints,html.mobile #navtoggle,html.mobile #zoomtag{display:none}
+html.mobile #appHeader{flex:0 0 calc(var(--hdr-h) + var(--st));height:calc(var(--hdr-h) + var(--st));padding:var(--st) 14px 0;background:var(--header)}
+html.mobile .hdr-logo{font-size:1.3rem}
+html.mobile #searchWrap{display:none}
+html.mobile #appHeader .iconbtn{width:42px;height:42px;font-size:15px}
+html.mobile #appBody{position:relative}
+html.mobile #stage{padding-bottom:calc(var(--tab-h) + var(--sb))}
+html.mobile #viewport{border-radius:0}
+/* the bottom tab bar */
+html.mobile #tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;height:calc(var(--tab-h) + var(--sb));padding:0 var(--sr) var(--sb) var(--sl);background:var(--header);border-top:1px solid var(--line)}
+html.mobile #tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;border:0;color:var(--txt-3);font-size:10px;font-weight:600;letter-spacing:.04em;cursor:pointer;position:relative;padding:0}
+html.mobile #tabbar button i{font-size:19px}
+html.mobile #tabbar button.on{color:var(--txt)}
+html.mobile #tabbar button.on::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--blue)}
+html.mobile #tabbar button:active{background:rgba(128,128,128,.12)}
+html.mobile #scrim{display:block;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .25s var(--ease),visibility 0s linear .25s}
+html.mobile.sheet-open #scrim{opacity:1;visibility:visible;transition:opacity .25s var(--ease)}
+/* the three sheets: statistics (the old sidebar), transform, and tools (the old toolbar) */
+html.mobile #sidebar,html.mobile #xform,html.mobile #toolbar{position:fixed;left:var(--sl);right:var(--sr);bottom:calc(var(--tab-h) + var(--sb));width:auto;max-width:none;z-index:50;border:0;border-top:1px solid var(--line-2);border-radius:20px 20px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.55);transform:translateY(calc(100% + var(--tab-h) + var(--sb) + 20px));visibility:hidden;transition:transform .32s var(--ease),visibility 0s linear .32s}
+html.mobile #sidebar{display:flex!important;flex:none!important;top:calc(var(--hdr-h) + var(--st) + 10px);height:auto;background:var(--side-bg)}
+html.mobile.sheet-stats #sidebar,html.mobile.sheet-xform #xform,html.mobile.sheet-tools #toolbar{transform:none;visibility:visible;transition:transform .32s var(--ease),visibility 0s}
+html.mobile .sheet-grab{display:block;position:absolute;top:7px;left:50%;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:var(--line-2);z-index:3}
+html.mobile #sidebar .side-logo{display:none}
+html.mobile #sidebar{padding-top:22px}
+html.mobile .side-scroll{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+html.mobile #sideSearch{display:block;padding:4px 16px 10px}
+html.mobile #sideSearch #searchWrap{display:block;width:100%}
+html.mobile #sideSearch #searchBox{height:40px;font-size:16px;border-radius:10px;padding-left:34px}
+html.mobile #sideSearch #searchWrap i{left:12px;font-size:13px}
+html.mobile .side-license{display:block;padding:14px 18px 20px;font-size:10.5px;line-height:1.5;color:var(--txt-3);text-align:center}
+html.mobile .side-license a{color:var(--txt-2)}
+html.mobile .sec-head{padding-bottom:11px}
+html.mobile .row{padding:10px 12px;font-size:13px}
+html.mobile .trow{padding:7px 2px}
+html.mobile .trow .c,html.mobile .trow .fn{font-size:12px}
+html.mobile .chip{padding:8px 12px;font-size:11px}
+html.mobile .audit-bar{padding:12px 18px;font-size:12px}
+html.mobile .side-foot{padding:10px 16px;flex-wrap:nowrap;justify-content:space-between;gap:8px}
+html.mobile .pf-lbl{font-size:9px}
+html.mobile .stepper button{width:36px;height:34px;font-size:12px}
+html.mobile .stepper .val{width:34px;height:34px;font-size:13px}
+html.mobile .toggle2 button{height:34px;padding:0 11px;font-size:10.5px}
+/* transform sheet */
+html.mobile #xform{padding:10px 16px calc(14px);font-size:13px}
+html.mobile #xform .xf-head{height:34px;padding:6px 0 0;font-size:12px}
+html.mobile #xform .xf-head .chev{display:none}
+html.mobile #xform.collapsed .xf-body{display:grid}
+html.mobile #xform .xf-body{padding:4px 0 6px;gap:10px}
+html.mobile .xf-row{gap:8px}
+html.mobile .xf-row .xl{flex:0 0 66px;font-size:12px}
+html.mobile .xf-row input{height:42px;font-size:16px;border-radius:10px;padding:0 10px}
+html.mobile .xf-row .tbtn{height:42px;min-width:46px;border-radius:10px;font-size:14px}
+html.mobile .xf-row .xs{font-size:12px}
+html.mobile .xf-note{font-size:11.5px}
+/* tools sheet: the toolbar's groups become labelled grids of big buttons */
+html.mobile #toolbar{display:flex;flex-direction:column;flex-wrap:nowrap;justify-content:flex-start;gap:14px;max-width:none;top:auto;padding:22px 16px 16px;background:var(--panel);align-items:stretch}
+html.mobile #grpUnits{grid-template-columns:repeat(2,1fr)!important}
+html.mobile #grpTransform{grid-template-columns:repeat(6,1fr)!important}
+html.mobile #grpView{grid-template-columns:repeat(4,1fr)!important}
+html.mobile #toolbar .tgroup{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:8px;padding:0;border:0;background:transparent;position:relative;margin-top:16px}
+html.mobile #toolbar .tgroup::before{position:absolute;top:-16px;left:2px;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-3)}
+html.mobile #grpUnits::before{content:"Units"}
+html.mobile #grpTransform::before{content:"Rotate, flip & scale"}
+html.mobile #grpView::before{content:"View"}
+html.mobile #toolbar .tbtn{height:50px;min-width:0;border-radius:12px;font-size:17px;background:var(--panel-2)}
+html.mobile #toolbar .tbtn .t{font-size:12px}
+html.mobile #toolbar .tbtn.on{background:var(--txt);color:var(--bg)}
+html.mobile .tools-link{display:block;margin-top:14px;text-align:center;font-size:12px;color:var(--txt-3);text-decoration:none}
+html.mobile .tools-link:hover{color:var(--txt)}
+/* undo / redo / unlock / reset float over the canvas, always one thumb away */
+html.mobile #grpHist{position:absolute;top:10px;right:10px;z-index:5;display:flex;gap:6px;padding:4px;border:1px solid var(--line-2);border-radius:14px;background:var(--panel);box-shadow:0 4px 16px rgba(0,0,0,.35);margin:0}
+html.mobile #grpHist::before{content:none}
+html.mobile #grpHist .tbtn{width:44px;height:44px;min-width:44px;border-radius:10px;font-size:16px;background:transparent;border-color:transparent}
+html.mobile #viewport>#grpHist{transition:opacity .3s var(--ease)}
+html.mobile body.view-only #tabbar,html.mobile body.view-only #grpHist{opacity:0;visibility:hidden;pointer-events:none}
+html.mobile #exitViewOnly{top:calc(10px);right:10px;height:44px;border-radius:14px}
+/* the canvas labels: roomier touch targets, and nothing that needs a hover */
+html.touch .pill{box-shadow:0 3px 10px rgba(0,0,0,.4)}
+html.mobile .pill input{font-size:13px;width:60px}
+html.mobile .pill .tag{padding:0 3px 0 8px}
+html.mobile .pill-alt{display:none}
+html.mobile .pill .lockbtn{width:34px}
+html.mobile .pill-body{min-height:40px}
+html.mobile .pill:not(.active):not(.selected) .pill-coord{display:none}
+html.mobile .pill-coord input{width:44px;font-size:11px}
+@media (max-width:380px){ html.mobile .side-foot{flex-wrap:wrap} }
+/* explanation panel sits above the tab bar */
+html.mobile .modal-head{padding:12px 16px}
+html.mobile .modal-body{padding:14px 16px calc(14px)}
+html.mobile .copy-btn{width:32px;height:30px}
+/* landscape phones: a slimmer header and tab bar, shorter sheets */
+@media (orientation:landscape) and (max-height:520px){
+  html.mobile{--tab-h:44px;--hdr-h:40px}
+  html.mobile #tabbar button{flex-direction:row;gap:7px;font-size:11px}
+  html.mobile #tabbar button i{font-size:15px}
+  html.mobile #sidebar{top:calc(var(--hdr-h) + var(--st) + 4px)}
+  html.mobile #sideSearch{display:none}
+  html.mobile .audit-bar{padding:6px 16px}
+  html.mobile .side-foot{padding:6px 16px}
+  html.mobile .hdr-logo{font-size:1.05rem}
+  html.mobile #sidebar{padding-top:16px}
+  html.mobile #grpTransform{grid-template-columns:repeat(6,1fr)!important}
+  html.mobile #toolbar{flex-direction:row;flex-wrap:wrap;gap:6px 14px;padding:14px 14px 10px}
+  html.mobile #toolbar .tgroup{margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(46px,1fr));flex:1 1 220px}
+  html.mobile #toolbar .tbtn{height:40px}
+  html.mobile #xform{max-height:calc(100vh - var(--hdr-h) - var(--st) - var(--tab-h) - var(--sb) - 8px);overflow:auto}
+  html.mobile #xform .xf-body{grid-template-columns:1fr 1fr;column-gap:14px}
+  html.mobile .xf-note{grid-column:1 / -1}
+}
+@media (prefers-reduced-motion: reduce){ html.mobile #sidebar,html.mobile #xform,html.mobile #toolbar,html.mobile #scrim{transition:none} }
 
 /* ---------------- Leader arrows (drawn when labels overlap) ---------------- */
 #leaders{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
@@ -562,7 +703,10 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
       <div class="logo-rule"></div>
       <div class="logo-foot"><span class="logo-range">3 sides · 3 angles · live math</span></div>
     </header>
+    <span class="sheet-grab" aria-hidden="true"></span>
+    <div id="sideSearch" hidden></div>
     <div class="side-scroll" id="stats"></div>
+    <div class="side-license">Triangle Thing is released under GitHub’s <a href="https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/cc0-1.0.txt" target="_blank" rel="license noopener noreferrer">Creative Commons Zero v1.0 Universal</a> license. All rights reserved.</div>
     <button class="audit-bar" id="auditBar" data-state="idle" data-tip-pos="top-start" data-tip="Every number in this panel is re-derived a second way and compared — click for the details" aria-label="Calculation audit"><i class="fa-solid fa-shield-halved"></i><span class="at" id="auditText">Verifying calculations…</span><span class="am" id="auditMeta"></span></button>
     <div class="side-foot">
       <div class="pf-group"><span class="pf-lbl">Decimals</span>
@@ -589,6 +733,7 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
     <button id="navtoggle" data-tip-pos="bottom-start" data-tip="Toggle stats panel" aria-label="Toggle stats panel"><i class="fa-solid fa-bars"></i></button>
 
     <div id="toolbar">
+      <span class="sheet-grab" aria-hidden="true"></span>
       <div class="tgroup" id="grpUnits">
         <button class="tbtn" id="btnLen" data-tip="Length unit" aria-label="Length unit"><span class="t" id="lenLabel">IN</span></button>
         <button class="tbtn" id="btnAng" data-tip="Angle unit" aria-label="Angle unit"><span class="t" id="angLabel">DEG</span></button>
@@ -621,6 +766,7 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
       <span class="h" data-tip-pos="top-end" data-tip="Scroll to zoom" aria-label="Scroll to zoom"><i class="fa-solid fa-magnifying-glass"></i></span>
     </div>
     <div id="xform">
+      <span class="sheet-grab" aria-hidden="true"></span>
       <button class="xf-head" id="xfToggle" aria-label="Transform: rotation, position, scale and pivot"><i class="fa-solid fa-arrows-up-down-left-right"></i>Transform<i class="fa-solid fa-chevron-down chev"></i></button>
       <div class="xf-body">
         <div class="xf-row"><span class="xl">Rotation</span>
@@ -653,6 +799,13 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
   <span class="foot-ico"><i class="fa-solid fa-ruler"></i>type "3.4 mm" in any box</span>
 </footer>
 
+<div id="scrim"></div>
+<nav id="tabbar" aria-label="Triangle Thing">
+  <button type="button" data-tab="canvas" class="on" aria-label="Triangle"><i class="fa-solid fa-shapes"></i><span>Triangle</span></button>
+  <button type="button" data-tab="stats" aria-label="Statistics"><i class="fa-solid fa-chart-simple"></i><span>Stats</span></button>
+  <button type="button" data-tab="xform" aria-label="Transform"><i class="fa-solid fa-arrows-up-down-left-right"></i><span>Transform</span></button>
+  <button type="button" data-tab="tools" aria-label="Tools"><i class="fa-solid fa-sliders"></i><span>Tools</span></button>
+</nav>
 <footer class="foot"><span>Triangle Thing is released under GitHub’s <a href="https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/cc0-1.0.txt" target="_blank" rel="license noopener noreferrer">Creative Commons Zero v1.0 Universal</a> license. All rights reserved.</span></footer>
 <script src="calc_audit.js"></script>
 <script>
@@ -1242,7 +1395,7 @@ function fitTarget(pad) {
   const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
   const minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
   const w = Math.max(maxX - minX, 1e-9), h = Math.max(maxY - minY, 1e-9);
-  const m = pad === undefined ? { top: 220, right: 220, bottom: 220, left: 220 }
+  const m = pad === undefined ? (window.__mobile ? { top: 90, right: 56, bottom: 90, left: 56 } : { top: 220, right: 220, bottom: 220, left: 220 })
           : typeof pad === "number" ? { top: pad, right: pad, bottom: pad, left: pad }
           : { top: 220, right: 220, bottom: 220, left: 220, ...pad };
   /* a fixed padding can exceed a small viewport outright — clamp it
@@ -1539,7 +1692,7 @@ function draw(D) {
     const locked = S.lock.angle[i];
     const sel = S.selected.has(i);
     if (sel) { ctx.beginPath(); ctx.arc(p[i].x, p[i].y, 10, 0, TAU); ctx.strokeStyle = blueColor; ctx.lineWidth = 2; ctx.stroke(); }
-    ctx.beginPath(); ctx.arc(p[i].x, p[i].y, isHov ? 7 : 5, 0, TAU);
+    ctx.beginPath(); ctx.arc(p[i].x, p[i].y, (isHov ? 7 : 5) + (window.__touch ? 2.5 : 0), 0, TAU);
     ctx.fillStyle = locked ? lockColor : (dark ? "#0b0b0d" : "#f4f4f6"); ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = isHov || locked ? (locked ? lockColor : white) : (dark ? "#b8b8c2" : "#54545c");
     ctx.stroke();
@@ -2042,6 +2195,10 @@ function layoutPills(D) {
     const clear = pushClearOfObstacles(px, py, dirx, diry, hw, hh, p, VERTEX_HANDLE_CLEARANCE, edges, TRIANGLE_EDGE_CLEARANCE);
     px = clear.x; py = clear.y;
 
+    /* a label never slides off the edge of the screen: on a phone the triangle fills most of the width, and the leader arrow (pass 4)
+       still points the label at its corner or side */
+    if (W > 2 * hw + 12) px = clamp(px, hw + 6, W - hw - 6);
+    if (HH > 2 * hh + 12) py = clamp(py, hh + 6, HH - hh - 6);
     /* positions are applied in pass 4, after overlapping labels have been pulled apart */
     rec.pos = { x: px, y: py, hw, hh, tx, ty };
 
@@ -2726,6 +2883,7 @@ function paintModalContent(title, bodyHtml, force) {
 }
 
 function openModal(title, bodyHtml) {
+  if (window.__mobile && typeof setSheet === "function") setSheet(null); /* the explanation panel needs the canvas and the bottom bar, not a sheet over them */
   S.highlightKey = null; /* a freshly opened explanation starts on its row's own highlight */
   paintModalContent(title, bodyHtml, true);
   modalRoot.classList.add("show");
@@ -3286,13 +3444,15 @@ function pointInTri(p, q) {
   const d1 = s(p, q[0], q[1]), d2 = s(p, q[1], q[2]), d3 = s(p, q[2], q[0]);
   return !(((d1 < 0) || (d2 < 0) || (d3 < 0)) && ((d1 > 0) || (d2 > 0) || (d3 > 0)));
 }
+/* a fingertip is far wider than a mouse pointer: touch gets handles about twice the size to grab */
+let hitK = 1;
 function hitTest(m) {
   const p = S.P.map(toScreen);
-  if (S.pivot.mode === "custom") { const q = toScreen(pivotWorld()); if (Math.hypot(m.x - q.x, m.y - q.y) <= 12) return { kind: "pivot", i: -1 }; }
-  for (let i = 0; i < 3; i++) if (Math.hypot(m.x - p[i].x, m.y - p[i].y) <= 15) return { kind: "vertex", i };
+  if (S.pivot.mode === "custom") { const q = toScreen(pivotWorld()); if (Math.hypot(m.x - q.x, m.y - q.y) <= 12 * hitK) return { kind: "pivot", i: -1 }; }
+  for (let i = 0; i < 3; i++) if (Math.hypot(m.x - p[i].x, m.y - p[i].y) <= 15 * hitK) return { kind: "vertex", i };
   for (let i = 0; i < 3; i++) {
     const r = distToSeg(m, p[(i + 1) % 3], p[(i + 2) % 3]);
-    if (r.d <= 11 && r.t > 0.15 && r.t < 0.85) return { kind: "side", i };
+    if (r.d <= 11 * hitK && r.t > 0.15 && r.t < 0.85) return { kind: "side", i };
   }
   if (pointInTri(m, p)) return { kind: "body", i: -1 };
   return null;
@@ -3315,8 +3475,43 @@ const mouseAt = e => {
 
 cv.addEventListener("contextmenu", e => e.preventDefault());
 
+/* touch: two fingers pinch to zoom and drag to pan, a double tap on empty canvas fits the triangle */
+const touches = new Map(), pinch = { on: false, cool: false, d0: 1, z0: 1, w: null }, tapState = { last: null };
+const pinchMid = () => { const r = cv.getBoundingClientRect(), a = [...touches.values()]; return { x: (a[0].x + a[1].x) / 2 - r.left, y: (a[0].y + a[1].y) / 2 - r.top, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1 }; };
+function touchDown(e) {
+  if (e.pointerType !== "touch") return false;
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touches.size === 2) {
+    if (S.drag && S.drag.mode !== "pan") pushHistory();
+    S.drag = null; cancelCam(); cancelShapeAnim();
+    if (zoomGlide) { cancelAnimationFrame(zoomGlide.raf); zoomGlide = null; }
+    const mid = pinchMid(); pinch.on = true; pinch.cool = true; pinch.d0 = mid.d; pinch.z0 = S.view.z; pinch.w = toWorld(mid);
+    return true;
+  }
+  return touches.size > 2 || pinch.cool;
+}
+function touchMove(e) {
+  if (e.pointerType !== "touch" || !touches.has(e.pointerId)) return false;
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch.on && touches.size >= 2) {
+    const mid = pinchMid(), z = clamp(pinch.z0 * mid.d / pinch.d0, 1e-6, 1e9);
+    S.view.z = z; S.view.cx = pinch.w.x - (mid.x - W / 2) / z; S.view.cy = pinch.w.y - (HH / 2 - mid.y) / z;
+    requestRender();
+    return true;
+  }
+  return pinch.cool;
+}
+function touchUp(e) {
+  if (e.pointerType !== "touch") return;
+  touches.delete(e.pointerId);
+  if (touches.size < 2) pinch.on = false;
+  if (touches.size === 0) pinch.cool = false;
+}
+
 cv.addEventListener("pointerdown", e => {
   if (S.viewOnly) return;
+  hitK = e.pointerType === "mouse" ? 1 : 1.9;
+  if (touchDown(e)) { try { cv.setPointerCapture(e.pointerId); } catch (_) {} return; }
   const m = mouseAt(e);
   cancelCam(); cancelShapeAnim();
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
@@ -3346,7 +3541,7 @@ cv.addEventListener("pointerdown", e => {
     requestRender();
     return;
   }
-  if (!hit) { S.drag = { mode: "pan", last: m }; cv.style.cursor = "grabbing"; return; }
+  if (!hit) { S.drag = { mode: "pan", last: m, tap: e.pointerType === "touch" ? { x: m.x, y: m.y, t: performance.now() } : null }; cv.style.cursor = "grabbing"; return; }
   if (hit.kind !== "vertex" || !S.selected.has(hit.i)) S.selected.clear();
 
   S.drag = { mode: hit.kind, i: hit.i, startWorld: toWorld(m), startP: S.P.map(v => ({ x: v.x, y: v.y })), shift: e.shiftKey };
@@ -3365,6 +3560,8 @@ function snapPoint(w) {
 
 cv.addEventListener("pointermove", e => {
   if (S.viewOnly) return;
+  if (e.pointerType !== "mouse") hitK = 1.9;
+  if (touchMove(e)) return;
   const m = mouseAt(e);
   const dg = S.drag;
 
@@ -3466,8 +3663,14 @@ cv.addEventListener("pointermove", e => {
 });
 
 function endDrag(e) {
+  touchUp(e);
   if (!S.drag) return;
   const dg = S.drag;
+  /* a quick second tap on empty canvas fits the triangle to the screen */
+  if (dg.mode === "pan" && dg.tap && e.type === "pointerup" && Math.hypot(dg.last.x - dg.tap.x, dg.last.y - dg.tap.y) < 10 && performance.now() - dg.tap.t < 300) {
+    const L = tapState.last, now = performance.now();
+    if (L && now - L.t < 350 && Math.hypot(L.x - dg.tap.x, L.y - dg.tap.y) < 34) { tapState.last = null; fitView(); } else tapState.last = { x: dg.tap.x, y: dg.tap.y, t: now };
+  }
   const wasGeometry = dg.mode !== "pan";
   if (dg.mode === "multi" && dg.idx.length < 3 && anyLockActive()) applyConstraints(S.P, [1, 1, 1], null, false);
   if (dg.mode === "vertex" || dg.mode === "side") {
@@ -3812,6 +4015,7 @@ function setViewOnly(on) {
   if (on === S.viewOnly) return;
   S.viewOnly = on;
   document.body.classList.toggle("view-only", on);
+  if (on && window.__mobile) setSheet(null); /* a sheet left open would sit over the plain drawing */
   closeMenu();
 
   if (on) {
@@ -3889,9 +4093,10 @@ document.getElementById("navtoggle").addEventListener("click", () => setSidebarO
 /* --- sidebar open/close driven by JS width animation, so the canvas
    never sees a mismatched raster mid-transition --------------------- */
 const sidebarEl = document.getElementById("sidebar");
-let sidebarOpen = window.innerWidth >= 900;
+let sidebarOpen = window.innerWidth >= 900 && !window.__mobile;
 let sbAnim = null;
 function setSidebarOpen(open) {
+  if (window.__mobile) { setSheet(open ? "stats" : null); return; } /* on a phone the statistics are a sheet, not a docked column */
   sidebarOpen = open;
   if (sbAnim) cancelAnimationFrame(sbAnim);
   /* must be visible (not display:none) for the whole open animation, or
@@ -3918,6 +4123,61 @@ function setSidebarOpen(open) {
     }
   };
   sbAnim = requestAnimationFrame(step);
+}
+
+/* =======================================================================
+   Phone app mode: the three sheets (statistics, transform, tools) and the tab bar that opens them
+   ======================================================================= */
+const rootEl = document.documentElement;
+const tabButtons = [...document.querySelectorAll("#tabbar button")];
+let sheet = null;
+function setSheet(name) {
+  if (!window.__mobile) return;
+  if (name) closeMenu();
+  sheet = name || null;
+  for (const k of ["stats", "xform", "tools"]) rootEl.classList.toggle("sheet-" + k, k === sheet);
+  rootEl.classList.toggle("sheet-open", !!sheet);
+  sidebarOpen = sheet === "stats";
+  tabButtons.forEach(b => b.classList.toggle("on", b.dataset.tab === (sheet || "canvas")));
+}
+if (window.__mobile) {
+  /* the search box moves into the statistics sheet, undo / redo float over the canvas, the licence goes at the end of the stats */
+  const side = document.getElementById("sideSearch"); side.hidden = false; side.appendChild(document.getElementById("searchWrap"));
+  viewport.appendChild(document.getElementById("grpHist"));
+  document.getElementById("stats").appendChild(document.querySelector(".side-license"));
+  const tb = document.getElementById("toolbar"), back = document.createElement("a");
+  back.className = "tools-link"; back.href = "https://kevmcg1.github.io/portfolio"; back.target = "_top"; back.textContent = "‹ Back to the portfolio";
+  tb.appendChild(back);
+  document.getElementById("xform").classList.remove("collapsed");
+  tabButtons.forEach(b => b.addEventListener("click", () => {
+    const t = b.dataset.tab;
+    if (t === "canvas") { setSheet(null); closeModal(); }
+    else setSheet(sheet === t ? null : t);
+  }));
+  document.getElementById("scrim").addEventListener("click", () => setSheet(null));
+  /* swipe a sheet down by its top edge to put it away */
+  for (const el of [document.getElementById("sidebar"), document.getElementById("xform"), document.getElementById("toolbar")]) {
+    let st = null;
+    el.addEventListener("pointerdown", e => {
+      const r = el.getBoundingClientRect();
+      if (e.pointerType === "mouse" || e.clientY - r.top > 44 || e.target.closest("input,button:not(.xf-head),select")) return;
+      st = { y: e.clientY, t: performance.now(), id: e.pointerId, dy: 0 };
+    });
+    el.addEventListener("pointermove", e => {
+      if (!st || e.pointerId !== st.id) return;
+      st.dy = Math.max(0, e.clientY - st.y);
+      if (st.dy > 4) { el.style.transition = "none"; el.style.transform = "translateY(" + st.dy + "px)"; }
+    });
+    const end = e => {
+      if (!st || e.pointerId !== st.id) return;
+      const fast = st.dy / Math.max(1, performance.now() - st.t) > 0.6, far = st.dy > 90;
+      el.style.transition = ""; el.style.transform = "";
+      st = null;
+      if (far || fast) setSheet(null);
+    };
+    el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+  }
+  window.addEventListener("keydown", e => { if (e.key === "Escape") setSheet(null); }, true);
 }
 
 /* =======================================================================
@@ -4007,12 +4267,20 @@ window.addEventListener("keydown", e => {
 });
 
 /* boot */
-if (window.innerWidth < 900) { sidebarOpen = false; sidebarEl.style.display = "none"; }
+if (window.innerWidth < 900 && !window.__mobile) { sidebarOpen = false; sidebarEl.style.display = "none"; }
 syncChrome();
 resize();
 markLoaded();
 requestRender();
+if (window.__mobile) {
+  /* a phone: frame the triangle for the small screen, and again whenever the phone is turned */
+  fitView(undefined, 0);
+  const portrait = matchMedia("(orientation:portrait)");
+  (portrait.addEventListener ? portrait.addEventListener.bind(portrait, "change") : portrait.addListener.bind(portrait))(() => setTimeout(() => fitView(undefined, 300), 250));
+}
 </script>
+<script src="version.js?v=1"></script>
+<script src="changelog.js?v=1"></script>
 <script src="devmode.js"></script>
 </body>
 </html>
