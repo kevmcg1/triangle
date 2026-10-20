@@ -2,8 +2,12 @@
 // To release: add an entry to the top of `changelog`, set `version` to match, and raise the ?v=N on its <script> tag in index.html.
 // Keep each version to three sentences at most.
 window.__TRIANGLE = {
-  version: '1.4.0',
+  version: '1.4.1',
   changelog: [
+    { v: '1.4.1', date: '2026-10-20', title: 'Tidier logo, steadier dev mode', items: [
+      'The logo in the top-left corner is now on one line, like the one in Shop Tool Sim.',
+      'Dev mode keeps running when the tab is in the background or another window is in front.'
+    ] },
     { v: '1.4.0', date: '2026-10-20', title: 'A real app on your phone', items: [
       'On a phone the page becomes an app with a bottom tab bar (Triangle, Stats, Transform, Tools), slide-up sheets, and room for the notch and home bar.',
       'Touch works properly: bigger corner handles, pinch to zoom, two fingers to pan, and a double tap to fit the triangle. You can add it to your home screen.',
