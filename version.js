@@ -2,8 +2,13 @@
 // To release: add an entry to the top of `changelog`, set `version` to match, and raise the ?v=N on its <script> tag in index.html.
 // Keep each version to three sentences at most.
 window.__TRIANGLE = {
-  version: '1.4.2',
+  version: '1.5.0',
   changelog: [
+    { v: '1.5.0', date: '2026-10-21', title: 'Homework helper', items: [
+      'A new Solve & Practice panel solves any triangle from three known values (SSS, SAS, ASA, AAS, SSA with both answers, AAA) and draws it.',
+      'Practice and exam modes give homework-style problems with hidden answers, instant checking and a score.',
+      'New quantities: exterior angles, tangent lengths, exradii, midsegments, midpoints, slopes and line equations, nine-point circle, Euler line, special-triangle chips, and extra worked explanations.'
+    ] },
     { v: '1.4.2', date: '2026-10-20', title: 'Dev mode aims at problems', items: [
       'Dev mode has a new Aim at problems mode: it remembers what broke before, replays old problems, spends most of its time on the likeliest suspects, and shrinks each failure to its shortest recipe.',
       'Tests now run about ten times a second, and the calculation check line at the bottom of the sidebar is gone (the checks still run quietly in Dev mode).'

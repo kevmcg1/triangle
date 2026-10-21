@@ -149,6 +149,27 @@ function calcAudit(D) {
       ident('Trigonometry', 'Law of Sines ' + low[i] + ' / sin ' + names[i] + ' = 2R', 2 * D.R, sides[i] / Math.sin(D.ang[i]), { tol: 1e-8 * cond });
     }
 
+    /* ---- the homework quantities ---- */
+    const halfT = ang.map(x => Math.tan(x / 2));
+    for (let i = 0; i < 3; i++) {
+      const j = (i + 1) % 3, k = (i + 2) % 3;
+      model('Homework', 'exterior angle at ' + names[i] + ' = 180° − ' + names[i], Math.PI - ang[i], D.ext[i], { tol: Math.max(TOL, 1e-9), scale: Math.PI });
+      ident('Homework', 'exterior angle at ' + names[i] + ' = ' + names[j] + ' + ' + names[k], ang[j] + ang[k], D.ext[i], { tol: Math.max(TOL, 1e-9), scale: Math.PI });
+      model('Homework', 'tangent length from ' + names[i] + ' = s − ' + low[i], s - sides[i], D.tl[i]);
+      ident('Homework', 'tangent length from ' + names[i] + ' = r ÷ tan(' + names[i] + '/2)', r / halfT[i], D.tl[i]);
+      model('Homework', 'exradius r' + low[i] + ' = K ÷ (s − ' + low[i] + ')', heron / (s - sides[i]), D.exr[i]);
+      ident('Homework', 'exradius r' + low[i] + ' = s · tan(' + names[i] + '/2)', s * halfT[i], D.exr[i]);
+      model('Homework', 'midsegment ∥ ' + low[i] + ' = ' + low[i] + ' ÷ 2', sides[i] / 2, D.seg[i]);
+      ident('Homework', 'midpoint of side ' + low[i] + ' (x)', (V[j].x + V[k].x) / 2, D.sideMid[i].x, { abs: pos });
+      ident('Homework', 'midpoint of side ' + low[i] + ' (y)', (V[j].y + V[k].y) / 2, D.sideMid[i].y, { abs: pos });
+    }
+    ident('Homework', 'exterior angles add to 360°', 2 * Math.PI, D.ext[0] + D.ext[1] + D.ext[2], { scale: Math.PI });
+    ident('Homework', 'tangent lengths add to s', s, D.tl[0] + D.tl[1] + D.tl[2]);
+    ident('Homework', 'r + 4R = rₐ + r_b + r_c  (r_a + r_b + r_c = 4R + r)', 4 * R + r, D.exr[0] + D.exr[1] + D.exr[2]);
+    ident('Homework', '1/r = 1/rₐ + 1/r_b + 1/r_c', 1 / r, 1 / D.exr[0] + 1 / D.exr[1] + 1 / D.exr[2]);
+    model('Homework', 'nine-point circle radius = R ÷ 2', R / 2, D.nine);
+    ident('Homework', 'Euler: OH² = 9R² − (a² + b² + c²)', Math.max(0, 9 * R * R - (a * a + b * b + c * c)), D.oh * D.oh, { abs: 9 * R * R + a * a + b * b + c * c, tol: 1e-8 * cond });
+
     /* ---- classification ---- */
     const maxA = Math.max(D.A, D.B, D.C), kind = isRightAngle(maxA) ? 'Right' : maxA > Math.PI / 2 ? 'Obtuse' : 'Acute';
     ident('Geometry', 'classification by angle (' + kind + ')', 1, D.kind === kind ? 1 : 0, { tol: 0 });
@@ -195,6 +216,8 @@ function auditDisplay(D, add, degenerate, a, b, c, s) {
   row('Angle A row', 'A', D.A / af); row('Angle B row', 'B', D.B / af); row('Angle C row', 'C', D.C / af);
   row('Area row', 'area', D.area / (lf * lf)); row('Perimeter row', 'per', D.per / lf); row('Semiperimeter row', 'semi', D.s / lf);
   if (degenerate) return;
+  for (let i = 0; i < 3; i++) { row('Exterior angle ' + 'ABC'[i] + ' row', 'ext' + i, D.ext[i] / af); row('Tangent length ' + 'ABC'[i] + ' row', 'tl' + i, D.tl[i] / lf); row('Exradius ' + 'abc'[i] + ' row', 'exr' + i, D.exr[i] / lf); row('Midsegment ' + 'abc'[i] + ' row', 'seg' + i, D.seg[i] / lf); }
+  row('Nine-point radius row', 'nine', D.nine / lf); row('OH row', 'oh', D.oh / lf);
   row('Circumradius row', 'R', D.R / lf); row('Circumdiameter row', 'Rd', 2 * D.R / lf);
   row('Inradius row', 'r', D.r / lf); row('Incircle diameter row', 'rd', 2 * D.r / lf);
   row('R / r row', 'Rr', D.R / D.r);
@@ -216,6 +239,7 @@ function auditDisplay(D, add, degenerate, a, b, c, s) {
     add(label + ' x', px, x.v, opt(x, px)); add(label + ' y', py, y.v, opt(y, py));
   };
   pt('Vertex A', 'pA', D.P[0]); pt('Vertex B', 'pB', D.P[1]); pt('Vertex C', 'pC', D.P[2]);
+  for (let i = 0; i < 3; i++) pt('Midpoint ' + 'abc'[i], 'mid' + i, D.sideMid[i]);
   pt('Centroid', 'cen', D.centroid); pt('Incenter', 'inc', D.incenter); pt('Circumcenter', 'cir', D.circum); pt('Orthocenter', 'ort', D.ortho);
   /* trig table cells */
   const td = trigData(D);
