@@ -451,8 +451,8 @@ body.view-only #exitViewOnly{
 }
 
 /* ---------------- Sidebar, in the Shop Tool Sim style ---------------- */
-:root{--raise:#1b1d20;--raise-2:#24272b;--side-bg:#131416;--side-line:#222428;--side-ink:#ececee;--c0:#5b93ea;--c1:#5fcf8a;--c2:#e8b547;--c3:#a78bfa;--c4:#f472b6;--c5:#fb923c;--c6:#94a3b8}
-:root[data-theme="light"]{--raise:#eceef2;--raise-2:#e0e3e9;--side-bg:#fbfbfd;--side-line:#e4e4ea;--side-ink:#17171a;--c0:#2f63c9;--c1:#1e9455;--c2:#b97d0c;--c3:#6d4fd6;--c4:#c2377f;--c5:#d4640f;--c6:#5f6b7c}
+:root{--raise:#1b1d20;--raise-2:#24272b;--side-bg:#131416;--side-line:#222428;--side-ink:#ececee;--c0:#5b93ea;--c1:#5fcf8a;--c2:#e8b547;--c3:#a78bfa;--c4:#f472b6;--c5:#fb923c;--c6:#94a3b8;--c7:#38bdf8;--c8:#facc15}
+:root[data-theme="light"]{--raise:#eceef2;--raise-2:#e0e3e9;--side-bg:#fbfbfd;--side-line:#e4e4ea;--side-ink:#17171a;--c0:#2f63c9;--c1:#1e9455;--c2:#b97d0c;--c3:#6d4fd6;--c4:#c2377f;--c5:#d4640f;--c6:#5f6b7c;--c7:#0a7fb8;--c8:#a07a00}
 #sidebar{background:var(--side-bg);border-right:1px solid var(--side-line)}
 .side-logo{flex:0 0 auto;padding:20px 18px 14px;text-align:center}
 .side-logo .logo-mark{margin:0;font-family:'Bebas Neue','Inter',sans-serif;font-size:2.35rem;font-weight:400;letter-spacing:.055em;line-height:.9;color:#e4e6ea;display:flex;align-items:center;justify-content:center;gap:.28em;user-select:none}
@@ -466,7 +466,7 @@ body.view-only #exitViewOnly{
 .sec{--sc:var(--c6);border-bottom:1px solid var(--side-line);background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 22%,transparent) 0%,color-mix(in srgb,var(--sc) 8%,transparent) 45%,transparent 100%);box-shadow:inset 3px 0 0 color-mix(in srgb,var(--sc) 75%,transparent)}
 .sec::before{display:none}
 .sec{display:flow-root}
-.sec.cat-0{--sc:var(--c0)}.sec.cat-1{--sc:var(--c1)}.sec.cat-2{--sc:var(--c2)}.sec.cat-3{--sc:var(--c3)}.sec.cat-4{--sc:var(--c4)}.sec.cat-5{--sc:var(--c5)}.sec.cat-6{--sc:var(--c6)}
+.sec.cat-0{--sc:var(--c0)}.sec.cat-1{--sc:var(--c1)}.sec.cat-2{--sc:var(--c2)}.sec.cat-3{--sc:var(--c3)}.sec.cat-4{--sc:var(--c4)}.sec.cat-5{--sc:var(--c5)}.sec.cat-6{--sc:var(--c6)}.sec.cat-7{--sc:var(--c7)}.sec.cat-8{--sc:var(--c8)}
 .sec-head{position:relative;margin:16px 18px 0;padding:0 0 9px;gap:9px;color:color-mix(in srgb,var(--sc) 55%,var(--side-ink))}
 .sec-head:hover{background:transparent;color:color-mix(in srgb,var(--sc) 35%,var(--side-ink))}
 .sec-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--sc) 0%,color-mix(in srgb,var(--sc) 45%,#5b93ea) 42%,transparent 100%)}
@@ -1313,7 +1313,13 @@ function derive() {
   /* incircle touch points: touch[0] on side a (BC), touch[1] on side b (CA), touch[2] on side c (AB) */
   const touch = [ lerp(pb, pc, (s - b) / a), lerp(pc, pa, (s - c) / b), lerp(pa, pb, (s - a) / c) ];
 
-  return { P, a, b, c, sides: [a, b, c], A, B, C, ang, per, s, area, R, r,
+  /* what homework and exams ask about on top of the basics */
+  const ext = [Math.PI - A, Math.PI - B, Math.PI - C];                         /* exterior angles */
+  const tl = [s - a, s - b, s - c];                                              /* tangent lengths from each corner to the incircle */
+  const exr = [area / (s - a), area / (s - b), area / (s - c)];                  /* exradii */
+  const sideMid = [lerp(pb, pc, 0.5), lerp(pc, pa, 0.5), lerp(pa, pb, 0.5)], seg = [a / 2, b / 2, c / 2];   /* side midpoints, midsegments */
+  const nine = R / 2, oh = Math.hypot(ortho.x - circum.x, ortho.y - circum.y);   /* nine-point circle radius, Euler line OH */
+  return { ext, tl, exr, sideMid, seg, nine, oh, P, a, b, c, sides: [a, b, c], A, B, C, ang, per, s, area, R, r,
            circum, centroid, incenter, ortho, alt, med, bis, kind, shape,
            arcCirc, arcIn, altFoot, medFoot, bisFoot, touch };
 }
@@ -2415,13 +2421,15 @@ function rowIcon(kind) { return ROW_ICONS[kind] ? ROW_ICONS[kind]() : ""; }
   addRow(b, "Angle B", "B", { hl: 1, info: { kind: "vertex", i: 1 } });
   addRow(b, "Angle C", "C", { hl: 1, info: { kind: "vertex", i: 2 } });
   addRow(b, "Sum", "sum", { info: { kind: "all" } });
+  gap(b);
+  for (let i = 0; i < 3; i++) addRow(b, "Exterior angle at " + "ABC"[i], "ext" + i, { info: { kind: "vertex", i } });
 }
 {
   const b = section("Geometry", "fa-shapes", 1);
   addRow(b, "Area", "area", { hl: 1, info: { kind: "all" } });
   addRow(b, "Perimeter", "per", { hl: 1, info: { kind: "all" } });
   addRow(b, "Semiperimeter", "semi", { info: { kind: "all" } });
-  addRow(b, "Classification", "class");
+  addRow(b, "Classification", "class", { info: { kind: "all" } });
   const cr = document.createElement("div"); cr.className = "chip-row"; cr.id = "chips"; b.appendChild(cr);
 }
 {
@@ -2480,6 +2488,25 @@ function rowIcon(kind) { return ROW_ICONS[kind] ? ROW_ICONS[kind]() : ""; }
   addRow(b, "Incenter", "inc", { info: { kind: "point", get: D => D.incenter } });
   addRow(b, "Circumcenter", "cir", { info: { kind: "point", get: D => D.circum } });
   addRow(b, "Orthocenter", "ort", { info: { kind: "point", get: D => D.ortho } });
+}
+{
+  const b = section("Tangents & Excircles", "fa-circle-dot", 6), side = ["a", "b", "c"];
+  for (let i = 0; i < 3; i++) addRow(b, "Tangent length from " + "ABC"[i] + " (s − " + side[i] + ")", "tl" + i, { info: { kind: "vertex", i } });
+  gap(b);
+  for (let i = 0; i < 3; i++) addRow(b, "Exradius r<sub>" + side[i] + "</sub> (opposite " + "ABC"[i] + ")", "exr" + i, { info: { kind: "side", i } });
+  gap(b);
+  addRow(b, "Nine-point circle radius (R/2)", "nine", { info: { kind: "all" } });
+  addRow(b, "Orthocenter ↔ circumcenter (OH)", "oh", { info: { kind: "all" } });
+}
+{
+  const b = section("Coordinate geometry", "fa-draw-polygon", 8), side = ["a", "b", "c"], ends = ["BC", "CA", "AB"];
+  for (let i = 0; i < 3; i++) addRow(b, "Midpoint of " + side[i] + " (" + ends[i] + ")", "mid" + i, { info: { kind: "point", get: D => D.sideMid[i] } });
+  gap(b);
+  for (let i = 0; i < 3; i++) addRow(b, "Midsegment ∥ " + side[i] + " (= " + side[i] + "/2)", "seg" + i, { info: { kind: "side", i } });
+  gap(b);
+  for (let i = 0; i < 3; i++) addRow(b, "Slope of " + side[i] + " (" + ends[i] + ")", "slope" + i, { info: { kind: "side", i } });
+  gap(b);
+  for (let i = 0; i < 3; i++) addRow(b, "Line " + ends[i], "line" + i, { info: { kind: "side", i } });
 }
 
 /* ONE source for every trig value on screen — the sidebar table and the
@@ -2618,6 +2645,21 @@ function trigSafe(v, plain, digits) {
   return plain ? fmt(v, d) : numFmt(v, d);
 }
 
+/* slope and equation of the line through a side's two corners, in the current length unit (the slope has no unit) */
+function sideLine(D, i) {
+  const [u, w] = [[D.P[1], D.P[2]], [D.P[2], D.P[0]], [D.P[0], D.P[1]]][i], f = LEN[S.lenUnit].f, sc = Math.max(D.a, D.b, D.c);
+  const dx = snapNoise(w.x - u.x, sc), dy = snapNoise(w.y - u.y, sc);
+  if (Math.abs(dx) <= sc * 1e-12) return { vertical: true, x0: u.x / f, slopeText: "vertical (no slope)", eqText: "x = " + fmt(snapNoise(u.x, sc) / f, S.prec) };
+  const m = dy / dx, b0 = (u.y - m * u.x) / f, bn = snapNoise(b0, sc / f);
+  return { vertical: false, m, b: bn, slopeText: numFmt(snapNoise(m, 1e-12), S.prec), eqText: "y = " + fmt(snapNoise(m, 1e-12), S.prec) + "x " + (bn < 0 ? "− " : "+ ") + fmt(Math.abs(bn), S.prec) };
+}
+/* special triangles: 30-60-90, 45-45-90 (judged the same way as "right": by what the angles READ at the current decimals) and Pythagorean triples */
+function specialFlags(D) {
+  const tol = Math.max(0.5 * Math.pow(10, -S.prec), 1e-9), a = D.ang.map(deg).sort((x, y) => x - y), near = (arr) => arr.every((v, i) => Math.abs(a[i] - v) < tol);
+  let triple = null; const sd = D.sides.slice().sort((x, y) => x - y), f = LEN[S.lenUnit].f;
+  for (let dn = 1; dn <= 60 && !triple; dn++) { const t = sd[0] / dn, n = sd.map(v => v / t); if (n.every(v => Math.abs(v - Math.round(v)) < 1e-9 * Math.max(1, v)) && n[2] < 5000) { const [x, y, z] = n.map(Math.round); if (x * x + y * y === z * z) triple = [x, y, z]; } }
+  return { s30: near([30, 60, 90]), s45: near([45, 45, 90]), triple };
+}
 let lastChipKey = null;
 function updateStats(D) {
   const d = S.prec, U = S.lenUnit;
@@ -2645,13 +2687,14 @@ function updateStats(D) {
   /* the six classification chips only change at the rare instant the
      triangle crosses into a different kind/shape — rebuilding all six
      DOM nodes from scratch on every frame regardless was pure churn */
-  const chipKey = D.kind + "|" + D.shape;
+  const sp = specialFlags(D), chipKey = D.kind + "|" + D.shape + "|" + sp.s30 + sp.s45 + (sp.triple ? sp.triple.join("-") : "");
   if (chipKey !== lastChipKey) {
     lastChipKey = chipKey;
     const chips = document.getElementById("chips");
     chips.innerHTML = "";
     [["Acute", D.kind === "Acute"], ["Right", D.kind === "Right"], ["Obtuse", D.kind === "Obtuse"],
-     ["Scalene", D.shape === "Scalene"], ["Isosceles", D.shape === "Isosceles"], ["Equilateral", D.shape === "Equilateral"]
+     ["Scalene", D.shape === "Scalene"], ["Isosceles", D.shape === "Isosceles"], ["Equilateral", D.shape === "Equilateral"],
+     ["30-60-90", sp.s30], ["45-45-90", sp.s45], [sp.triple ? sp.triple.join("-") + " triple" : "Pythagorean triple", !!sp.triple]
     ].forEach(([n, on]) => {
       const c = document.createElement("div"); c.className = "chip" + (on ? " on" : ""); c.textContent = n; chips.appendChild(c);
     });
@@ -2676,6 +2719,16 @@ function updateStats(D) {
   refs.cen.textContent = PT(D.centroid); refs.inc.textContent = PT(D.incenter);
   refs.cir.textContent = PT(D.circum);   refs.ort.textContent = PT(D.ortho);
   ["pA","pB","pC","cen","inc","cir","ort"].forEach(k => refs[k].classList.add("dim"));
+
+  /* the homework rows */
+  for (let i = 0; i < 3; i++) {
+    refs["ext" + i].innerHTML = ANGLE(D.ext[i]);
+    refs["tl" + i].innerHTML = L(D.tl[i]); refs["exr" + i].innerHTML = L(D.exr[i]);
+    refs["mid" + i].textContent = PT(D.sideMid[i]); refs["seg" + i].innerHTML = L(D.seg[i]);
+    const eq = sideLine(D, i); refs["slope" + i].textContent = eq.slopeText; refs["line" + i].textContent = eq.eqText;
+  }
+  refs.nine.innerHTML = L(D.nine); refs.oh.innerHTML = L(D.oh);
+  for (let i = 0; i < 3; i++) { refs["mid" + i].classList.add("dim"); refs["slope" + i].classList.add("dim"); refs["line" + i].classList.add("dim"); }
 }
 
 /* =======================================================================
@@ -2968,6 +3021,95 @@ function NFH(v, hl) {
   return NH(dp(v) + (f ? " (" + f + ")" : ""), hl);
 }
 
+/* =======================================================================
+   Explanations for the homework rows (exterior angles, tangent lengths, exradii, midsegments, lines, classification…)
+   Each builds a title and worked lines from the live triangle, with the numbers substituted.
+   ======================================================================= */
+const EXTRA_EXPLAIN = {};
+(() => {
+  const nm = ["A", "B", "C"], lw = ["a", "b", "c"], ends = ["BC", "CA", "AB"];
+  const idx = id => +id.slice(-1);
+  for (let i = 0; i < 3; i++) {
+    const j = (i + 1) % 3, k = (i + 2) % 3;
+    EXTRA_EXPLAIN["ext" + i] = H => ({
+      title: "Exterior angle at " + nm[i],
+      lines: [
+        EL("An exterior angle is formed by extending one side past the corner. It sits on a straight line with the interior angle, so:"),
+        EL("Exterior " + V(nm[i], nm[i]) + " = 180° − " + V(nm[i], nm[i]) + " = 180° − " + H.NDc(H.D.ang[i], nm[i]) + " = " + H.NDc(H.D.ext[i], "ext")),
+        EL("The exterior angle theorem says it also equals the two remote interior angles added together:"),
+        EL("Exterior " + V(nm[i], nm[i]) + " = " + V(nm[j], nm[j]) + " + " + V(nm[k], nm[k]) + " = " + H.NDc(H.D.ang[j], nm[j]) + " + " + H.NDc(H.D.ang[k], nm[k])),
+        BOXED("Exterior angle at " + nm[i] + " = " + H.NDc(H.D.ext[i], "ext")),
+        NOTE("The three exterior angles (one at each corner) always add up to 360°.")],
+      approxS: angSymbolic(H.D.ext[i]), exactS: angDecimal(H.D.ext[i]) });
+    EXTRA_EXPLAIN["tl" + i] = H => ({
+      title: "Tangent length from " + nm[i],
+      lines: [
+        EL("The incircle touches the two sides that meet at " + nm[i] + ". The two tangent segments from one outside point to a circle are equal, and each is:"),
+        EL("tangent length = " + V("s", "s") + " − " + V(lw[i], lw[i]) + " (the semiperimeter minus the side opposite " + nm[i] + ")"),
+        EL("tangent length = " + H.NLc(H.D.s, "s") + " − " + H.NLc(H.D.sides[i], lw[i])),
+        BOXED("tangent length from " + nm[i] + " = " + H.NLc(H.D.tl[i], "s")),
+        NOTE("The three tangent lengths add up to the semiperimeter: " + dp(H.D.tl[0] / LEN[H.U].f) + " + " + dp(H.D.tl[1] / LEN[H.U].f) + " + " + dp(H.D.tl[2] / LEN[H.U].f) + " = " + dp(H.D.s / LEN[H.U].f) + " " + LEN[H.U].sym + ".")],
+      approxS: lenSymbolic(H.D.tl[i], H.U), exactS: lenDecimal(H.D.tl[i], H.U) });
+    EXTRA_EXPLAIN["exr" + i] = H => ({
+      title: "Exradius opposite " + nm[i],
+      lines: [
+        EL("The excircle opposite " + nm[i] + " touches side " + lw[i] + " from OUTSIDE the triangle and the extensions of the other two sides."),
+        EL("r" + "<sub>" + lw[i] + "</sub> = " + FR(V("Area", "area"), V("s", "s") + " − " + V(lw[i], lw[i]))),
+        EL("r" + "<sub>" + lw[i] + "</sub> = " + FR(H.NAc(H.D.area, "area"), H.NLc(H.D.s, "s") + " − " + H.NLc(H.D.sides[i], lw[i]))),
+        BOXED("r<sub>" + lw[i] + "</sub> = " + H.NLc(H.D.exr[i], "R")),
+        NOTE("Check: 1/r = 1/r<sub>a</sub> + 1/r<sub>b</sub> + 1/r<sub>c</sub> gives the inradius, " + dp(1 / (1 / H.D.exr[0] + 1 / H.D.exr[1] + 1 / H.D.exr[2]) / LEN[H.U].f) + " " + LEN[H.U].sym + ".")],
+      approxS: lenSymbolic(H.D.exr[i], H.U), exactS: lenDecimal(H.D.exr[i], H.U) });
+    EXTRA_EXPLAIN["mid" + i] = H => { const u = [H.D.P[1], H.D.P[2], H.D.P[0]][i], w = [H.D.P[2], H.D.P[0], H.D.P[1]][i], q = H.D.sideMid[i], n1 = nm[(i + 1) % 3], n2 = nm[(i + 2) % 3];
+      return { title: "Midpoint of side " + lw[i] + " (" + ends[i] + ")",
+        lines: [EL("Midpoint = the average of the two endpoints: " + FR("x₁ + x₂", "2") + ",  " + FR("y₁ + y₂", "2")),
+          EL("Midpoint = ( " + FR(H.ncp(u.x, n1) + " + " + H.ncp(w.x, n2), "2") + " ,  " + FR(H.ncp(u.y, n1) + " + " + H.ncp(w.y, n2), "2") + " )"),
+          BOXED("Midpoint of " + lw[i] + " = ( " + H.NC(q.x) + ", " + H.NC(q.y) + " )")],
+        approxS: coordSymbolic(q.x / LEN[H.U].f, q.y / LEN[H.U].f), exactS: coordDecimal(q.x / LEN[H.U].f, q.y / LEN[H.U].f) }; };
+    EXTRA_EXPLAIN["seg" + i] = H => ({
+      title: "Midsegment parallel to side " + lw[i],
+      lines: [EL("A midsegment joins the midpoints of two sides. The midsegment theorem: it is PARALLEL to the third side and HALF as long."),
+        EL("Midsegment = " + FR(V(lw[i], lw[i]), "2") + " = " + FR(H.NLc(H.D.sides[i], lw[i]), "2")),
+        BOXED("Midsegment = " + H.NLc(H.D.seg[i], lw[i])),
+        NOTE("The three midsegments cut the triangle into 4 congruent triangles, each with ¼ of the area (" + uarea(H.D.area / 4, H.U) + ").")],
+      approxS: lenSymbolic(H.D.seg[i], H.U), exactS: lenDecimal(H.D.seg[i], H.U) });
+    const slopeLines = (H, withLine) => { const u = [H.D.P[1], H.D.P[2], H.D.P[0]][i], w = [H.D.P[2], H.D.P[0], H.D.P[1]][i], n1 = nm[(i + 1) % 3], n2 = nm[(i + 2) % 3], ln = sideLine(H.D, i);
+      const lines = [EL("Slope = " + FR("y₂ − y₁", "x₂ − x₁") + " (rise over run) between " + V(n1, n1) + " and " + V(n2, n2)),
+        EL("Slope = " + FR(H.ncp(w.y, n2) + " − " + H.ncp(u.y, n1), H.ncp(w.x, n2) + " − " + H.ncp(u.x, n1)))];
+      if (ln.vertical) { lines.push(BOXED("The run is 0, so the line is vertical: it has no slope, and its equation is x = " + dp(ln.x0))); return lines; }
+      lines.push(BOXED("Slope = " + NF(ln.m)));
+      if (withLine) { lines.push(EL("Point-slope form through " + V(n1, n1) + ":  y − y₁ = m(x − x₁)"), EL("y = m·x + b  with  b = y₁ − m·x₁ = " + H.ncp(u.y, n1) + " − " + NF(ln.m) + " · " + H.ncp(u.x, n1) + " = " + NF(ln.b)), BOXED("Line " + ends[i] + ":  " + ln.eqText), NOTE("Two lines are perpendicular when their slopes multiply to −1, and parallel when they are equal.")); }
+      return lines; };
+    EXTRA_EXPLAIN["slope" + i] = H => ({ title: "Slope of side " + lw[i] + " (" + ends[i] + ")", lines: slopeLines(H, false), approxS: "", exactS: sideLine(H.D, i).slopeText });
+    EXTRA_EXPLAIN["line" + i] = H => ({ title: "Line through " + ends[i][0] + " and " + ends[i][1], lines: slopeLines(H, true), approxS: "", exactS: sideLine(H.D, i).eqText });
+  }
+  EXTRA_EXPLAIN.nine = H => ({ title: "Nine-point circle",
+    lines: [EL("One circle passes through nine special points: the three side midpoints, the three feet of the altitudes, and the three midpoints between each corner and the orthocenter."),
+      EL("Radius = " + FR(V("R", "R"), "2") + " = " + FR(H.NLc(H.D.R, "R"), "2")), BOXED("Nine-point radius = " + H.NLc(H.D.nine, "R")),
+      NOTE("Its center is the midpoint between the orthocenter and the circumcenter, and it is always half the size of the circumcircle.")],
+    approxS: lenSymbolic(H.D.nine, H.U), exactS: lenDecimal(H.D.nine, H.U) });
+  EXTRA_EXPLAIN.oh = H => ({ title: "Distance between orthocenter and circumcenter (OH)",
+    lines: [EL("The orthocenter H, centroid G and circumcenter O lie on one straight line, the Euler line, and the centroid divides O to H in the ratio OG : GH = 1 : 2."),
+      EL("Euler: OH² = 9" + V("R", "R") + "² − (" + V("a", "a") + "² + " + V("b", "b") + "² + " + V("c", "c") + "²)"),
+      EL("OH² = 9 · " + H.NLc(H.D.R, "R") + "² − (" + H.NLc(H.D.a, "a") + "² + " + H.NLc(H.D.b, "b") + "² + " + H.NLc(H.D.c, "c") + "²)"),
+      BOXED("OH = " + H.NLc(H.D.oh, "R")), NOTE("In a right triangle the orthocenter is the right-angle corner and the circumcenter is the midpoint of the hypotenuse.")],
+    approxS: lenSymbolic(H.D.oh, H.U), exactS: lenDecimal(H.D.oh, H.U) });
+  EXTRA_EXPLAIN.class = H => { const D = H.D, f = LEN[H.U].f, so = D.sides.map(v => v / f).sort((x, y) => x - y), sp = specialFlags(D), mx = Math.max(D.A, D.B, D.C);
+    const lhs = so[0] * so[0] + so[1] * so[1], rhs = so[2] * so[2], cmp = Math.abs(lhs - rhs) < 0.5 * Math.pow(10, -S.prec) * so[2] ? "=" : lhs > rhs ? ">" : "<";
+    const lines = [
+      EL("<b>By angles.</b> The biggest angle decides: under 90° is ACUTE, exactly 90° is RIGHT, over 90° is OBTUSE."),
+      EL("Biggest angle = " + H.NDc(mx, "A") + "  →  " + D.kind.toLowerCase()),
+      EL("<b>Check with the sides</b> (converse of the Pythagorean theorem). Square the two shorter sides and add them, then compare with the square of the longest:"),
+      EL(dp(so[0]) + "² + " + dp(so[1]) + "² = " + dp(lhs) + "     and     " + dp(so[2]) + "² = " + dp(rhs)),
+      EL(dp(lhs) + " " + cmp + " " + dp(rhs) + "  →  " + (cmp === "=" ? "right triangle (a² + b² = c²)" : cmp === ">" ? "acute (a² + b² > c²)" : "obtuse (a² + b² < c²)")),
+      EL("<b>By sides.</b> " + (D.shape === "Equilateral" ? "All three sides are equal: EQUILATERAL (and every angle is 60°)." : D.shape === "Isosceles" ? "Two sides are equal: ISOSCELES (the angles opposite them are equal too)." : "No two sides are equal: SCALENE.")),
+      BOXED("Classification = " + D.kind + " · " + D.shape)];
+    if (sp.s30) lines.push(NOTE("A 30-60-90 triangle: the sides are in the ratio 1 : √3 : 2 (short leg : long leg : hypotenuse)."));
+    if (sp.s45) lines.push(NOTE("A 45-45-90 triangle: the sides are in the ratio 1 : 1 : √2 (leg : leg : hypotenuse)."));
+    if (sp.triple) lines.push(NOTE("The sides are in the ratio of the Pythagorean triple " + sp.triple.join(" : ") + " (" + sp.triple[0] + "² + " + sp.triple[1] + "² = " + sp.triple[2] + "²)."));
+    lines.push(NOTE("The triangle inequality always holds here: each side is shorter than the other two added together (" + dp(so[0]) + " + " + dp(so[1]) + " = " + dp(so[0] + so[1]) + " > " + dp(so[2]) + ")."));
+    return { title: "Classification", lines, approxS: "", exactS: D.kind + " · " + D.shape }; };
+})();
+
 function openExplain(id, live) {
   const D = derive();
   const U = S.lenUnit;
@@ -2999,7 +3141,10 @@ function openExplain(id, live) {
   const NCH  = (inches, hl) => { const v = inches / LEN[U].f, f = fractionStr(v); return NH(dp(v) + (f ? " (" + f + ")" : ""), hl); };
   let title = "", lines = [], approxS = "", exactS = "";
 
-  if (id === "a" || id === "b" || id === "c") {
+  if (EXTRA_EXPLAIN[id]) {
+    const x = EXTRA_EXPLAIN[id]({ D, U, NLc, NAc, NDc, NC, ncp: (inches, letter) => ncpFmt(inches, U, letter) });
+    title = x.title; lines = x.lines; approxS = x.approxS; exactS = x.exactS;
+  } else if (id === "a" || id === "b" || id === "c") {
     const i = { a: 0, b: 1, c: 2 }[id];
     const j = (i + 1) % 3, k = (i + 2) % 3;
     const ncp0 = (inches, letter) => ncpFmt(inches, U, letter);
@@ -3058,6 +3203,15 @@ function openExplain(id, live) {
       EL("Area = " + FR("1", "2") + " · |" + NAc(2 * D.area, "area") + "|"),
       BOXED("Area = " + NAc(D.area, "area"))
     ];
+    {
+      /* the same area the other ways a textbook asks for it */
+      const f = LEN[U].f, sq = v => dp(v / f), s_ = D.s / f, a_ = D.a / f, b_ = D.b / f, c_ = D.c / f, h = D.alt[0] / f;
+      lines.push(NOTE("The same area, the other ways it is asked for:"),
+        EL("<b>Heron's formula</b>:  " + V("Area", "area") + " = √[ s(s − a)(s − b)(s − c) ] = √[ " + sq(D.s) + " · " + sq(D.s - D.a) + " · " + sq(D.s - D.b) + " · " + sq(D.s - D.c) + " ] = " + NAc(D.area, "area")),
+        EL("<b>Base × height</b>:  " + V("Area", "area") + " = ½ · base · height = ½ · " + V("a", "a") + " · " + V("hₐ", "a") + " = ½ · " + dp(a_) + " · " + dp(h) + " = " + NAc(D.area, "area")),
+        EL("<b>Two sides and the angle between them</b>:  " + V("Area", "area") + " = ½ · " + V("a", "a") + " · " + V("b", "b") + " · sin " + V("C", "C") + " = ½ · " + dp(a_) + " · " + dp(b_) + " · sin " + udeg(D.C) + " = " + NAc(D.area, "area")),
+        EL("<b>With the radii</b>:  " + V("Area", "area") + " = r · s = " + dp(D.r / f) + " · " + dp(s_) + " = " + NAc(D.area, "area") + "     and     " + V("Area", "area") + " = " + FR("a · b · c", "4R") + " = " + NAc(D.area, "area")));
+    }
     approxS = areaSymbolic(D.area, U); exactS = areaDecimal(D.area, U);
   } else if (id === "per") {
     title = "Perimeter";
@@ -4254,7 +4408,8 @@ if (window.__mobile) {
   (portrait.addEventListener ? portrait.addEventListener.bind(portrait, "change") : portrait.addListener.bind(portrait))(() => setTimeout(() => fitView(undefined, 300), 250));
 }
 </script>
-<script src="version.js?v=3"></script>
+<script src="homework.js?v=1"></script>
+<script src="version.js?v=4"></script>
 <script src="changelog.js?v=1"></script>
 <script src="devmode.js"></script>
 </body>

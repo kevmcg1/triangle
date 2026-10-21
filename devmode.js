@@ -246,6 +246,7 @@
     });
     const XF = [['xfRot', 'rotation', V_ANGLE], ['xfPx', 'position x', V_COORD], ['xfPy', 'position y', V_COORD], ['xfSc', 'scale', V_SCALE], ['xfCx', 'pivot x', V_COORD], ['xfCy', 'pivot y', V_COORD]];
     XF.forEach(([id, name, V]) => { const el = $('#' + id); if (el && visible(el)) add('in:' + id, 'field', 'transform ' + name, async (r, k) => typeInto(el, k && k.value !== undefined ? k.value : pick(r, V), r), { values: V }); });
+    $$('#hwIn input').forEach(el => { if (!visible(el)) return; const isA = el.dataset.k === el.dataset.k.toUpperCase(); add('in:hw-' + el.dataset.k, 'field', 'solve box ' + el.dataset.k, async (r, k) => typeInto(el, k && k.value !== undefined ? k.value : pick(r, isA ? V_ANGLE : V_SIDE), r), { values: isA ? V_ANGLE : V_SIDE }); });
     const sb = $('#searchBox'); if (sb && visible(sb)) add('in:search', 'field', 'search box', async r => typeInto(sb, pick(r, V_SEARCH), r), { values: V_SEARCH });
     $$('input[type=color]').forEach((c, i) => { if (!dev(c) && visible(c)) add('color:' + i, 'field', 'color ' + i, async r => { setNative(c, '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0')); c.dispatchEvent(new Event('input', { bubbles: true })); }); });
     $$('input[type=checkbox],input[type=range],select').forEach((c, i) => { if (!dev(c) && visible(c)) add('ctl:' + c.id + i, 'field', c.id || c.type, async r => { if (c.tagName === 'SELECT') { c.selectedIndex = Math.floor(r() * c.options.length); c.dispatchEvent(new Event('change', { bubbles: true })); } else if (c.type === 'range') { setNative(c, String(+c.min + r() * (+c.max - +c.min))); c.dispatchEvent(new Event('input', { bubbles: true })); } else c.click(); }); });
@@ -520,6 +521,54 @@
       for (const v of ['approx', 'exact']) { $$('#exactToggle button').find(e => e.dataset.v === v).click(); await settle(); f.T('the audit passes in ' + v + ' display mode', AUDIT.failed.length === 0, AUDIT.failed.slice(0, 2).map(c => c.label).join(' | ')); }
       window.__openAudit(); await settle(1400); f.T('the audit details panel opens with a table of checks', modalOpen() && $$('#mBody .audit-table tr').length > 50, $$('#mBody .audit-table tr').length);
       closeModal(); await settle(1200);
+    }],
+    ['the triangle solver recovers the true triangle in every case', async (R, f) => {
+      let seed = 3; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }, H = window.__hw, close = (x, y) => Math.abs(x - y) <= 1e-6 * Math.max(1, Math.abs(x), Math.abs(y));
+      const same = (s, t) => ['a', 'b', 'c', 'A', 'B', 'C'].every(k => close(s[k], t[k])); let bad = [], n = 0;
+      for (let i = 0; i < 300; i++) {
+        const a = 1 + rnd() * 20, b = 1 + rnd() * 20, C = 0.2 + rnd() * 2.7, c = Math.sqrt(a * a + b * b - 2 * a * b * Math.cos(C)), A = Math.acos((b * b + c * c - a * a) / (2 * b * c)), B = Math.PI - A - C, T0 = { a, b, c, A, B, C };
+        for (const [nm, k] of Object.entries({ SSS: { a, b, c }, SAS: { a, b, C }, ASA: { A, B, c }, AAS: { A, B, a }, SSA: { a, b, A }, SSA2: { b, c, B } })) { n++; const r = H.solveTriangle(k); if (!r.sols.some(sol => same(sol, T0))) bad.push(nm + ' ' + JSON.stringify(k).slice(0, 60)); }
+      }
+      f.T('all ' + n + ' solved triangles include the true one', bad.length === 0, bad.slice(0, 3).join(' | '));
+      f.T('3, 4, 8 is rejected by the triangle inequality', /No triangle/.test(H.solveTriangle({ a: 3, b: 4, c: 8 }).error));
+      f.T('angles of 100° and 90° are rejected', /180°/.test(H.solveTriangle({ A: Math.PI * 100 / 180, B: Math.PI / 2, a: 3 }).error));
+      f.T('a = 7, b = 10, A = 30° has two triangles (the ambiguous case)', H.solveTriangle({ a: 7 * 25.4 / 25.4, b: 10, A: Math.PI / 6 }).sols.length === 2);
+      f.T('a = 3, b = 10, A = 30° has none', H.solveTriangle({ a: 3, b: 10, A: Math.PI / 6 }).sols.length === 0);
+    }],
+    ['the Solve box takes typed values and draws the answer', async (R, f) => {
+      await resetApp(); const sec = $('.sec-hw'); if (sec.classList.contains('collapsed')) { toggleSection(sec); await settle(600); }
+      const box = k => $('#hwIn input[data-k="' + k + '"]'), set = async (k, v) => { await typeInto(box(k), v, () => 0.1); };
+      click('hwClear'); await set('a', '5'); await set('b', '4'); await set('c', '3'); click('hwSolve'); await settle(400);
+      f.T('SSS 5-4-3 gives one triangle', $$('#hwOut [data-draw]').length === 1, $('#hwOut').textContent.slice(0, 80));
+      $('#hwOut [data-draw]').click(); await settle(900);
+      f.T('drawing it puts a 5-4-3 triangle on the canvas', sidesOf(S.P).every((v, i) => near(v / LEN[S.lenUnit].f, [5, 4, 3][i], 1e-6)), JSON.stringify(sidesOf(S.P)));
+      click('hwClear'); await set('a', '7'); await set('b', '10'); await set('A', '30'); click('hwSolve'); await settle(400);
+      f.T('SSA 7, 10, 30° offers two triangles to draw', $$('#hwOut [data-draw]').length === 2, $$('#hwOut [data-draw]').length);
+      click('hwClear'); await set('a', '3'); await set('b', '4'); await set('c', '8'); click('hwSolve'); await settle(300);
+      f.T('3, 4, 8 says why it cannot be drawn', /No triangle/.test($('#hwOut').textContent) && $$('#hwOut [data-draw]').length === 0);
+      click('hwClear'); await set('a', 'abc'); click('hwSolve'); await settle(300);
+      f.T('a box that cannot be read is flagged, not guessed', $('#hwIn input[data-k="a"]').classList.contains('bad'));
+      click('hwUse'); click('hwSolve'); await settle(300);
+      f.T('"Use this triangle" fills six values and Solve says to enter three', /three|exactly/i.test($('#hwOut').textContent), $('#hwOut').textContent.slice(0, 80));
+      click('hwClear');
+    }],
+    ['practice problems are answerable, checked and marked', async (R, f) => {
+      await resetApp(); const H = window.__hw; let bad = [], n = 0;
+      for (const [k, g] of Object.entries(H.GEN)) for (let i = 0; i < 80; i++) { const q = g(); n++; const typed = q.choices ? q.answer : String(q.answer); if (!H.check(q, typed).ok) bad.push(k + ' rejects its own answer'); if (!q.steps.length || q.steps.some(t => BAD_TEXT.test(t))) bad.push(k + ' has bad steps'); if (BAD_TEXT.test(q.text)) bad.push(k + ' has bad text'); }
+      f.T('all ' + n + ' generated problems accept their own answer and read cleanly', bad.length === 0, [...new Set(bad)].slice(0, 3).join(' | '));
+      click('hwPrac'); await settle(1000);
+      f.T('Practice opens a problem and hides the answers', !!$('#hwPracBox .hw-q') && document.body.classList.contains('hw-hide'));
+      const hiddenPills = pills.filter(p => getComputedStyle(p.el).visibility === 'hidden').length; f.T('only the given values stay on the canvas', hiddenPills > 0 && hiddenPills < 6, hiddenPills + ' hidden');
+      let q = H.PR.cur; if (q.choices) $('#hwPracBox [data-choice="' + q.answer + '"]').click(); else { await typeInto($('#hwAns'), String(q.answer), () => 0.6); click('hwCheck'); } await settle(300);
+      f.T('the right answer is marked correct', /Correct/.test(($('#hwFb') || {}).textContent || ''), ($('#hwFb') || {}).textContent);
+      f.T('the answers come back after checking', !document.body.classList.contains('hw-hide'));
+      click('hwNext'); await settle(500); q = H.PR.cur; if (q.choices) { const wrong = q.choices.find(c => c !== q.answer); $('#hwPracBox [data-choice="' + wrong + '"]').click(); } else { await typeInto($('#hwAns'), '-12345', () => 0.6); click('hwCheck'); } await settle(300);
+      f.T('a wrong answer shows the solution', /Not quite/.test(($('#hwFb') || {}).textContent || '') && $$('#hwFb ol li').length > 0, ($('#hwFb') || {}).textContent);
+      click('hwPrac'); await settle(500); f.T('closing Practice shows everything again', !document.body.classList.contains('hw-hide') && pills.every(p => getComputedStyle(p.el).visibility !== 'hidden'));
+      click('hwExam'); await settle(500);
+      for (let i = 0; i < 10; i++) { q = H.PR.cur; if (!q) break; if (q.choices) $('#hwPracBox [data-choice="' + q.answer + '"]').click(); else { await typeInto($('#hwAns'), String(q.answer), () => 0.6); click('hwCheck'); } await settle(200); }
+      f.T('an exam of ten marks itself at the end', /Exam finished: 10 \/ 10/.test($('#hwPracBox').textContent), $('#hwPracBox').textContent.slice(0, 60));
+      click('hwEnd'); await settle(300);
     }],
     ['the drawing is never blank', async (R, f) => { await resetApp(); const r = rng(77); for (let i = 0; i < 8; i++) { await pick(r, discover().filter(c => c.kind === 'button' && !/btnView|navtoggle/.test(c.id))).fire(r); await settle(900); } f.T('the canvas has ink after eight random buttons', canvasHasInk()); }]
   ];
