@@ -195,7 +195,7 @@
   }
   const modalOpen = () => modalRoot.classList.contains('show');
   const stateKey = () => {
-    try { return JSON.stringify([S.P.map(p => [+p.x.toFixed(9), +p.y.toFixed(9)]), S.lock, S.units, S.lenUnit, S.angUnit, [S.view.cx, S.view.cy, S.view.z].map(v => +v.toPrecision(9)), S.grid, S.prec, S.exact, S.theme, S.viewOnly, [...S.selected], hashStr(statsEl.textContent), modalOpen(), hashStr(($('#mBody') || {}).textContent || ''), sidebarOpen, !!openMenuEl, ($('#searchBox') || {}).value, document.body.className, $$('.sec.collapsed').length, $('#settingsModal') ? 1 : 0]); }
+    try { return JSON.stringify([S.P.map(p => [+p.x.toFixed(9), +p.y.toFixed(9)]), S.lock, S.units, S.lenUnit, S.angUnit, [S.view.cx, S.view.cy, S.view.z].map(v => +v.toPrecision(9)), S.grid, S.prec, S.exact, S.theme, S.viewOnly, [...S.selected], hashStr(statsEl.textContent), modalOpen(), hashStr(($('#mBody') || {}).textContent || ''), sidebarOpen, !!openMenuEl, ($('#searchBox') || {}).value, document.body.className, $$('.sec.collapsed').length, $('#settingsModal') ? 1 : 0, JSON.stringify(S.pivot), !!document.querySelector('.shop-cl:not([hidden])'), document.documentElement.className, ($('#xform') || {}).className, S.highlight ? 1 : 0, Hist.i]); }
     catch (e) { return 'err:' + e.message; }
   };
 
@@ -717,7 +717,7 @@
       mem.repros = mem.repros.slice(0, 40);
       mem.flows = [...new Set(R.flows.filter(f => f.passed < f.checks).map(f => f.name).concat(P.flowsRerun.filter(f => f.still).map(f => f.name)))].slice(0, 10);
       saveMem(mem);
-      P.suspects = [...sus.values()].filter(x => x.uses || x.mem).map(x => ({ id: x.id, label: x.label, kind: x.kind, score: Math.round((x.mem + x.found) * 100) / 100, hits: x.hits, uses: x.uses, remembered: x.mem > 0, values: Object.entries(x.bad).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]) })).sort((a, b) => b.score - a.score).slice(0, 12);
+      P.suspects = [...sus.values()].filter(x => x.uses || x.mem).map(x => ({ id: x.id, label: x.label, kind: x.kind, score: Math.round((x.mem + x.found) * 100) / 100, prior: x.prior, hits: x.hits, uses: x.uses, remembered: x.mem > 0, values: Object.entries(x.bad).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]) })).sort((a, b) => (b.score - a.score) || (b.prior - a.prior)).slice(0, 12); P.measured = P.suspects.some(x => x.score > 0);
       const aimedN = P.aimed, exploreN = P.explore; P.share = aimedN + exploreN ? Math.round(aimedN / (aimedN + exploreN + scoutN) * 100) : 0;
       P.share = Math.round((R.scenarios - scoutN - P.explore) / Math.max(1, R.scenarios) * 100);
     }
@@ -933,7 +933,7 @@
   function text(R) {
     const L = ['TRIANGLE THING DEV REPORT', R.verdict.toUpperCase(), 'mode ' + R.mode + ' · seed ' + R.seed + ' · ' + R.controls + ' controls · ' + R.scenarios + ' scenarios · ' + R.steps + ' steps · ' + Math.round((R.finished - R.started) / 1000) + ' s', 'Smoothness: ' + R.overall.grade.word + ' (avg ' + R.overall.avg + ' ms, p95 ' + R.overall.p95 + ' ms, worst ' + R.overall.max + ' ms, ' + R.overall.over100 + ' frames over 100 ms)', 'Redraw: p50 ' + R.draw.p50 + ' ms, p95 ' + R.draw.p95 + ' ms', ''];
     if (R.problems) { const P = R.problems; L.push('AIMED AT PROBLEMS: ' + P.share + '% of ' + R.scenarios + ' scenarios on suspects (' + Object.entries(P.types).map(([k, v]) => k + ' ' + v).join(', ') + '); memory at start: ' + P.memory.suspects + ' suspects, ' + P.memory.repros + ' old problems');
-      L.push('Suspects:'); P.suspects.forEach(x => L.push('- ' + x.label + ' score ' + x.score + ', ' + x.hits + ' problem(s)' + (x.values.length ? ', values ' + x.values.map(v => JSON.stringify(String(v).slice(0, 18))).join(' ') : '')));
+      L.push(P.measured ? 'Suspects:' : 'Suspects (nothing went wrong, so this is the tester\'s starting guess by kind of control, not a measured ranking):'); P.suspects.forEach(x => L.push('- ' + x.label + (P.measured ? ' score ' + x.score : ' likelihood about ' + x.prior + ' of 5') + ', ' + x.hits + ' problem(s)' + (x.values.length ? ', values ' + x.values.map(v => JSON.stringify(String(v).slice(0, 18))).join(' ') : '')));
       if (P.replay.length) { L.push('Old problems replayed:'); P.replay.forEach(x => L.push('- ' + (x.still ? 'STILL FAILING' : 'fixed') + ' [' + x.type + '] ' + x.msg.slice(0, 110))); }
       if (P.minimal.length) { L.push('Shortest recipes:'); P.minimal.forEach(x => L.push('- ' + x.msg.slice(0, 110) + ' (' + x.from + ' -> ' + x.to + ' steps): ' + x.steps.join(' > '))); }
       L.push(''); }
@@ -954,7 +954,8 @@
     const types = Object.entries(P.types).map(([k, v]) => k + ' ' + v).join(', ');
     return `<h4>Aimed at problems</h4>
       <div class="note">${share}% of the ${R.scenarios} scenarios went to suspects (${esc(types)}); the rest scouted or explored. Memory at the start: ${P.memory.suspects} suspect controls, ${P.memory.repros} old problems.</div>
-      <table><tr><th>suspect</th><th>score</th><th>problems</th><th>worst values</th></tr>${P.suspects.map(x => `<tr><td>${esc(x.label)}${x.remembered ? ' <span class="note">(remembered)</span>' : ''}</td><td>${x.score}</td><td class="${x.hits ? 'bad' : ''}">${x.hits}</td><td>${esc(x.values.map(v => JSON.stringify(String(v).slice(0, 18))).join(' '))}</td></tr>`).join('') || '<tr><td colspan="4" class="ok">Nothing looked suspicious.</td></tr>'}</table>
+      ${P.measured ? '' : '<div class="note">Nothing went wrong, so there is no measured ranking. These are the controls the tester thinks are most likely to break, a starting guess by kind of control (typed boxes, canvas gestures and locks first).</div>'}
+      <table><tr><th>suspect</th><th>${P.measured ? 'score' : 'likelihood (guess)'}</th><th>problems</th><th>worst values</th></tr>${P.suspects.map(x => `<tr><td>${esc(x.label)}${x.remembered ? ' <span class="note">(remembered)</span>' : ''}</td><td>${P.measured ? x.score : '≈ ' + x.prior + ' / 5'}</td><td class="${x.hits ? 'bad' : ''}">${x.hits}</td><td>${esc(x.values.map(v => JSON.stringify(String(v).slice(0, 18))).join(' '))}</td></tr>`).join('') || '<tr><td colspan="4" class="ok">Nothing looked suspicious.</td></tr>'}</table>
       ${P.replay.length ? `<h4>Old problems, replayed</h4>${P.replay.map(x => `<div class="${x.still ? 'bad' : 'ok'}">${x.still ? 'still failing' : 'fixed'} · [${esc(x.type)}] ${esc(x.msg.slice(0, 110))}</div>`).join('')}` : ''}
       ${P.minimal.length ? `<h4>Shortest recipes</h4>${P.minimal.map(x => `<div class="iss"><b>${esc(x.msg.slice(0, 120))}</b><small>${x.from} steps shrunk to ${x.to}: ${esc(x.steps.join(' → '))}</small></div>`).join('')}` : ''}`;
   }
