@@ -143,7 +143,7 @@ function calcAudit(D) {
           if (Math.abs(ex.cos) < 1e-7 && (fn === 'tan' || fn === 'sec') || !Number.isFinite(want)) continue;
           if (Math.abs(want) > 1e8) continue;
         }
-        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: rightRule ? Math.PI / 180 * Math.pow(10, -S.prec) + 1e-8 : Math.min(1e-2, 1e-9 * cond) });
+        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: rightRule ? (Math.PI / 180 * Math.pow(10, -S.prec) + 1e-8) * (fn === 'sin' || fn === 'cos' ? 1 : (1 + want * want) / Math.max(1, Math.abs(want))) : Math.min(1e-2, 1e-9 * cond) });
       }
       ident('Trigonometry', 'sin² + cos² = 1 at ' + names[i], 1, ex.sin ** 2 + ex.cos ** 2, { tol: 1e-12 });
       ident('Trigonometry', 'Law of Sines ' + low[i] + ' / sin ' + names[i] + ' = 2R', 2 * D.R, sides[i] / Math.sin(D.ang[i]), { tol: 1e-8 * cond });
