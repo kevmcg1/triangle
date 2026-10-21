@@ -412,7 +412,7 @@ body.view-only #exitViewOnly{
 #cornerHints .h{pointer-events:auto;cursor:default}
 [data-tip]::after{
   content:attr(data-tip);position:absolute;z-index:80;pointer-events:none;
-  top:calc(100% + 7px);left:50%;transform:translate(-50%,-3px);
+  top:calc(100% + 7px);left:50%;transform:translate(calc(-50% + var(--tip-dx,0px)),-3px);
   padding:5px 8px;border-radius:6px;white-space:nowrap;
   background:var(--panel);color:var(--txt);border:1px solid var(--line-2);
   box-shadow:0 6px 20px rgba(0,0,0,.35);
@@ -422,21 +422,24 @@ body.view-only #exitViewOnly{
   transition:opacity .12s var(--ease),transform .12s var(--ease),visibility 0s linear .12s;
 }
 [data-tip]:hover::after{
-  opacity:1;visibility:visible;transform:translate(-50%,0);
+  opacity:1;visibility:visible;transform:translate(calc(-50% + var(--tip-dx,0px)),0);
   transition:opacity .15s var(--ease) .35s,transform .15s var(--ease) .35s,visibility 0s linear .35s;
 }
 /* never while pressed — a tip popping up mid-click just gets in the way */
 [data-tip]:active::after{opacity:0;visibility:hidden;transition:none}
-[data-tip-pos="bottom-end"]::after{left:auto;right:0;transform:translate(0,-3px)}
-[data-tip-pos="bottom-end"]:hover::after{transform:translate(0,0)}
-[data-tip-pos="bottom-start"]::after{left:0;transform:translate(0,-3px)}
-[data-tip-pos="bottom-start"]:hover::after{transform:translate(0,0)}
-[data-tip-pos="top"]::after{top:auto;bottom:calc(100% + 7px);transform:translate(-50%,3px)}
-[data-tip-pos="top"]:hover::after{transform:translate(-50%,0)}
-[data-tip-pos="top-end"]::after{top:auto;bottom:calc(100% + 7px);left:auto;right:0;transform:translate(0,3px)}
-[data-tip-pos="top-end"]:hover::after{transform:translate(0,0)}
-[data-tip-pos="left"]::after{top:50%;left:auto;right:calc(100% + 7px);transform:translate(3px,-50%)}
-[data-tip-pos="left"]:hover::after{transform:translate(0,-50%)}
+[data-tip-pos="bottom-end"]::after{left:auto;right:0;transform:translate(var(--tip-dx,0px),-3px)}
+[data-tip-pos="bottom-end"]:hover::after{transform:translate(var(--tip-dx,0px),0)}
+[data-tip-pos="bottom-start"]::after{left:0;transform:translate(var(--tip-dx,0px),-3px)}
+[data-tip-pos="bottom-start"]:hover::after{transform:translate(var(--tip-dx,0px),0)}
+[data-tip-pos="top"]::after{top:auto;bottom:calc(100% + 7px);transform:translate(calc(-50% + var(--tip-dx,0px)),3px)}
+[data-tip-pos="top"]:hover::after{transform:translate(calc(-50% + var(--tip-dx,0px)),0)}
+[data-tip-pos="top-end"]::after{top:auto;bottom:calc(100% + 7px);left:auto;right:0;transform:translate(var(--tip-dx,0px),3px)}
+[data-tip-pos="top-end"]:hover::after{transform:translate(var(--tip-dx,0px),0)}
+[data-tip-pos="left"]::after{top:50%;left:auto;right:calc(100% + 7px);transform:translate(3px,calc(-50% + var(--tip-dy,0px)))}
+[data-tip-pos="left"]:hover::after{transform:translate(0,calc(-50% + var(--tip-dy,0px)))}
+/* tipfit.js nudges a tip back on screen (--tip-dx / --tip-dy) or flips it to the other side when it would run off an edge */
+[data-tip-flip="up"]::after{top:auto!important;bottom:calc(100% + 7px)!important}
+[data-tip-flip="down"]::after{bottom:auto!important;top:calc(100% + 7px)!important}
 /* the tip's own z-index only counts inside its element's stacking context
    (.tbtn's opacity:.95 makes one per button), so the hovered element
    itself has to rise above its siblings — or a wrapped second toolbar
@@ -4409,6 +4412,7 @@ if (window.__mobile) {
 }
 </script>
 <script src="homework.js?v=1"></script>
+<script src="tipfit.js?v=1"></script>
 <script src="version.js?v=4"></script>
 <script src="changelog.js?v=1"></script>
 <script src="devmode.js"></script>
