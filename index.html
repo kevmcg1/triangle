@@ -667,6 +667,10 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
 @media (max-width:640px){.foot{padding:8px 10px}}
 :root[data-theme="light"] .site-head,:root[data-theme="light"] .foot{--sh-bar:#ffffff;--sh-line:#d9dce2;--sh-ink:#1a1c21;--sh-muted:#5f6670;--sh-accent:#1f5fd1;--sh-hover:rgba(0,0,0,.05)}
 </style>
+<script>/* no right-click, view-source (Ctrl+U) or dev tools (Ctrl+Shift+I) */
+document.addEventListener('contextmenu',function(e){e.preventDefault();});
+document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase();if((e.ctrlKey||e.metaKey)&&(k==='u'||(e.shiftKey&&k==='i')))e.preventDefault();},true);
+</script>
 </head>
 <body>
 <header class="site-head" role="banner"><a href="https://kevmcg1.github.io/portfolio" target="_top" aria-label="Back to the portfolio at kevmcg1.github.io">KEVMCG1.GITHUB.IO</a></header>
