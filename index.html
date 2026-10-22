@@ -2130,6 +2130,7 @@ const TRIANGLE_EDGE_CLEARANCE = 14;
    itself runs in well under a tenth of a millisecond). Batching every
    write, then every read, then every write again costs at most ONE
    forced layout for the whole panel instead of six-plus. */
+const PILL_BLOCKERS = ["grpHist", "xform", "zoomtag", "cornerHints", "navtoggle"];
 function layoutPills(D) {
   const p = S.P.map(toScreen);
   const gx = (p[0].x + p[1].x + p[2].x) / 3, gy = (p[0].y + p[1].y + p[2].y) / 3;
@@ -2153,6 +2154,13 @@ function layoutPills(D) {
 
   /* pass 2: reads only */
   const metrics = pills.map(rec => ({ w: rec.el.offsetWidth || 60, h: rec.el.offsetHeight || 30 }));
+  /* the controls floating over the canvas (undo bar, Transform panel, zoom tag, ...) in canvas coordinates: a label must not hide under one */
+  const cvr = cv.getBoundingClientRect(), blockers = [];
+  for (const id of PILL_BLOCKERS) {
+    const el = document.getElementById(id); if (!el || !el.offsetParent) continue;
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    blockers.push({ l: r.left - cvr.left, t: r.top - cvr.top, r: r.right - cvr.left, b: r.bottom - cvr.top });
+  }
 
   /* pass 3: writes only, using the metrics already captured above */
   pills.forEach((rec, idx) => {
@@ -2223,6 +2231,8 @@ function layoutPills(D) {
   /* pass 4: labels that would sit on top of each other are pushed apart, and each one that had to move gets a leader arrow to the
      vertex or side it describes, so it is still clear which label belongs to what */
   const GAP = 6, crowded = new Set();
+  /* separating two labels must not push one back off the screen: the same clamp as pass 3, after every move */
+  const keepOn = P => { if (W > 2 * P.hw + 12) P.x = clamp(P.x, P.hw + 6, W - P.hw - 6); if (HH > 2 * P.hh + 12) P.y = clamp(P.y, P.hh + 6, HH - P.hh - 6); };
   for (let it = 0; it < 40; it++) {
     let moved = false;
     for (let m = 0; m < pills.length; m++) for (let n = m + 1; n < pills.length; n++) {
@@ -2231,8 +2241,22 @@ function layoutPills(D) {
       if (ox <= 0 || oy <= 0) continue;
       crowded.add(m); crowded.add(n); moved = true;
       /* separate along the axis with the least overlap */
-      if (ox < oy) { const d = (A.x === B.x ? (m < n ? -1 : 1) : Math.sign(A.x - B.x)) * ox / 2; A.x += d; B.x -= d; }
+      const dx = (A.x === B.x ? (m < n ? -1 : 1) : Math.sign(A.x - B.x)) * ox / 2;
+      /* sideways is only an option while neither label would be driven into the screen edge: otherwise they stack instead */
+      const wall = P => W > 2 * P.hw + 12 && (P.x < P.hw + 6 || P.x > W - P.hw - 6);
+      if (ox < oy && !wall({ hw: A.hw, x: A.x + dx }) && !wall({ hw: B.hw, x: B.x - dx })) { A.x += dx; B.x -= dx; }
       else { const d = (A.y === B.y ? (m < n ? -1 : 1) : Math.sign(A.y - B.y)) * oy / 2; A.y += d; B.y -= d; }
+      keepOn(A); keepOn(B);
+    }
+    /* then out from under any floating control: to the nearest side of it that still fits on screen */
+    for (let m = 0; m < pills.length; m++) for (const o of blockers) {
+      const P = pills[m].pos;
+      if (P.x + P.hw <= o.l || P.x - P.hw >= o.r || P.y + P.hh <= o.t || P.y - P.hh >= o.b) continue;
+      const cand = [{ x: o.l - P.hw - GAP, y: P.y }, { x: o.r + P.hw + GAP, y: P.y }, { x: P.x, y: o.t - P.hh - GAP }, { x: P.x, y: o.b + P.hh + GAP }]
+        .filter(c => c.x - P.hw >= 0 && c.x + P.hw <= W && c.y - P.hh >= 0 && c.y + P.hh <= HH)
+        .map(c => ({ c, hit: pills.reduce((k, q, j) => { const Q = q.pos; return k + (j !== m && Math.abs(c.x - Q.x) < P.hw + Q.hw + GAP && Math.abs(c.y - Q.y) < P.hh + Q.hh + GAP ? 1 : 0); }, 0) }))
+        .sort((u, v) => u.hit - v.hit || Math.hypot(u.c.x - P.x, u.c.y - P.y) - Math.hypot(v.c.x - P.x, v.c.y - P.y)).map(u => u.c);
+      if (cand.length) { P.x = cand[0].x; P.y = cand[0].y; crowded.add(m); moved = true; }
     }
     if (!moved) break;
   }
