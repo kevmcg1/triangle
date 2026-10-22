@@ -144,8 +144,10 @@
     },
     trig() {
       const Bd = ri(20, 70), a = ri(8, 30), B = rad(Bd), b = a * Math.sin(B), c = a * Math.cos(B), kind = pick(['opp', 'adj', 'angle']);
-      if (kind === 'angle') return { topic: 'right', tri: [a, b, c], givens: { sides: [0, 1], angles: [0] }, text: 'In a right triangle (right angle at A) the hypotenuse is a = ' + a + ' ' + sym() + ' and the side opposite B is b = ' + fmtN(b) + ' ' + sym() + '. Find angle B in degrees.', unit: 'deg', answer: Bd, tol: 0.4,
-        steps: ['SOH: sin B = opposite ÷ hypotenuse = b ÷ a', 'sin B = ' + fmtN(b, 4) + ' ÷ ' + a + ' = ' + fmtN(b / a, 4), 'B = sin⁻¹(' + fmtN(b / a, 4) + ') = ' + Bd + '°'] };
+      /* the problem prints b rounded, so the working and the answer must come from that printed value, not the unrounded one */
+      const bShown = +fmtN(b), Bcalc = deg(Math.asin(bShown / a));
+      if (kind === 'angle') return { topic: 'right', tri: [a, b, c], givens: { sides: [0, 1], angles: [0] }, text: 'In a right triangle (right angle at A) the hypotenuse is a = ' + a + ' ' + sym() + ' and the side opposite B is b = ' + fmtN(b) + ' ' + sym() + '. Find angle B in degrees.', unit: 'deg', answer: Bcalc, tol: 0.4,
+        steps: ['SOH: sin B = opposite ÷ hypotenuse = b ÷ a', 'sin B = ' + fmtN(bShown, 4) + ' ÷ ' + a + ' = ' + fmtN(bShown / a, 4), 'B = sin⁻¹(' + fmtN(bShown / a, 4) + ') = ' + fmtN(Bcalc, 2) + '°'] };
       const askOpp = kind === 'opp';
       return { topic: 'right', tri: [a, b, c], givens: { sides: [0], angles: [0, 1] }, text: 'In a right triangle (right angle at A) the hypotenuse is a = ' + a + ' ' + sym() + ' and angle B = ' + Bd + '°. Find the side ' + (askOpp ? 'b opposite B' : 'c next to B') + '.', unit: 'len', answer: askOpp ? b : c,
         steps: askOpp ? ['SOH: sin B = opposite ÷ hypotenuse = b ÷ a', 'b = a · sin B = ' + a + ' · sin ' + Bd + '° = ' + a + ' · ' + fmtN(Math.sin(B), 4) + ' = ' + fmtN(b, 3) + ' ' + sym()] : ['CAH: cos B = adjacent ÷ hypotenuse = c ÷ a', 'c = a · cos B = ' + a + ' · cos ' + Bd + '° = ' + a + ' · ' + fmtN(Math.cos(B), 4) + ' = ' + fmtN(c, 3) + ' ' + sym()] };
@@ -167,9 +169,12 @@
         steps: ['Law of Cosines: c² = a² + b² − 2ab · cos C', 'cos C = (a² + b² − c²) ÷ (2ab) = (' + (a * a) + ' + ' + (b * b) + ' − ' + (c * c) + ') ÷ (2 · ' + a + ' · ' + b + ') = ' + fmtN((a * a + b * b - c * c) / (2 * a * b), 4), 'C = cos⁻¹(' + fmtN((a * a + b * b - c * c) / (2 * a * b), 4) + ') = ' + fmtN(deg(C), 2) + '°'] };
     },
     ambig() {
-      const Ad_ = ri(25, 65), A = rad(Ad_), b = ri(10, 30), h = b * Math.sin(A), want = pick([0, 1, 2, 2]);
-      let a;
-      if (want === 0) a = +(h * rnd() * 0.85 + 1).toFixed(1); else if (want === 1) a = pick([+(b + ri(1, 5)).toFixed(0), +h.toFixed(6)]); else a = +(h + (b - h) * (0.25 + 0.5 * rnd())).toFixed(1);
+      const want = pick([0, 1, 2, 2]);
+      let Ad_ = ri(25, 65), b = ri(10, 30), A = rad(Ad_), h = b * Math.sin(A), a;
+      /* the "just touches" case needs a printed a that really equals h: only 30° gives a rational sine, so use A = 30°, even b, a = b/2 */
+      const tangent = want === 1 && chance(0.5);
+      if (tangent) { Ad_ = 30; b = 2 * ri(5, 15); A = rad(30); h = b / 2; }
+      if (want === 0) a = +(h * rnd() * 0.85 + 1).toFixed(1); else if (want === 1) a = tangent ? b / 2 : +(b + ri(1, 5)).toFixed(0); else a = +(h + (b - h) * (0.25 + 0.5 * rnd())).toFixed(1);
       a = Math.max(a, 0.5);
       const r = solveTriangle({ a: toIn(a), b: toIn(b), A }); const count = r.sols.length;
       const tri = r.sols[0] ? [inUnit(r.sols[0].a), inUnit(r.sols[0].b), inUnit(r.sols[0].c)] : null;
