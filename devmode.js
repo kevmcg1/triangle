@@ -361,6 +361,7 @@
     try {
       if (PRISTINE && !animsBusy() && pristineKey() === PRISTINE) { await raf(); return; }
       window.__where = 'reset: start';
+      if (window.__hw && window.__hw.PR.on) window.__hw.setPractice(false);   /* a Practice or Exam left open by an earlier step would make the next click on Practice close it */
       window.__where = 'reset: menu/modal'; closeMenu(); if (window.__changelog) window.__changelog.close(); if ($('#settingsModal')) closeModal();
       if (modalOpen()) { closeModal(); await settle(900); }
       const sbx = $('#searchBox'); if (sbx && sbx.value) { setNative(sbx, ''); sbx.dispatchEvent(new Event('input', { bubbles: true })); }
