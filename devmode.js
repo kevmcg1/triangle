@@ -7,12 +7,12 @@
 //
 //   one by one      each control on its own, typing fields get a whole list of awkward values (letters, units, negatives, 1e308, NaN ...)
 //   pairs           every control followed by another control (Thorough: a large random share of all pairs)
-//   combinations    every on/off combination of the toggles (grid, theme, units, exact/approx, view only, sidebar, locks...), each one
+//   combinations    every on/off combination of the toggles (grid, units, exact/approx, view only, sidebar, locks...), each one
 //                   a single flip from the last, and after each a handful of other controls on top
 //   random runs     random runs of 3 to 10 controls in a row (the same seed gives the same runs, so a glitch can be replayed)
 //   flows           whole journeys with checks along the way: the default 3-4-5 triangle, rotating 24 times, flipping twice, scaling up
 //                   and back, undo/redo walks, every lock held while every corner is dragged, every typed value, every unit and
-//                   decimal setting, every explanation panel, the search box, view-only, the theme, the settings panel, zooming to
+//                   decimal setting, every explanation panel, the search box, view-only, the settings panel, zooming to
 //                   the extremes, dragging far off screen, 300 clicks in two seconds, 400 key presses, and smooth dragging
 //
 // "Aim at problems" is a fourth mode: it remembers what went wrong in earlier runs (in this browser), scouts for the controls most likely to
@@ -195,7 +195,7 @@
   }
   const modalOpen = () => modalRoot.classList.contains('show');
   const stateKey = () => {
-    try { return JSON.stringify([S.P.map(p => [+p.x.toFixed(9), +p.y.toFixed(9)]), S.lock, S.units, S.lenUnit, S.angUnit, [S.view.cx, S.view.cy, S.view.z].map(v => +v.toPrecision(9)), S.grid, S.prec, S.exact, S.theme, S.viewOnly, [...S.selected], hashStr(statsEl.textContent), modalOpen(), hashStr(($('#mBody') || {}).textContent || ''), sidebarOpen, !!openMenuEl, ($('#searchBox') || {}).value, document.body.className, $$('.sec.collapsed').length, $('#settingsModal') ? 1 : 0, JSON.stringify(S.pivot), !!document.querySelector('.shop-cl:not([hidden])'), document.documentElement.className, ($('#xform') || {}).className, S.highlight ? 1 : 0, Hist.i]); }
+    try { return JSON.stringify([S.P.map(p => [+p.x.toFixed(9), +p.y.toFixed(9)]), S.lock, S.units, S.lenUnit, S.angUnit, [S.view.cx, S.view.cy, S.view.z].map(v => +v.toPrecision(9)), S.grid, S.prec, S.exact, S.viewOnly, [...S.selected], hashStr(statsEl.textContent), modalOpen(), hashStr(($('#mBody') || {}).textContent || ''), sidebarOpen, !!openMenuEl, ($('#searchBox') || {}).value, document.body.className, $$('.sec.collapsed').length, $('#settingsModal') ? 1 : 0, JSON.stringify(S.pivot), !!document.querySelector('.shop-cl:not([hidden])'), document.documentElement.className, ($('#xform') || {}).className, S.highlight ? 1 : 0, Hist.i]); }
     catch (e) { return 'err:' + e.message; }
   };
 
@@ -203,7 +203,7 @@
   /* ------------------------------------------------------------------ live view: what is being tested right now */
   const LIVE = { stage: 'idle', phase: '', phaseNo: 0, phaseTotal: 0, scenario: '', purpose: '', stepNo: 0, stepTotal: 0, ctl: null, value: undefined, diff: null, cats: [], audit: null, ms: 0, fr: null, issuesNow: 0, flow: [], log: [], t0: 0, lastPaint: 0 };
   const stateParts = () => {
-    try { return { 'triangle corners': S.P.map(p => p.x.toFixed(7) + ',' + p.y.toFixed(7)).join(' '), 'locks': JSON.stringify(S.lock), 'units': S.lenUnit + '/' + S.angUnit + JSON.stringify(S.units), 'decimals / exact': S.prec + '/' + S.exact, 'theme': S.theme, 'grid': S.grid, 'view-only': S.viewOnly, 'sidebar open': sidebarOpen, 'explanation panel': modalOpen() + hashStr(($('#mBody') || {}).textContent || ''), 'selection': [...S.selected].join(), 'pivot': JSON.stringify(S.pivot), 'camera': [S.view.cx, S.view.cy, S.view.z].map(v => v.toPrecision(6)).join(), 'sidebar numbers': hashStr(statsEl.textContent), 'search box': ($('#searchBox') || {}).value }; }
+    try { return { 'triangle corners': S.P.map(p => p.x.toFixed(7) + ',' + p.y.toFixed(7)).join(' '), 'locks': JSON.stringify(S.lock), 'units': S.lenUnit + '/' + S.angUnit + JSON.stringify(S.units), 'decimals / exact': S.prec + '/' + S.exact, 'grid': S.grid, 'view-only': S.viewOnly, 'sidebar open': sidebarOpen, 'explanation panel': modalOpen() + hashStr(($('#mBody') || {}).textContent || ''), 'selection': [...S.selected].join(), 'pivot': JSON.stringify(S.pivot), 'camera': [S.view.cx, S.view.cy, S.view.z].map(v => v.toPrecision(6)).join(), 'sidebar numbers': hashStr(statsEl.textContent), 'search box': ($('#searchBox') || {}).value }; }
     catch (e) { return {}; }
   };
   const diffParts = (a, b) => Object.keys(b).filter(k => a && a[k] !== b[k]);
@@ -224,7 +224,7 @@
     if (/^[+-]?[\d.]+\s*[a-z°'"′″]+/i.test(t) || /^\d+'\s*\d/.test(t)) return 'a number with a unit (tests unit parsing and conversion)';
     return 'text that is not a number (must be refused, not crash)';
   }
-  const CATS = [['model', 'corners finite, decimals in range, selection valid'], ['view', 'camera finite and zoom positive'], ['geometry', 'angles sum to 180°, law of cosines, Heron, perimeter, circumcenter'], ['lock', 'every locked side / angle kept its value'], ['display', 'no NaN / undefined / Infinity text, no stray — rows'], ['history', 'undo / redo pointer and buttons agree'], ['layout', 'no sideways scroll, canvas matches its box'], ['calc audit', 'every sidebar number re-derived a second way']];
+  const CATS = [['model', 'corners finite, decimals in range, selection valid'], ['view', 'camera finite and zoom positive'], ['geometry', 'angles sum to 180°, law of cosines, Heron, perimeter, circumcenter'], ['lock', 'every locked side / angle kept its value'], ['display', 'no NaN / undefined / Infinity text, no stray — rows'], ['history', 'undo / redo pointer and buttons agree'], ['layout', 'no sideways scroll, canvas matches its box'], ['calc audit', 'every sidebar number re-derived a second way'], ['mathematician', 'every number is one a triangle can have: domain, classical identities, the same answer after move / turn / mirror / scale / relabel, exact units, and the worked steps add up'], ['user sight', 'seen as a person sees it: text and icon contrast, nothing covered or cut off, the edges and corner handles really painted, colours told apart']];
   function setLive(patch) { Object.assign(LIVE, patch); const t = NOW(); if (t - LIVE.lastPaint > 110) { LIVE.lastPaint = t; liveRender(); } }
   function liveLog(R, row) { LIVE.log.push(Object.assign({ at: Math.round((Date.now() - R.started) / 100) / 10 }, row)); if (LIVE.log.length > 600) LIVE.log.splice(0, 200); }
 
@@ -237,7 +237,7 @@
       if (dev(b) || b.disabled || !visible(b)) return;
       const pill = b.classList.contains('lockbtn') ? pills.findIndex(p => p.lockBtn === b) : -1;
       const id = b.id ? 'btn:#' + b.id : pill >= 0 ? 'lock:' + pills[pill].kind + pills[pill].i : 'btn:' + (b.className || 'x').split(' ')[0] + ':' + (labelOf(b) || i);
-      add(id, 'button', b.id ? '#' + b.id + ' ' + labelOf(b) : (labelOf(b) || id), async () => { b.dispatchEvent(pe('pointerdown', 0, 0)); b.click(); }, { toggle: /^btn:#(btnTheme|btnGrid|btnView|btnLen|btnAng|navtoggle|btnSettings)$/.test(id) || id.startsWith('lock:') });
+      add(id, 'button', b.id ? '#' + b.id + ' ' + labelOf(b) : (labelOf(b) || id), async () => { b.dispatchEvent(pe('pointerdown', 0, 0)); b.click(); }, { toggle: /^btn:#(btnGrid|btnView|btnLen|btnAng|navtoggle|btnSettings)$/.test(id) || id.startsWith('lock:') });
     });
     pills.forEach(p => {
       const nm = p.kind + p.i, V = p.kind === 'side' ? V_SIDE : V_ANGLE;
@@ -306,6 +306,18 @@
         LIVE.audit = { total: au.total, failed: au.failed.length, ms: au.ms, tested: au.tested, degenerate: au.degenerate };
         for (const f of au.failed.slice(0, 6)) bad('calc audit', f.group + ' · ' + f.label + ': should be ' + auditNum(f.expected) + ' but is ' + auditNum(f.actual) + (f.note ? ' (' + f.note + ')' : ''));
       }
+      /* a mathematician's review of every number, and of the worked solution when an explanation is open (dev_math.js) */
+      if (window.__devMath && !S.viewOnly) {
+        const mr = __devMath.review(derive());
+        LIVE.math = { total: mr.total, failed: mr.failed.length, degenerate: mr.degenerate, working: 0 };
+        for (const x of mr.failed.slice(0, 6)) bad('mathematician', x.group + ' · ' + x.label + ': should be ' + auditNum(x.expected) + ' but is ' + auditNum(x.actual) + (x.note ? ' (' + x.note + ')' : ''));
+        if (modalOpen()) { const pr = __devMath.reviewPanel(); LIVE.math.working = pr.total; LIVE.math.total += pr.total; LIVE.math.failed += pr.failed.length; for (const x of pr.failed.slice(0, 4)) bad('mathematician', 'the working does not add up: ' + x.label + ' (' + auditNum(x.expected) + ' against ' + auditNum(x.actual) + ')'); }
+      }
+      /* what a person sees: contrast, covered or cut-off controls, painted edges and handles, colours (dev_sight.js) */
+      if (window.__devSight && !S.viewOnly && !animsBusy()) {
+        const si = __devSight.review(); LIVE.sight = { issues: si.length, errors: si.filter(x => x.sev === 'error').length };
+        for (const x of si.slice(0, 6)) bad(x.type === 'checker' ? 'checker' : 'user sight', x.msg, x.sev);
+      }
       /* locks keep their value */
       const nl = S.lock.side.filter(Boolean).length + S.lock.angle.filter(Boolean).length, sd = sidesOf(S.P);
       for (let i = 0; i < 3; i++) {
@@ -366,7 +378,7 @@
       if (modalOpen()) { closeModal(); await settle(900); }
       const sbx = $('#searchBox'); if (sbx && sbx.value) { setNative(sbx, ''); sbx.dispatchEvent(new Event('input', { bubbles: true })); }
       if (S.viewOnly) { setViewOnly(false); await settle(1500); }
-      window.__where = 'reset: units'; S.lenUnit = 'in'; S.units.side = ['in', 'in', 'in']; S.angUnit = 'deg'; S.units.angle = ['deg', 'deg', 'deg']; S.exact = true; S.theme = 'dark'; customColors.dark = {}; customColors.light = {}; applyCustomColors();
+      window.__where = 'reset: units'; S.lenUnit = 'in'; S.units.side = ['in', 'in', 'in']; S.angUnit = 'deg'; S.units.angle = ['deg', 'deg', 'deg']; S.exact = true; customColors.dark = {}; customColors.light = {}; applyCustomColors();
       window.__where = 'reset: clear+reset'; $('#btnClear').click(); window.__where = 'reset: after clear'; $('#btnReset').click(); window.__where = 'reset: after reset'; S.selected.clear(); setGrid(true); setPrec(4);
       window.__where = 'reset: sidebar'; if (!sidebarOpen && innerWidth >= 900) { setSidebarOpen(true); await settle(900); }
       $$('.sec.collapsed').forEach(s => toggleSection(s));
@@ -462,7 +474,7 @@
     ['search box', async (R, f) => { await resetApp(); const sb = $('#searchBox'); for (const q of V_SEARCH) { setNative(sb, q); sb.dispatchEvent(new Event('input', { bubbles: true })); await settle(); } setNative(sb, ''); sb.dispatchEvent(new Event('input', { bubbles: true })); await settle(); f.T('clearing the search shows every section again', $$('.sec.searchhide').length === 0 && $$('.rowhide').length === 0, $$('.sec.searchhide').length + ' hidden'); }],
     ['sections collapse and expand', async (R, f) => { await resetApp(); const heads = $$('.sec-head'); for (const h of heads) { const sec = h.parentElement, was = sec.classList.contains('collapsed'); h.click(); await sleep(350); f.T('section "' + labelOf(h) + '" toggles', sec.classList.contains('collapsed') !== was); h.click(); await sleep(350); } }],
     ['view only', async (R, f) => { await resetApp(); const P0 = snapP(); click('btnView'); await settle(2000); f.T('view-only is on', S.viewOnly); await drag(toClient(S.P[0]), { x: 500, y: 400 }, { steps: 6 }); f.T('dragging does nothing in view-only', same(S.P, P0, 1e-12)); const ex = $('#exitViewOnly'); f.T('the exit button is shown', ex && visible(ex)); click('exitViewOnly'); await settle(2000); f.T('exit button leaves view-only', !S.viewOnly); key('v'); await settle(2000); f.T('V turns it on', S.viewOnly); key('v'); await settle(2000); f.T('V turns it off', !S.viewOnly); f.T('the sidebar is back', sidebarOpen === (innerWidth >= 900) || sidebarOpen); }],
-    ['theme and settings', async (R, f) => { await resetApp(); const t0 = S.theme; click('btnTheme'); await settle(); f.T('the theme flips', S.theme !== t0); f.T('the canvas still has a drawing in the other theme', canvasHasInk()); click('btnTheme'); await settle(); f.T('and flips back', S.theme === t0); click('btnSettings'); await settle(1200); const inputs = $$('#mBody input[type=color]'); f.T('settings has the six color inputs', inputs.length >= 6, inputs.length); const r = rng(5); for (let i = 0; i < 24; i++) { const c = pick(r, inputs); setNative(c, '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0')); c.dispatchEvent(new Event('input', { bubbles: true })); await raf(); } f.T('colors are applied to the page', document.documentElement.style.getPropertyValue('--bg') !== '' || true); const rb = $('#mResetColors'); if (rb) { rb.click(); await settle(1200); f.T('Reset clears every custom color', COLOR_VARS.every(([v]) => document.documentElement.style.getPropertyValue(v) === ''), document.documentElement.getAttribute('style')); } }],
+    ['the settings panel', async (R, f) => { await resetApp(); click('btnSettings'); await settle(1200); const inputs = $$('#mBody input[type=color]'); f.T('settings has the six color inputs', inputs.length >= 6, inputs.length); const r = rng(5); for (let i = 0; i < 24; i++) { const c = pick(r, inputs); setNative(c, '#' + Math.floor(r() * 0xffffff).toString(16).padStart(6, '0')); c.dispatchEvent(new Event('input', { bubbles: true })); await raf(); } f.T('colors are applied to the page', document.documentElement.style.getPropertyValue('--bg') !== '' || true); const rb = $('#mResetColors'); if (rb) { rb.click(); await settle(1200); f.T('Reset clears every custom color', COLOR_VARS.every(([v]) => document.documentElement.style.getPropertyValue(v) === ''), document.documentElement.getAttribute('style')); } }],
     ['zoom to the extremes', async (R, f) => { await resetApp(); const c = cvRect(), mx = c.left + c.width / 2, my = c.top + c.height / 2; for (let i = 0; i < 80; i++) { wheel(mx, my, -400); await raf(); } await settle(2500); f.T('zoomed far in the view stays finite', Number.isFinite(S.view.z) && S.view.z > 74, S.view.z); f.T('the canvas still has a drawing zoomed in', canvasHasInk() || zoomedInsideTriangle(mx, my)); for (let i = 0; i < 200; i++) { wheel(mx, my, 400); await raf(); } await settle(2500); f.T('zoomed far out the view stays finite', Number.isFinite(S.view.z) && S.view.z > 0, S.view.z); click('btnFit'); await settle(2500); f.T('Fit brings the triangle back on screen', S.P.every(p => { const t = toClient(p), b = cvRect(); return t.x >= b.left - 2 && t.x <= b.right + 2 && t.y >= b.top - 2 && t.y <= b.bottom + 2; }), 'a corner is off screen after Fit'); click('btnCenter'); await settle(2500); f.T('Reset view returns to the home zoom', near(S.view.z, 74, 1e-3), S.view.z); }],
     ['pan, then fit', async (R, f) => { await resetApp(); const r = rng(11); for (let i = 0; i < 10; i++) await drag(inCanvas(r), inCanvas(r), { button: 2, steps: 8 }); await settle(); f.T('panning keeps the view finite', [S.view.cx, S.view.cy].every(Number.isFinite)); key('f'); await settle(2500); f.T('F fits the triangle', S.P.every(p => Number.isFinite(toClient(p).x))); }],
     ['dragging far off screen and onto other corners', async (R, f) => { await resetApp(); const b = cvRect(); for (const to of [{ x: b.left - 4000, y: b.top - 4000 }, { x: b.right + 9000, y: b.bottom + 9000 }, { x: b.left + 1, y: b.top + 1 }, null]) { const t = to || toClient(S.P[1]); await drag(toClient(S.P[0]), t, { steps: 10 }); await settle(800); f.T('after dragging a corner to ' + (to ? Math.round(to.x) + ',' + Math.round(to.y) : 'another corner') + ' the model is finite', S.P.every(p => Number.isFinite(p.x) && Number.isFinite(p.y)), JSON.stringify(S.P)); } click('btnReset'); await settle(1500); f.T('Reset triangle recovers', near(derive().area, 6, 1e-6), derive().area); }],
@@ -577,7 +589,56 @@
       f.T('an exam of ten marks itself at the end', /Exam finished: 10 \/ 10/.test($('#hwPracBox').textContent), $('#hwPracBox').textContent.slice(0, 60));
       click('hwEnd'); await settle(300);
     }],
-    ['the drawing is never blank', async (R, f) => { await resetApp(); const r = rng(77); for (let i = 0; i < 8; i++) { await pick(r, discover().filter(c => c.kind === 'button' && !/btnView|navtoggle/.test(c.id))).fire(r); await settle(900); } f.T('the canvas has ink after eight random buttons', canvasHasInk()); }]
+    ['the drawing is never blank', async (R, f) => { await resetApp(); const r = rng(77); for (let i = 0; i < 8; i++) { await pick(r, discover().filter(c => c.kind === 'button' && !/btnView|navtoggle/.test(c.id))).fire(r); await settle(900); } f.T('the canvas has ink after eight random buttons', canvasHasInk()); }],
+    ['a mathematician reads every calculation', async (R, f) => {
+      await resetApp(); const M = window.__devMath; if (!M) { f.T('the mathematician module is loaded', false); return; }
+      const shapes = { '3-4-5': [[0, 0], [3, 0], [0, 4]], equilateral: [[0, 0], [2, 0], [1, Math.sqrt(3)]], '30-60-90': [[0, 0], [Math.sqrt(3), 0], [0, 1]], obtuse: [[0, 0], [6, 0], [1, 1]], 'acute scalene': [[0, 0], [5, 0], [2, 3]], isosceles: [[0, 0], [4, 0], [2, 5]], 'long and thin': [[0, 0], [100, 0], [50, 1]], tiny: [[0, 0], [1e-3, 0], [4e-4, 6e-4]], 'far from the origin': [[1e4, 1e4], [1e4 + 3, 1e4], [1e4, 1e4 + 4]] };
+      for (const [name, pts] of Object.entries(shapes)) { S.P = pts.map(([x, y]) => ({ x, y })); requestRender(); await settle(120); const r = M.review(derive()); f.T(name + ': ' + r.total + ' things read, all hold' + (r.degenerate ? ' (too thin or extreme for more than the basics)' : ''), r.failed.length === 0, JSON.stringify(r.failed.slice(0, 2).map(x => x.group + ' · ' + x.label + ' ' + x.expected + ' vs ' + x.actual))); }
+      const rr = rng(2026); let n = 0, badR = [];
+      for (let i = 0; i < 80; i++) { S.P = [0, 1, 2].map(() => ({ x: (rr() - .5) * 12, y: (rr() - .5) * 10 })); const r = M.review(derive()); n += r.total; badR.push(...r.failed); }
+      f.T('80 random triangles: ' + n + ' things read, all hold', badR.length === 0, JSON.stringify(badR.slice(0, 2).map(x => x.group + ' · ' + x.label)));
+      const u = M.reviewUnits(); f.T('the unit factors are the exact definitions, and a printed fraction or multiple of π is its value (' + u.total + ' checked)', u.failed.length === 0, JSON.stringify(u.failed.slice(0, 2)));
+      await resetApp();
+      for (const prec of [2, 4, 6]) {
+        setPrec(prec); await settle(120); let steps = 0, badW = [];
+        for (const id of Object.keys(rowMeta)) { openExplain(id); const r = M.reviewPanel(); steps += r.total; badW.push(...r.failed.map(x => id + ': ' + x.label)); }
+        for (const fn of ['sin', 'cos', 'tan', 'csc', 'sec', 'cot']) { openTrigExplain(fn); const r = M.reviewPanel(); steps += r.total; badW.push(...r.failed.map(x => fn + ': ' + x.label)); }
+        closeModal(); await settle(300);
+        f.T('every worked solution adds up at ' + prec + ' decimals (' + steps + ' steps)', badW.length === 0, badW.slice(0, 2).join(' | '));
+      }
+      /* the reviewer is not asleep: a wrong number, and a wrong step, are noticed */
+      const D0 = derive(); f.T('a circumradius that is 1% off is noticed', M.review(Object.assign({}, D0, { R: D0.R * 1.01 })).failed.length > 0);
+      f.T('an inradius larger than half the circumradius is noticed', M.review(Object.assign({}, D0, { r: D0.R })).failed.length > 0);
+      openExplain('area'); const body = $('#mBody'); body.insertAdjacentHTML('beforeend', '<div class="eqn-line"><span class="eqn-content">Area = 6.0000 · 0.5000 = 3.5000</span></div>');
+      f.T('a wrong step in a worked solution is noticed', M.reviewPanel().failed.length > 0);
+      closeModal(); await settle(300);
+    }],
+    ['a user looks at every screen', async (R, f) => {
+      await resetApp(); const Sg = window.__devSight; if (!Sg) { f.T('the sight module is loaded', false); return; }
+      const sec = $('.sec-hw');
+      const screens = [['the sidebar and canvas', async () => {}], ['an explanation', async () => { openExplain('R'); await settle(500); }], ['the trig explanation', async () => { openTrigExplain('tan'); await settle(500); }],
+        ['the Solve & Practice panel', async () => { if (sec && sec.classList.contains('collapsed')) { toggleSection(sec); await settle(500); } }], ['Practice', async () => { click('hwPrac'); await settle(800); }],
+        ['the settings', async () => { $('#btnSettings').click(); await settle(600); }], ['a locked side', async () => { const p = pills.find(q => q.kind === 'side'); if (p && !S.lock.side[p.i]) p.lockBtn.click(); await settle(500); }]];
+      const tidy = async () => { if (window.__hw && __hw.PR.on) __hw.setPractice(false); if ($('#settingsModal')) closeModal(); if (modalOpen()) { closeModal(); await settle(500); } for (let i = 0; i < 3; i++) if (S.lock.side[i]) { const p = pills.find(q => q.kind === 'side' && q.i === i); p.lockBtn.click(); } await settle(300); };
+      const warns = [];
+      for (const theme of ['dark']) {
+        await settle(300); fitView(undefined, 0); await settle(500);
+        for (const [name, go] of screens) { await go(); const iss = Sg.review({ full: true }), err = iss.filter(x => x.sev === 'error'); warns.push(...iss.filter(x => x.sev === 'warn').map(x => theme + ': ' + x.msg)); f.T(theme + ' · ' + name + ' is easy to see', err.length === 0, err.slice(0, 2).map(x => x.msg).join(' | ')); await tidy(); }
+        const rr = rng(77); let off = [];
+        for (let i = 0; i < 12; i++) { S.P = [0, 1, 2].map(() => ({ x: (rr() - .5) * 8, y: (rr() - .5) * 6 })); if (derive().area < .6) continue; fitView(undefined, 0); await settle(350); off.push(...Sg.review({ full: true }).filter(x => x.sev === 'error').map(x => x.msg)); }
+        f.T(theme + ' · twelve triangles, every edge and corner handle stands out from the background', off.length === 0, [...new Set(off)].slice(0, 2).join(' | '));
+      }
+      f.T('the side colours are told apart, by sight and in colour blindness' + (warns.length ? ' (' + [...new Set(warns)].length + ' note(s): ' + [...new Set(warns)].slice(0, 2).join(' | ') + ')' : ''), true);
+      /* the observer is not blind: it notices unreadable text, a covered control and a vanished drawing */
+      await resetApp();
+      const probe = document.createElement('div'); probe.textContent = 'sight probe'; probe.style.cssText = 'position:fixed;left:30px;top:120px;z-index:99999;color:#2a2a2a;background:#2b2b2b;font:14px sans-serif'; document.body.appendChild(probe);
+      f.T('grey text on a nearly identical grey is noticed', Sg.review({ full: true }).some(x => /sight probe/.test(x.msg))); probe.remove();
+      const btn = $('#btnSettings'), br = btn.getBoundingClientRect(), cover = document.createElement('div'); cover.style.cssText = 'position:fixed;z-index:99999;background:#444;left:' + (br.left - 6) + 'px;top:' + (br.top - 6) + 'px;width:' + (br.width + 12) + 'px;height:' + (br.height + 12) + 'px'; document.body.appendChild(cover);
+      f.T('a control hidden under another element is noticed', Sg.review().some(x => /covered/.test(x.msg))); cover.remove();
+      const g = cv.getContext('2d'), bgPx = g.getImageData(2, 2, 1, 1).data; const rn = renderNow; renderNow = () => {}; g.fillStyle = 'rgb(' + bgPx[0] + ',' + bgPx[1] + ',' + bgPx[2] + ')'; g.fillRect(0, 0, cv.width, cv.height);
+      const vanished = Sg.review({ full: true }).some(x => /disappears|not visible/.test(x.msg)); renderNow = rn; renderNow();
+      f.T('a drawing that has vanished into the background is noticed', vanished);
+    }],
   ];
 
   /* ------------------------------------------------------------------ aim at problems */
@@ -616,8 +677,7 @@
     ['a custom pivot far away', async () => { setPivotMode('custom'); const b = toBary({ x: 25, y: -40 }); if (b) { S.pivot.bary = b; requestRender(); } }],
     ['the circumcenter as pivot', async () => { setPivotMode('circum'); }],
     ['an explanation panel open', async () => { const row = $$('.row.clickable', statsEl)[3]; if (row) row.click(); await settle(900); }],
-    ['two corners selected', async () => { S.selected.clear(); S.selected.add(0); S.selected.add(1); requestRender(); }],
-    ['the light theme', async () => { if (S.theme !== 'light') click('btnTheme'); }]
+    ['two corners selected', async () => { S.selected.clear(); S.selected.add(0); S.selected.add(1); requestRender(); }]
   ].map(([label, fn]) => ({ id: 'setup:' + label, kind: 'setup', label: 'start from ' + label, fire: async () => { await fn(); await settle(300); } }));
   const SETUP_MAP = new Map(SETUPS.map(c => [c.id, c]));
 
@@ -794,7 +854,7 @@
   async function run(opts) {
     if (RUN.on) return RUN.report;
     opts = opts || {}; const mode = MODES[opts.mode] ? opts.mode : 'standard', M = MODES[mode], seed = opts.seed === undefined ? (Date.now() & 0xffff) : +opts.seed;
-    BG.start(opts.speed !== undefined ? opts.speed : speedSetting()); RUN.on = true; RUN.stop = false; LIVE.log.length = 0; LIVE.stage = 'starting'; LIVE.cats = []; LIVE.audit = null; LIVE.ctl = null; LIVE.value = undefined; LIVE.diff = null; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
+    BG.start(opts.speed !== undefined ? opts.speed : speedSetting()); RUN.on = true; RUN.stop = false; LIVE.log.length = 0; LIVE.stage = 'starting'; LIVE.cats = []; LIVE.audit = null; LIVE.math = null; LIVE.sight = null; LIVE.ctl = null; LIVE.value = undefined; LIVE.diff = null; ERR.length = 0; FM.ts.length = 0; FM.draw.length = 0; fmStart();
     const R = newReport(mode, seed); R.label = M.label; RUN.report = R; RUN.R = R;
     const r = rng(seed);
     const phase = (n, total) => {
@@ -980,6 +1040,8 @@
       row('Changed', L.diff ? (L.diff.length ? esc(L.diff.join(', ')) : '<span class="warn">nothing changed on screen</span>') : '') +
       row('Response', L.ms ? Math.round(L.ms) + ' ms' + (L.fr ? ' · frames avg ' + L.fr.avg + ' ms, p95 ' + L.fr.p95 + ' ms, worst ' + L.fr.max + ' ms' : '') : '') +
       row('Calc audit', au) +
+      row('Mathematician', L.math ? `${L.math.total} things read${L.math.working ? ' (' + L.math.working + ' worked steps)' : ''} · <b class="${L.math.failed ? 'bad' : 'ok'}">${L.math.failed ? L.math.failed + ' FAILED' : 'all hold'}</b>${L.math.degenerate ? ' · flat or extreme triangle, only the basics apply' : ''}` : '') +
+      row('User sight', L.sight ? `<b class="${L.sight.errors ? 'bad' : L.sight.issues ? 'warn' : 'ok'}">${L.sight.issues ? L.sight.issues + ' thing(s) a person would struggle to see' : 'everything is easy to see'}</b>` : '') +
       row('Checks', chips) +
       row('Flow checks', fl) +
       row('Problems so far', R.issues.length ? `<span class="bad">${R.issues.length}</span>` : '<span class="ok">none</span>') +

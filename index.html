@@ -41,25 +41,15 @@
   --bg:#0b0b0d; --header:#101013; --footer:#101013;
   --panel:#0f0f12; --panel-2:#131317; --pill:#111115;
   --line:#232328; --line-2:#2e2e35;
-  --txt:#f2f2f4; --txt-2:#a0a0aa; --txt-3:#868690;
+  --txt:#f2f2f4; --txt-2:#a0a0aa; --txt-3:#8c8c96;
   --accent:#ffffff; --accent-ink:#0b0b0d;
   /* palette restricted to grayscale + the three primaries (red / green / blue) */
+  --violet:#c9a0ff; --orange:#ffb066;
   --red:#ff5c5c; --red-dim:#ff8a8a; --green:#46d160; --green-dim:#7ee08a; --blue:#4ea1ff; --blue-dim:#7fb8ff;
   --lock:var(--red); --lock-ink:#2a0d0d;
   --ease:cubic-bezier(.32,.72,.28,1);
   --cat-0:rgba(255,92,92,.07); --cat-1:rgba(70,209,96,.07); --cat-2:rgba(78,161,255,.07);
   --cat-3:rgba(160,160,168,.08); --cat-4:rgba(70,209,96,.12); --cat-5:rgba(78,161,255,.12); --cat-6:rgba(160,160,168,.12);
-}
-:root[data-theme="light"]{
-  --bg:#f4f4f6; --header:#ffffff; --footer:#ffffff;
-  --panel:#ffffff; --panel-2:#f0f0f3; --pill:#ffffff;
-  --line:#e4e4ea; --line-2:#d3d3db;
-  --txt:#17171a; --txt-2:#5c5c66; --txt-3:#686872;
-  --accent:#17171a; --accent-ink:#ffffff;
-  --red:#c22b2b; --red-dim:#c42f2f; --green:#158a37; --green-dim:#1b7a35; --blue:#1d4ed8; --blue-dim:#1f5fd1;
-  --lock:var(--red); --lock-ink:#2a0d0d;
-  --cat-0:rgba(194,43,43,.06); --cat-1:rgba(21,138,55,.06); --cat-2:rgba(29,78,216,.06);
-  --cat-3:rgba(110,110,120,.07); --cat-4:rgba(21,138,55,.1); --cat-5:rgba(29,78,216,.1); --cat-6:rgba(110,110,120,.1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
@@ -130,10 +120,6 @@ input,button,select{font-family:inherit}
 .logo-bot{display:block;font-style:italic;text-transform:uppercase;letter-spacing:.2em;text-indent:.2em;color:#6d737c;white-space:nowrap}
 @supports (-webkit-text-stroke:1px black){ .logo-bot{color:transparent;-webkit-text-stroke:.9px #e4e6ea} }
 .logo-brk{display:block;font-size:1.55em;line-height:.78;color:#e8c547;opacity:.85}
-:root[data-theme="light"] .hdr-logo{color:#17171a}
-:root[data-theme="light"] .logo-bot{color:#686872}
-@supports (-webkit-text-stroke:1px black){ :root[data-theme="light"] .logo-bot{color:transparent;-webkit-text-stroke:.9px #17171a} }
-:root[data-theme="light"] .logo-brk{color:#c9a227}
 
 .sec{border-bottom:1px solid var(--line);position:relative}
 .sec::before{content:"";position:absolute;inset:0;background:var(--tint);pointer-events:none;z-index:0}
@@ -162,7 +148,7 @@ input,button,select{font-family:inherit}
 .row.clickable{cursor:pointer}
 .row.clickable:hover{background:rgba(128,128,128,.09)}
 .row.rowhide{display:none}
-.row .k{color:var(--txt-3);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .k{color:var(--txt-3);flex:1;min-width:0;white-space:normal;overflow-wrap:break-word;text-wrap:balance;line-height:1.25}   /* a long label wraps onto a second line instead of being cut off */
 .row .v{color:var(--txt);font-variant-numeric:tabular-nums;font-weight:500;letter-spacing:-.01em;text-align:right;white-space:nowrap}
 .row .v .alt{color:var(--txt-3);font-size:10.5px;font-weight:400;margin-left:3px}
 .row .v.dim{color:var(--txt-2);font-weight:400}
@@ -378,6 +364,7 @@ body.view-only #exitViewOnly{
    text-color difference nobody can actually see. */
 .var-a{color:var(--red-dim)} .var-b{color:var(--green-dim)} .var-c{color:var(--blue-dim)}
 .var-A{color:var(--red)} .var-B{color:var(--green)} .var-C{color:var(--blue)}
+.var-sin{color:var(--violet)} .var-cos{color:var(--orange)}
 .var-R,.var-r,.var-s,.var-area{
   color:var(--txt);border-radius:4px;padding:0 4px;margin:0 1px;
   border:1px solid var(--chip-border);background:var(--chip-bg);
@@ -386,10 +373,6 @@ body.view-only #exitViewOnly{
 .var-r{--chip-bg:rgba(255,255,255,.10);--chip-border:rgba(255,255,255,.28);border-style:dashed}
 .var-s{--chip-bg:transparent;--chip-border:var(--txt-2)}
 .var-area{--chip-bg:rgba(255,255,255,.10);--chip-border:rgba(255,255,255,.28)}
-:root[data-theme="light"] .var-R{--chip-bg:rgba(0,0,0,.09);--chip-border:rgba(0,0,0,.35)}
-:root[data-theme="light"] .var-r{--chip-bg:rgba(0,0,0,.05);--chip-border:rgba(0,0,0,.22)}
-:root[data-theme="light"] .var-s{--chip-bg:transparent;--chip-border:var(--txt-2)}
-:root[data-theme="light"] .var-area{--chip-bg:rgba(0,0,0,.05);--chip-border:rgba(0,0,0,.22)}
 .expandable{cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--txt-3)}
 .expandable:hover{text-decoration-color:var(--txt)}
 .expandable.expanded{text-decoration:none;font-size:.92em}
@@ -461,13 +444,11 @@ body.view-only #exitViewOnly{
 
 /* ---------------- Sidebar, in the Shop Tool Sim style ---------------- */
 :root{--raise:#1b1d20;--raise-2:#24272b;--side-bg:#131416;--side-line:#222428;--side-ink:#ececee;--c0:#5b93ea;--c1:#5fcf8a;--c2:#e8b547;--c3:#a78bfa;--c4:#f472b6;--c5:#fb923c;--c6:#94a3b8;--c7:#38bdf8;--c8:#facc15}
-:root[data-theme="light"]{--raise:#eceef2;--raise-2:#e0e3e9;--side-bg:#fbfbfd;--side-line:#e4e4ea;--side-ink:#17171a;--c0:#2f63c9;--c1:#1e9455;--c2:#b97d0c;--c3:#6d4fd6;--c4:#c2377f;--c5:#d4640f;--c6:#5f6b7c;--c7:#0a7fb8;--c8:#a07a00}
 #sidebar{background:var(--side-bg);border-right:1px solid var(--side-line)}
 .side-logo{flex:0 0 auto;padding:20px 18px 14px;text-align:center}
 .side-logo .logo-mark{margin:0;font-family:'Bebas Neue','Inter',sans-serif;font-size:2.35rem;font-weight:400;letter-spacing:.055em;line-height:.9;color:#e4e6ea;display:flex;align-items:center;justify-content:center;gap:.28em;user-select:none}
-:root[data-theme="light"] .side-logo .logo-mark{color:#17171a}
 .side-logo .logo-bot{letter-spacing:.1em;text-indent:.1em}
-@supports (-webkit-text-stroke:1px black){ .side-logo .logo-bot{-webkit-text-stroke:1.4px #e4e6ea} :root[data-theme="light"] .side-logo .logo-bot{-webkit-text-stroke:1.4px #17171a} }
+@supports (-webkit-text-stroke:1px black){ .side-logo .logo-bot{-webkit-text-stroke:1.4px #e4e6ea} }
 .logo-rule{width:100%;max-width:210px;height:1.5px;margin:12px auto 8px;background:linear-gradient(90deg,transparent 0%,var(--side-ink) 50%,transparent 100%);opacity:.35}
 .logo-foot{display:flex;align-items:center;justify-content:center;min-height:22px}
 .logo-range{color:var(--txt-3);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
@@ -642,7 +623,7 @@ html.mobile .copy-btn{width:32px;height:30px}
 .audit-ok{color:#7bd389}.audit-bad{color:var(--lock)}
 
 /* ---------------- Transform panel (rotation / position / scale / pivot), bottom left ---------------- */
-#xform{position:absolute;left:12px;bottom:46px;z-index:4;width:262px;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:11px;color:var(--txt-2);transition:opacity .3s var(--ease),visibility 0s linear 0s}
+#xform{position:absolute;left:12px;bottom:46px;z-index:4;width:292px;background:var(--panel);border:1px solid var(--line-2);border-radius:9px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:11px;color:var(--txt-2);transition:opacity .3s var(--ease),visibility 0s linear 0s}
 body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s var(--ease),visibility 0s linear .3s}
 #xform .xf-head{display:flex;align-items:center;gap:7px;width:100%;height:28px;padding:0 10px;background:transparent;border:0;color:var(--txt-2);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;cursor:pointer}
 #xform .xf-head:hover{color:var(--txt)}
@@ -653,7 +634,7 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
 .xf-row{display:flex;align-items:center;gap:5px}
 .xf-row[hidden]{display:none}
 .xf-row .xl{flex:0 0 54px;font-size:10px;color:var(--txt-3)}
-.xf-row input{flex:1;min-width:0;width:0;height:24px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;color:var(--txt);font:500 11px 'Inter',sans-serif;padding:0 6px;outline:0;font-variant-numeric:tabular-nums}
+.xf-row input{flex:1;min-width:0;width:0;height:24px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:5px;color:var(--txt);font:500 10.5px 'Inter',sans-serif;padding:0 3px 0 4px;outline:0;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .xf-row input:focus{border-color:var(--txt-3)}
 .xf-row input.bad{border-color:var(--lock)}
 .xf-row .xs{font-size:9.5px;color:var(--txt-3)}
@@ -671,7 +652,6 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
 .foot a{color:var(--sh-ink);text-decoration:underline;text-underline-offset:2px;border-bottom:1px solid transparent}
 .foot a:hover,.foot a:focus-visible{color:var(--sh-accent);border-bottom-color:currentColor;outline:none}
 @media (max-width:640px){.foot{padding:8px 10px}}
-:root[data-theme="light"] .site-head,:root[data-theme="light"] .foot{--sh-bar:#ffffff;--sh-line:#d9dce2;--sh-ink:#1a1c21;--sh-muted:#5f6670;--sh-accent:#1f5fd1;--sh-hover:rgba(0,0,0,.05)}
 </style>
 </head>
 <body>
@@ -684,7 +664,6 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
     <i class="fa-solid fa-magnifying-glass"></i>
     <input id="searchBox" type="text" placeholder="Search values or terms" autocomplete="off" spellcheck="false">
   </div>
-  <button class="iconbtn" id="btnTheme" data-tip-pos="bottom-end" data-tip="Toggle light / dark theme" aria-label="Toggle light / dark theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
   <button class="iconbtn" id="btnSettings" data-tip-pos="bottom-end" data-tip="Appearance settings" aria-label="Appearance settings"><i class="fa-solid fa-gear"></i></button>
 </header>
 
@@ -830,7 +809,14 @@ function fmt(v, d) {
 const trim = v => String(+v.toPrecision(6));
 /* every displayed answer/derivation number: fixed at the Decimals setting
    (4 by default), so "3" reads "3.0000" and values line up column-wise */
-const dp = v => fmt(v, S.prec);
+const dpR = v => fmt(v, S.prec);   /* always rounded to the Decimals setting */
+/* While an explanation is being written (WORK), every number goes in as a token that carries its full value; settleWorking() then
+   shows it at full precision in every step of the working and rounds it to the Decimals setting only in the final answer. */
+let WORK = false;
+const WTOK = (v, text) => "\uE000" + v.toPrecision(17) + "\uE001" + text + "\uE002";
+const dp = v => (WORK && Number.isFinite(v) ? WTOK(v, fmt(v, S.prec)) : fmt(v, S.prec));
+/* a unitless value (a sine, a ratio) in the working: same idea, with trigSafe's special cases ("undefined", "—") kept */
+const dpt = v => (WORK && Number.isFinite(v) && Math.abs(v) < 1e7 ? WTOK(v, trigSafe(v, true)) : trigSafe(v, true));
 
 /* "Exact" formatting: full precision, but trailing zeros are trimmed —
    a value that terminates cleanly (like the number 5) reads as "5.0",
@@ -1204,7 +1190,6 @@ const S = {
   view: { cx: 0, cy: 0, z: 74 },
   grid: true, gridAnim: 1, gridAnimT: null,
   prec: 4, exact: true,
-  theme: "dark",
   selected: new Set(),
   viewOnly: false, viewFade: 0, /* viewFade: 0 = full UI drawing, 1 = view-only's plain outline */
   hover: null, drag: null,
@@ -1316,12 +1301,9 @@ function derive() {
   const maxA = Math.max(A, B, C);
   /* a flat "triangle" (corners on one line: 0°, 0°, 180°, area 0) isn't acute, right or obtuse — same cutoff the calc audit uses for degenerate */
   const kind = !(area > 1e-9 * Math.max(a, b, c) ** 2) ? "Degenerate" : isRightAngle(maxA) ? "Right" : maxA > Math.PI / 2 ? "Obtuse" : "Acute";
-  /* equal sides = sides that DISPLAY equal at the current unit and
-     precision — the same rule isRightAngle uses — so the classification
-     can never say "Isosceles" beside two visibly different lengths
-     (the old fixed 0.01% tolerance called 3.0000 / 3.0002 isosceles) */
-  const shown = v => fmt(v / LEN[S.lenUnit].f, S.prec);
-  const eq = [shown(a) === shown(b), shown(b) === shown(c), shown(c) === shown(a)];
+  /* equal sides = equal to within floating-point noise (a billionth): never "equal because they print alike at the current decimals" */
+  const same = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(x, y);
+  const eq = [same(a, b), same(b, c), same(c, a)];
   let shape = "Scalene";
   if (eq[0] && eq[1]) shape = "Equilateral";
   else if (eq[0] || eq[1] || eq[2]) shape = "Isosceles";
@@ -1603,10 +1585,9 @@ function themeColors() {
 function invalidateThemeColors() { themeColorCache = null; }
 
 function draw(D) {
-  const dark = S.theme !== "light";
   ctx.clearRect(0, 0, W, HH);
   const colors = themeColors();
-  ctx.fillStyle = colors.bg || (dark ? "#0b0b0d" : "#f4f4f6");
+  ctx.fillStyle = colors.bg || "#0b0b0d";
   ctx.fillRect(0, 0, W, HH);
   drawGrid();
 
@@ -1616,8 +1597,8 @@ function draw(D) {
     ctx.save(); ctx.globalAlpha = a;
     ctx.beginPath();
     ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.lineTo(q[2].x, q[2].y); ctx.closePath();
-    ctx.fillStyle = dark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.04)"; ctx.fill();
-    ctx.strokeStyle = dark ? "#c9c9d1" : "#33333a"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.fill();
+    ctx.strokeStyle = "#c9c9d1"; ctx.lineWidth = 2; ctx.stroke();
     ctx.restore();
   };
   /* S.viewFade runs 0 → 1 entering view-only (and back leaving it): the
@@ -1629,22 +1610,22 @@ function draw(D) {
 
   const p = S.P.map(toScreen);
   const hv = S.hover;
-  const fg = dark ? "#8f8f99" : "#7a7a84";
-  const fgLock = dark ? "#e6e6ea" : "#33333a";
-  const white = dark ? "#ffffff" : "#101012";
+  const fg = "#8f8f99";
+  const fgLock = "#e6e6ea";
+  const white = "#ffffff";
   const lockColor = colors.lock || "#ff5c5c";
   const blueColor = colors.blue || "#4ea1ff";
 
   ctx.beginPath();
   ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); ctx.lineTo(p[2].x, p[2].y);
   ctx.closePath();
-  ctx.fillStyle = hv && hv.kind === "body" ? (dark ? "rgba(255,255,255,.075)" : "rgba(0,0,0,.06)")
-                                            : (dark ? "rgba(255,255,255,.045)" : "rgba(0,0,0,.035)");
+  ctx.fillStyle = hv && hv.kind === "body" ? "rgba(255,255,255,.075)"
+                                            : "rgba(255,255,255,.045)";
   ctx.fill();
 
   const cS = toScreen(D.centroid);
   ctx.save();
-  ctx.setLineDash([2, 4]); ctx.strokeStyle = dark ? "rgba(255,255,255,.13)" : "rgba(0,0,0,.14)"; ctx.lineWidth = 1;
+  ctx.setLineDash([2, 4]); ctx.strokeStyle = "rgba(255,255,255,.13)"; ctx.lineWidth = 1;
   for (let i = 0; i < 3; i++) {
     const u = p[(i + 1) % 3], w = p[(i + 2) % 3];
     ctx.beginPath(); ctx.moveTo(p[i].x, p[i].y); ctx.lineTo((u.x + w.x) / 2, (u.y + w.y) / 2); ctx.stroke();
@@ -1702,7 +1683,7 @@ function draw(D) {
   }
 
   ctx.beginPath(); ctx.arc(cS.x, cS.y, 2, 0, TAU);
-  ctx.fillStyle = dark ? "rgba(255,255,255,.3)" : "rgba(0,0,0,.3)"; ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.3)"; ctx.fill();
 
   /* generic geometry highlight, driven by clicking a stat row */
   if (S.highlight) drawHighlight(D, S.highlight);
@@ -1722,8 +1703,8 @@ function draw(D) {
     const sel = S.selected.has(i);
     if (sel) { ctx.beginPath(); ctx.arc(p[i].x, p[i].y, 10, 0, TAU); ctx.strokeStyle = blueColor; ctx.lineWidth = 2; ctx.stroke(); }
     ctx.beginPath(); ctx.arc(p[i].x, p[i].y, (isHov ? 7 : 5) + (window.__touch ? 2.5 : 0), 0, TAU);
-    ctx.fillStyle = locked ? lockColor : (dark ? "#0b0b0d" : "#f4f4f6"); ctx.fill();
-    ctx.lineWidth = 2; ctx.strokeStyle = isHov || locked ? (locked ? lockColor : white) : (dark ? "#b8b8c2" : "#54545c");
+    ctx.fillStyle = locked ? lockColor : "#0b0b0d"; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = isHov || locked ? (locked ? lockColor : white) : "#b8b8c2";
     ctx.stroke();
 
     let ux = p[(i + 1) % 3].x - p[i].x, uy = p[(i + 1) % 3].y - p[i].y;
@@ -1733,7 +1714,7 @@ function draw(D) {
     const lb = Math.hypot(bx, by) || 1; bx /= lb; by /= lb;
     ctx.font = "600 12px Inter, sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = dark ? "#8a8a94" : "#6a6a74";
+    ctx.fillStyle = "#8a8a94";
     ctx.fillText(names[i], p[i].x + bx * 20, p[i].y + by * 20);
   }
 
@@ -2161,7 +2142,7 @@ const TRIANGLE_EDGE_CLEARANCE = 14;
    itself runs in well under a tenth of a millisecond). Batching every
    write, then every read, then every write again costs at most ONE
    forced layout for the whole panel instead of six-plus. */
-const PILL_BLOCKERS = ["grpHist", "xform", "zoomtag", "cornerHints", "navtoggle"];
+const PILL_BLOCKERS = ["toolbar", "grpHist", "xform", "zoomtag", "cornerHints", "navtoggle"];
 function layoutPills(D) {
   const p = S.P.map(toScreen);
   const gx = (p[0].x + p[1].x + p[2].x) / 3, gy = (p[0].y + p[1].y + p[2].y) / 3;
@@ -2237,7 +2218,7 @@ function layoutPills(D) {
     if (W > 2 * hw + 12) px = clamp(px, hw + 6, W - hw - 6);
     if (HH > 2 * hh + 12) py = clamp(py, hh + 6, HH - hh - 6);
     /* positions are applied in pass 4, after overlapping labels have been pulled apart */
-    rec.pos = { x: px, y: py, hw, hh, tx, ty };
+    rec.pos = { x: px, y: py, ix: px, iy: py, hw, hh, tx, ty };
 
     const locked = S.lock[rec.kind][i];
     rec.el.classList.toggle("locked", locked || rec.forceLockedVisual);
@@ -2292,6 +2273,29 @@ function layoutPills(D) {
       if (cand.length) { P.x = cand[0].x; P.y = cand[0].y; crowded.add(m); moved = true; }
     }
     if (!moved) break;
+  }
+  /* the relaxation above can leave a label still sitting on another label or under a floating control (two nudges undoing each other in a
+     tight spot): any such label is moved to the free place nearest where it wanted to be, searched over the whole canvas */
+  const hitsAt = (m, x, y) => {
+    const P = pills[m].pos; let k = 0;
+    for (const o of blockers) if (x + P.hw > o.l && x - P.hw < o.r && y + P.hh > o.t && y - P.hh < o.b) k += 2;
+    for (let j = 0; j < pills.length; j++) { if (j === m) continue; const Q = pills[j].pos; if (Math.abs(x - Q.x) < P.hw + Q.hw + GAP && Math.abs(y - Q.y) < P.hh + Q.hh + GAP) k++; }
+    return k;
+  };
+  for (let pass = 0; pass < 3; pass++) {
+    let changed = false;
+    for (let m = 0; m < pills.length; m++) {
+      const P = pills[m].pos, cur = hitsAt(m, P.x, P.y); if (!cur) continue;
+      const x0 = W > 2 * P.hw + 12 ? P.hw + 6 : W / 2, x1 = W > 2 * P.hw + 12 ? W - P.hw - 6 : W / 2, y0 = HH > 2 * P.hh + 12 ? P.hh + 6 : HH / 2, y1 = HH > 2 * P.hh + 12 ? HH - P.hh - 6 : HH / 2;
+      let best = { x: P.x, y: P.y, h: cur, d: Math.hypot(P.x - P.ix, P.y - P.iy) };
+      const sx = Math.max(10, (x1 - x0) / 60), sy = Math.max(10, (y1 - y0) / 30);
+      for (let x = x0; x <= x1 + 1e-6; x += sx) for (let y = y0; y <= y1 + 1e-6; y += sy) {
+        const h = hitsAt(m, x, y); if (h > best.h) continue;
+        const d = Math.hypot(x - P.ix, y - P.iy); if (h < best.h || d < best.d) best = { x, y, h, d };
+      }
+      if (best.h < cur) { P.x = best.x; P.y = best.y; crowded.add(m); changed = true; }
+    }
+    if (!changed) break;
   }
   pills.forEach((rec, idx) => {
     rec.el.style.left = rec.pos.x.toFixed(1) + "px";
@@ -2609,20 +2613,16 @@ const TRIG_RAW = {
   sin: t => t.opposite / t.hypotenuse, cos: t => t.adjacent / t.hypotenuse, tan: t => t.opposite / t.adjacent,
   csc: t => t.hypotenuse / t.opposite, sec: t => t.hypotenuse / t.adjacent, cot: t => t.adjacent / t.opposite
 };
-/* "is this a right angle?" — ONE rule for the whole app (the Right chip,
-   the right-angle square drawn on the canvas, and the trig method):
-   exactly when the angle reads 90 at the current decimal setting. The
-   three used to disagree (0.0057° vs 0.23° vs display tolerance), so a
-   corner showing 89.8° could get a right-angle square drawn on it. */
+/* "is this a right angle?" — ONE rule for the whole app (the Right chip, the right-angle square drawn on the canvas, the trig method and the
+   classification). Nothing in the maths is ever rounded, so this is not decided by what the angle READS at the current decimals either: it
+   is a right angle when it is 90° to within floating-point noise (a billionth of a degree). */
 function isRightAngle(rad) {
-  const tol = Math.max(0.5 * Math.pow(10, -S.prec), 1e-9); /* in degrees */
-  return Math.abs(deg(rad) - 90) < tol;
+  return Math.abs(deg(rad) - 90) < 1e-9;
 }
-/* trig is stricter than the display rule above: only a genuinely 90° angle (to float noise) gets the exact right-triangle values, so
-   a corner that merely READS 90 (89.5° at 0 decimals) keeps its real, finite tan and sec instead of "undefined" */
+/* the trig method uses the same rule (kept as its own name: the right angle there picks SOH-CAH-TOA on the real sides) */
 function trigRightVertex(D) {
   if (!D.ang) return -1;
-  for (let i = 0; i < 3; i++) if (Math.abs(deg(D.ang[i]) - 90) < 1e-9) return i;
+  for (let i = 0; i < 3; i++) if (isRightAngle(D.ang[i])) return i;
   return -1;
 }
 function rightVertex(D) {
@@ -2653,18 +2653,15 @@ function trigRatio(t, fn) {
   }
   return TRIG_RAW[fn](t);
 }
-/* the Law of Sines line (sin) and Law of Cosines line (cos) for angle i,
-   shared by the trig panel and the angle explanation. Each builder prints
-   its final value at nOut decimals, and prints every input just precisely
-   enough that redoing the arithmetic by hand from the digits on screen
-   gives exactly the next printed step — never "off by one" in the last
-   digit. `tail` replaces the final value (e.g. with a clickable answer). */
+/* the Law of Sines line (sin) and Law of Cosines line (cos) for angle i, shared by the trig panel and the angle explanation. Every number goes in
+   as a working token (dp / dpt): the calculation behind it used the exact value, and the page shows it abbreviated to four decimals at most.
+   The result is a sub-final answer in its own colour (violet sin, orange cos); `tail` replaces it with the final answer when sin or cos itself
+   is what was asked. */
 function lawLines(D, i) {
   const U = S.lenUnit, f = LEN[U].f, sym = LEN[U].sym;
   const names = ["A", "B", "C"], lname = ["a", "b", "c"];
   const j = (i + 1) % 3, k = (i + 2) % 3;
   const p = lname[j], q = lname[k], o = lname[i], nm = names[i];
-  const r = (v, n) => +v.toFixed(n);
   /* same coordinate formulas as trigData "general" — identical numbers */
   const P = D.P || S.P, pi = P[i], pj = P[j], pk = P[k];
   const ux = pj.x - pi.x, uy = pj.y - pi.y, vx = pk.x - pi.x, vy = pk.y - pi.y;
@@ -2673,34 +2670,21 @@ function lawLines(D, i) {
   const sp = D.sides[j] / f, sq_ = D.sides[k] / f, so = D.sides[i] / f, Rv = D.R / f;
   const Nv = cv_ * 2 * sp * sq_, Dv = 2 * sp * sq_; /* b² + c² − a² and 2bc, display units² */
   const vHl = { kind: "vertex", i };
-  const tf = (v, n) => trigSafe(v, true, n);
-  const lenH = (v, letter, n) => NC2(fmt(v, n) + " " + sym, letter);
-  const sqH  = (v, letter, n) => NC2(fmt(v * v, n) + " " + sym + "²", letter);
+  /* Nothing in the working is rounded: every number is carried at full precision (dp / dpt tokens) and is only rounded, once, in the final
+     answer. A sine or cosine that a later step uses is a sub-final answer: it gets its own colour (violet for sin, orange for cos), and that
+     colour follows it into every step that uses it, until the final answer arrives in its box. */
+  const lenH = (v, letter) => NC2(dp(v) + " " + sym, letter);
+  const sqH  = (v, letter) => NC2(dp(v * v) + " " + sym + "²", letter);
   const nm2 = V(nm, nm);
+  const sinLbl = "sin(" + nm2 + ")", cosLbl = "cos(" + nm2 + ")";
 
-  /* sin via the Law of Sines, its final value printed at nOut decimals;
-     the inputs a and R get however many decimals it takes for
-     a ÷ (2·R), redone from the printed digits, to print as that value */
-  const sinLine = (nOut, tail) => {
-    let m = 15;
-    for (let n = nOut; n <= 15; n++) if (tf(r(so, n) / (2 * r(Rv, n)), nOut) === tf(sv, nOut)) { m = n; break; }
-    return "sin(" + nm2 + ") = " + FR(V(o, o), "2 · " + V("R", "R")) +
-      " = " + FR(lenH(so, o, m), "2 · " + lenH(Rv, "R", m)) + " = " + (tail || NH(tf(sv, nOut), vHl));
-  };
-  /* cos via the Law of Cosines, final value at nOut decimals; the
-     evaluated top/bottom (n2) and the substituted squares/products (m)
-     are each printed precisely enough to reproduce the next step */
-  const cosLine = (nOut, tail) => {
-    let n2 = 15, m = 15;
-    for (let n = nOut; n <= 15; n++) if (tf(r(Nv, n) / r(Dv, n), nOut) === tf(cv_, nOut)) { n2 = n; break; }
-    for (let n = n2; n <= 15; n++) {
-      const top = r(sp * sp, n) + r(sq_ * sq_, n) - r(so * so, n), bot = 2 * r(sp, n) * r(sq_, n);
-      if (fmt(top, n2) === fmt(Nv, n2) && fmt(bot, n2) === fmt(Dv, n2)) { m = n; break; }
-    }
-    return "cos(" + nm2 + ") = " + FR(V(p + "²", p) + " + " + V(q + "²", q) + " − " + V(o + "²", o), "2 · " + V(p, p) + " · " + V(q, q)) +
-      " = " + FR(sqH(sp, p, m) + " + " + sqH(sq_, q, m) + " − " + sqH(so, o, m), "2 · " + lenH(sp, p, m) + " · " + lenH(sq_, q, m)) +
-      " = " + FR(NH(fmt(Nv, n2) + " " + sym + "²", vHl), NH(fmt(Dv, n2) + " " + sym + "²", vHl)) + " = " + (tail || NH(tf(cv_, nOut), vHl));
-  };
+  /* sin via the Law of Sines; `tail` replaces the result (the final, rounded answer when sin itself is what was asked) */
+  const sinLine = tail => V(sinLbl, "sin") + " = " + FR(V(o, o), "2 · " + V("R", "R")) +
+    " = " + FR(lenH(so, o), "2 · " + lenH(Rv, "R")) + " = " + (tail || NHc(dpt(sv), vHl, "sin"));
+  /* cos via the Law of Cosines */
+  const cosLine = tail => V(cosLbl, "cos") + " = " + FR(V(p + "²", p) + " + " + V(q + "²", q) + " − " + V(o + "²", o), "2 · " + V(p, p) + " · " + V(q, q)) +
+    " = " + FR(sqH(sp, p) + " + " + sqH(sq_, q) + " − " + sqH(so, o), "2 · " + lenH(sp, p) + " · " + lenH(sq_, q)) +
+    " = " + FR(NH(dp(Nv) + " " + sym + "²", vHl), NH(dp(Dv) + " " + sym + "²", vHl)) + " = " + (tail || NHc(dpt(cv_), vHl, "cos"));
   return { sin: sv, cos: cv_, sinLine, cosLine };
 }
 
@@ -2732,7 +2716,7 @@ function sideLine(D, i) {
 }
 /* special triangles: 30-60-90, 45-45-90 (judged the same way as "right": by what the angles READ at the current decimals) and Pythagorean triples */
 function specialFlags(D) {
-  const tol = Math.max(0.5 * Math.pow(10, -S.prec), 1e-9), a = D.ang.map(deg).sort((x, y) => x - y), near = (arr) => arr.every((v, i) => Math.abs(a[i] - v) < tol);
+  const tol = 1e-9, a = D.ang.map(deg).sort((x, y) => x - y), near = (arr) => arr.every((v, i) => Math.abs(a[i] - v) < tol);
   let triple = null; const sd = D.sides.slice().sort((x, y) => x - y), f = LEN[S.lenUnit].f;
   for (let dn = 1; dn <= 60 && !triple; dn++) { const t = sd[0] / dn, n = sd.map(v => v / t); if (n.every(v => Math.abs(v - Math.round(v)) < 1e-9 * Math.max(1, v)) && n[2] < 5000) { const [x, y, z] = n.map(Math.round); if (x * x + y * y === z * z) triple = [x, y, z]; } }
   return { s30: near([30, 60, 90]), s45: near([45, 45, 90]), triple };
@@ -2991,7 +2975,37 @@ function addCopyButtons(container) {
    text selection, and — if it landed between mousedown and mouseup —
    the click itself, since the element pressed no longer existed. */
 let modalPainted = null;
+/* Turns the number tokens of the working into text: every step abbreviated to at most four decimals, and the final answer — the last thing after
+   the last "=" in a boxed line or a note — rounded to the Decimals setting (so is any number that sits outside a worked line). */
+const WTOKRE = /\uE000([^\uE001]*)\uE001([^\uE002]*)\uE002/g;
+/* a number in the working is abbreviated to at most four decimal places (and never more than the Decimals setting), trailing zeros dropped;
+   the exact value behind it is what every calculation used */
+function workingFull(raw) {
+  const v = +raw; if (!Number.isFinite(v)) return String(raw);
+  if (v === 0) return "0";
+  const d = Math.min(4, S.prec); let t = v.toFixed(d);
+  if (+t === 0) return v.toExponential(2);
+  if (t.indexOf(".") >= 0) t = t.replace(/0+$/, "").replace(/\.$/, "");
+  return t === "-0" ? "0" : t;
+}
+function settleWorking(html) {
+  if (html.indexOf("\uE000") < 0) return html;
+  const line = /<div class="eqn-line([^"]*)">((?:<i[^>]*><\/i>)?<span class="eqn-content">)([\s\S]*?)(<\/span><\/div>)/g;
+  const out = html.replace(line, (m, cls, open, body, close) => {
+    let cut = body.length;     /* tokens before `cut` are working, from `cut` on they are the answer */
+    if (/eqn-final|eqn-note/.test(cls)) {
+      let inTag = false, inTok = false, last = -1;
+      for (let k = 0; k < body.length; k++) { const ch = body[k]; if (ch === "\uE000") inTok = true; else if (ch === "\uE002") inTok = false; else if (!inTok) { if (ch === "<") inTag = true; else if (ch === ">") inTag = false; else if (ch === "=" && !inTag) last = k; } }
+      cut = last >= 0 ? last : 0;
+    }
+    let pos = 0;
+    const b = body.replace(WTOKRE, (t, raw, txt, at) => { pos = at; return at < cut ? workingFull(raw) : txt; });
+    return '<div class="eqn-line' + cls + '">' + open + b + close;
+  });
+  return out.replace(WTOKRE, (t, raw, txt) => txt);
+}
 function paintModalContent(title, bodyHtml, force) {
+  bodyHtml = settleWorking(bodyHtml);
   const key = title + "\u0000" + bodyHtml;
   if (!force && key === modalPainted) return;
   modalPainted = key;
@@ -3044,6 +3058,9 @@ const NC2 = (text, letter) => '<span class="numv var-' + letter + '">' + text + 
    is a drawHighlight descriptor; kept JSON-plain so it survives as an
    attribute across the panel's live repaints) */
 const NH = (text, hl) => "<span class=\"numv hlv\" data-hl='" + JSON.stringify(hl) + "'>" + text + '</span>';
+/* a sub-final answer (the sin or cos of an angle that a later step uses): clickable like NH, and in its own colour, which every later step keeps
+   until the final answer arrives in its box */
+const NHc = (text, hl, letter) => "<span class=\"numv hlv var-" + letter + "\" data-hl='" + JSON.stringify(hl) + "'>" + text + '</span>';
 const FR = (numHtml, denHtml) => '<span class="frac"><span class="num">' + numHtml + '</span><span class="den">' + denHtml + '</span></span>';
 /* a real subscript ("x" with a small lowered "A"), not the "x_A"
    underscore-text placeholder — reads as actual math notation */
@@ -3062,7 +3079,13 @@ const BOXED = html => '<div class="eqn-line eqn-final"><span class="eqn-content"
    conversion is happening right here — always placed between the line
    that ends in the old unit and the line that starts using the new one */
 const NOTE = text => '<div class="eqn-line eqn-note"><i class="fa-solid fa-circle-info"></i><span class="eqn-content">' + text + '</span></div>';
-const EQN = lines => '<div class="eqn">' + lines.join("") + '</div>';
+const ABBREV_NOTE = "Please note that the values used in equations are abbreviated, but, the exact value of it was used in the calculation";
+/* the note goes right after the final answer (the last boxed line) of every worked solution */
+const EQN = lines => {
+  const out = lines.slice(), at = out.map(l => l.indexOf("eqn-final") >= 0).lastIndexOf(true);
+  if (WORK && at >= 0) out.splice(at + 1, 0, NOTE(ABBREV_NOTE));
+  return '<div class="eqn">' + out.join("") + '</div>';
+};
 
 /* every quantity that appears mid-derivation carries its unit — these
    always attach one. Every constant is a numeral — never spelled out
@@ -3076,6 +3099,11 @@ const ulen   = (inches, U) => { const v = inches / LEN[U].f; const f = fractionS
 const ulenSq = (inches, U) => { const v = inches / LEN[U].f, sq = v * v; const f = fractionStr(sq); return dp(sq) + " " + LEN[U].sym + "²" + (f ? " (" + f + " " + LEN[U].sym + "²)" : ""); };
 const uarea  = (sqin,  U) => { const v = sqin / (LEN[U].f * LEN[U].f); const f = fractionStr(v); return dp(v) + " " + LEN[U].sym + "²" + (f ? " (" + f + " " + LEN[U].sym + "²)" : ""); };
 const udeg   = rad => dp(deg(rad)) + "°";
+/* the rounded (final-answer) forms of the above */
+const ulenR  = (inches, U) => { const v = inches / LEN[U].f; const f = fractionStr(v); return dpR(v) + " " + LEN[U].sym + (f ? " (" + f + " " + LEN[U].sym + ")" : ""); };
+const uareaR = (sqin,  U) => { const v = sqin / (LEN[U].f * LEN[U].f); const f = fractionStr(v); return dpR(v) + " " + LEN[U].sym + "²" + (f ? " (" + f + " " + LEN[U].sym + "²)" : ""); };
+const udegR  = rad => dpR(deg(rad)) + "°";
+const uradR  = rad => { const p = piStr(rad); return dpR(rad) + " rad" + (p ? " (" + p + " rad)" : ""); };
 const urad   = rad => { const p = piStr(rad); return dp(rad) + " rad" + (p ? " (" + p + " rad)" : ""); };
 /* a substituted coordinate/position value: negatives get parenthesized
    so "− -0.8" never appears as "minus minus", and a clean fraction (if
@@ -3083,7 +3111,7 @@ const urad   = rad => { const p = piStr(rad); return dp(rad) + " rad" + (p ? " (
 function ncpFmt(inches, U, letter) {
   const v = snapNoise(inches, Math.max(...sidesOf(S.P))) / LEN[U].f;
   const s = dp(v);
-  const guarded = s.charAt(0) === "-" ? "(" + s + ")" : s;
+  const guarded = v < 0 ? "(" + s + ")" : s;
   const f = fractionStr(v);
   return NC2(guarded + (f ? " (" + f + ")" : ""), letter);
 }
@@ -3118,7 +3146,7 @@ const EXTRA_EXPLAIN = {};
         EL("Exterior " + V(nm[i], nm[i]) + " = 180° − " + V(nm[i], nm[i]) + " = 180° − " + H.NDc(H.D.ang[i], nm[i]) + " = " + H.NDc(H.D.ext[i], "ext")),
         EL("The exterior angle theorem says it also equals the two remote interior angles added together:"),
         EL("Exterior " + V(nm[i], nm[i]) + " = " + V(nm[j], nm[j]) + " + " + V(nm[k], nm[k]) + " = " + H.NDc(H.D.ang[j], nm[j]) + " + " + H.NDc(H.D.ang[k], nm[k])),
-        BOXED("Exterior angle at " + nm[i] + " = " + H.NDc(H.D.ext[i], "ext")),
+        BOXED("Exterior angle at " + nm[i] + " = " + H.NDcF(H.D.ext[i], "ext")),
         NOTE("The three exterior angles (one at each corner) always add up to 360°.")],
       approxS: angSymbolic(H.D.ext[i]), exactS: angDecimal(H.D.ext[i]) });
     EXTRA_EXPLAIN["tl" + i] = H => ({
@@ -3127,7 +3155,7 @@ const EXTRA_EXPLAIN = {};
         EL("The incircle touches the two sides that meet at " + nm[i] + ". The two tangent segments from one outside point to a circle are equal, and each is:"),
         EL("tangent length = " + V("s", "s") + " − " + V(lw[i], lw[i]) + " (the semiperimeter minus the side opposite " + nm[i] + ")"),
         EL("tangent length = " + H.NLc(H.D.s, "s") + " − " + H.NLc(H.D.sides[i], lw[i])),
-        BOXED("tangent length from " + nm[i] + " = " + H.NLc(H.D.tl[i], "s")),
+        BOXED("tangent length from " + nm[i] + " = " + H.NLcF(H.D.tl[i], "s")),
         NOTE("The three tangent lengths add up to the semiperimeter: " + dp(H.D.tl[0] / LEN[H.U].f) + " + " + dp(H.D.tl[1] / LEN[H.U].f) + " + " + dp(H.D.tl[2] / LEN[H.U].f) + " = " + dp(H.D.s / LEN[H.U].f) + " " + LEN[H.U].sym + ".")],
       approxS: lenSymbolic(H.D.tl[i], H.U), exactS: lenDecimal(H.D.tl[i], H.U) });
     EXTRA_EXPLAIN["exr" + i] = H => ({
@@ -3136,7 +3164,7 @@ const EXTRA_EXPLAIN = {};
         EL("The excircle opposite " + nm[i] + " touches side " + lw[i] + " from OUTSIDE the triangle and the extensions of the other two sides."),
         EL("r" + "<sub>" + lw[i] + "</sub> = " + FR(V("Area", "area"), V("s", "s") + " − " + V(lw[i], lw[i]))),
         EL("r" + "<sub>" + lw[i] + "</sub> = " + FR(H.NAc(H.D.area, "area"), H.NLc(H.D.s, "s") + " − " + H.NLc(H.D.sides[i], lw[i]))),
-        BOXED("r<sub>" + lw[i] + "</sub> = " + H.NLc(H.D.exr[i], "R")),
+        BOXED("r<sub>" + lw[i] + "</sub> = " + H.NLcF(H.D.exr[i], "R")),
         NOTE("Check: 1/r = 1/r<sub>a</sub> + 1/r<sub>b</sub> + 1/r<sub>c</sub> gives the inradius, " + dp(1 / (1 / H.D.exr[0] + 1 / H.D.exr[1] + 1 / H.D.exr[2]) / LEN[H.U].f) + " " + LEN[H.U].sym + ".")],
       approxS: lenSymbolic(H.D.exr[i], H.U), exactS: lenDecimal(H.D.exr[i], H.U) });
     EXTRA_EXPLAIN["mid" + i] = H => { const u = [H.D.P[1], H.D.P[2], H.D.P[0]][i], w = [H.D.P[2], H.D.P[0], H.D.P[1]][i], q = H.D.sideMid[i], n1 = nm[(i + 1) % 3], n2 = nm[(i + 2) % 3];
@@ -3149,7 +3177,7 @@ const EXTRA_EXPLAIN = {};
       title: "Midsegment parallel to side " + lw[i],
       lines: [EL("A midsegment joins the midpoints of two sides. The midsegment theorem: it is PARALLEL to the third side and HALF as long."),
         EL("Midsegment = " + FR(V(lw[i], lw[i]), "2") + " = " + FR(H.NLc(H.D.sides[i], lw[i]), "2")),
-        BOXED("Midsegment = " + H.NLc(H.D.seg[i], lw[i])),
+        BOXED("Midsegment = " + H.NLcF(H.D.seg[i], lw[i])),
         NOTE("The three midsegments cut the triangle into 4 congruent triangles, each with ¼ of the area (" + uarea(H.D.area / 4, H.U) + ").")],
       approxS: lenSymbolic(H.D.seg[i], H.U), exactS: lenDecimal(H.D.seg[i], H.U) });
     const slopeLines = (H, withLine) => { const u = [H.D.P[1], H.D.P[2], H.D.P[0]][i], w = [H.D.P[2], H.D.P[0], H.D.P[1]][i], n1 = nm[(i + 1) % 3], n2 = nm[(i + 2) % 3], ln = sideLine(H.D, i);
@@ -3164,7 +3192,7 @@ const EXTRA_EXPLAIN = {};
   }
   EXTRA_EXPLAIN.nine = H => ({ title: "Nine-point circle",
     lines: [EL("One circle passes through nine special points: the three side midpoints, the three feet of the altitudes, and the three midpoints between each corner and the orthocenter."),
-      EL("Radius = " + FR(V("R", "R"), "2") + " = " + FR(H.NLc(H.D.R, "R"), "2")), BOXED("Nine-point radius = " + H.NLc(H.D.nine, "R")),
+      EL("Radius = " + FR(V("R", "R"), "2") + " = " + FR(H.NLc(H.D.R, "R"), "2")), BOXED("Nine-point radius = " + H.NLcF(H.D.nine, "R")),
       NOTE("Its center is the midpoint between the orthocenter and the circumcenter, and it is always half the size of the circumcircle.")],
     approxS: lenSymbolic(H.D.nine, H.U), exactS: lenDecimal(H.D.nine, H.U) });
   EXTRA_EXPLAIN.oh = H => ({ title: "Distance between orthocenter and circumcenter (OH)",
@@ -3172,10 +3200,10 @@ const EXTRA_EXPLAIN = {};
       EL("Euler: OH² = 9" + V("R", "R") + "² − (" + V("a", "a") + "² + " + V("b", "b") + "² + " + V("c", "c") + "²)"),
       EL("OH² = 9 · " + H.NLQc(H.D.R, "R") + " − (" + H.NLQc(H.D.a, "a") + " + " + H.NLQc(H.D.b, "b") + " + " + H.NLQc(H.D.c, "c") + ")"),
       EL("OH² = " + H.NLQc(H.D.oh, "R")),
-      BOXED("OH = " + H.NLc(H.D.oh, "R")), NOTE("In a right triangle the orthocenter is the right-angle corner and the circumcenter is the midpoint of the hypotenuse.")],
+      BOXED("OH = " + H.NLcF(H.D.oh, "R")), NOTE("In a right triangle the orthocenter is the right-angle corner and the circumcenter is the midpoint of the hypotenuse.")],
     approxS: lenSymbolic(H.D.oh, H.U), exactS: lenDecimal(H.D.oh, H.U) });
   EXTRA_EXPLAIN.class = H => { const D = H.D, f = LEN[H.U].f, so = D.sides.map(v => v / f).sort((x, y) => x - y), sp = specialFlags(D), mx = Math.max(D.A, D.B, D.C);
-    const lhs = so[0] * so[0] + so[1] * so[1], rhs = so[2] * so[2], cmp = Math.abs(lhs - rhs) < 0.5 * Math.pow(10, -S.prec) * so[2] ? "=" : lhs > rhs ? ">" : "<";
+    const lhs = so[0] * so[0] + so[1] * so[1], rhs = so[2] * so[2], cmp = Math.abs(lhs - rhs) <= 1e-9 * rhs ? "=" : lhs > rhs ? ">" : "<";
     const lines = [
       EL("<b>By angles.</b> The biggest angle decides: under 90° is ACUTE, exactly 90° is RIGHT, over 90° is OBTUSE."),
       EL("Biggest angle = " + H.NDc(mx, "A") + "  →  " + D.kind.toLowerCase()),
@@ -3191,7 +3219,8 @@ const EXTRA_EXPLAIN = {};
     return { title: "Classification", lines, approxS: "", exactS: D.kind + " · " + D.shape }; };
 })();
 
-function openExplain(id, live) {
+function openExplain(id, live) { WORK = true; try { return openExplainInner(id, live); } finally { WORK = false; } }
+function openExplainInner(id, live) {
   const D = derive();
   const U = S.lenUnit;
   const info = rowMeta[id];
@@ -3215,6 +3244,11 @@ function openExplain(id, live) {
   const NAc  = (sqin, letter)   => NC2(uarea(sqin, U), letter);
   const NDc  = (rad, letter)    => NC2(udeg(rad), letter);
   const NRc  = (rad, letter)    => NC2(urad(rad), letter);
+  /* the same, rounded to the Decimals setting: for the value in a box that IS the final answer */
+  const NLcF = (inches, letter) => NC2(ulenR(inches, U), letter);
+  const NAcF = (sqin, letter)   => NC2(uareaR(sqin, U), letter);
+  const NDcF = (rad, letter)    => NC2(udegR(rad), letter);
+  const NRcF = (rad, letter)    => NC2(uradR(rad), letter);
   /* clickable counterparts for results with no variable color of their
      own — each highlights the feature it measures (see NH) */
   const NLH  = (inches, hl) => NH(ulen(inches, U), hl);
@@ -3223,7 +3257,7 @@ function openExplain(id, live) {
   let title = "", lines = [], approxS = "", exactS = "";
 
   if (EXTRA_EXPLAIN[id]) {
-    const x = EXTRA_EXPLAIN[id]({ D, U, NLc, NLQc, NAc, NDc, NC, ncp: (inches, letter) => ncpFmt(inches, U, letter) });
+    const x = EXTRA_EXPLAIN[id]({ D, U, NLc, NLcF, NLQc, NAc, NAcF, NDc, NDcF, NC, ncp: (inches, letter) => ncpFmt(inches, U, letter) });
     title = x.title; lines = x.lines; approxS = x.approxS; exactS = x.exactS;
   } else if (id === "a" || id === "b" || id === "c") {
     const i = { a: 0, b: 1, c: 2 }[id];
@@ -3234,32 +3268,20 @@ function openExplain(id, live) {
       EL("Distance formula between vertices " + V(names[j], names[j]) + " and " + V(names[k], names[k]) + ":"),
       EL(V(lname[i], lname[i]) + " = √[(x₂−x₁)² + (y₂−y₁)²]"),
       EL(V(lname[i], lname[i]) + " = √[(" + ncp0(S.P[k].x, names[k]) + " − " + ncp0(S.P[j].x, names[j]) + ")² + (" + ncp0(S.P[k].y, names[k]) + " − " + ncp0(S.P[j].y, names[j]) + ")²]"),
-      BOXED(V(lname[i], lname[i]) + " = " + NLc(D.sides[i], lname[i]))
+      BOXED(V(lname[i], lname[i]) + " = " + NLcF(D.sides[i], lname[i]))
     ];
     approxS = lenSymbolic(D.sides[i], U); exactS = lenDecimal(D.sides[i], U);
   } else if (id === "A" || id === "B" || id === "C") {
     const i = { A: 0, B: 1, C: 2 }[id];
     title = "Angle " + names[i] + " — Law of Cosines";
     const L = lawLines(D, i);
-    const vA = V(names[i], names[i]);
-    const r = (v, n) => +v.toFixed(n);
-    /* cos printed precisely enough that arccos of the PRINTED cos gives
-       the printed angle — at 4 decimals alone, arccos(0.2714) can land a
-       few thousandths of a degree away from the angle shown */
-    const angTxt = fmt(deg(D.ang[i]), S.prec);
-    let nc = 15;
-    for (let n = S.prec; n <= 15; n++) if (fmt(deg(Math.acos(clamp(r(L.cos, n), -1, 1))), S.prec) === angTxt) { nc = n; break; }
-    /* same idea for the degree → radian step: the degrees are printed
-       with enough decimals that multiplying them by π/180 prints as the
-       radian value shown */
-    const radTxt = fmt(D.ang[i], S.prec);
-    let nd = 15;
-    for (let n = S.prec; n <= 15; n++) if (fmt(r(deg(D.ang[i]), n) * Math.PI / 180, S.prec) === radTxt) { nd = n; break; }
+    const vA = V(names[i], names[i]), vHl = { kind: "vertex", i };
+    /* cos is a sub-final answer (orange) and arccos of the full-precision cos gives the angle: nothing is rounded until the boxed answer */
     lines = [
-      EL(L.cosLine(nc)),
-      EL(vA + " = arccos(" + NH(fmt(L.cos, nc), { kind: "vertex", i }) + ") = " + NC2(angTxt + "°", names[i])),
-      NOTE("arccos returns the angle itself; it can be written in degrees or in radians. Radians are what the arc-length and area formulas need, and 180° = π rad, so degrees × π/180 = radians: " + N(fmt(deg(D.ang[i]), nd) + "°") + " × π/180 = " + NRc(D.ang[i], names[i]) + "."),
-      BOXED(vA + " = " + NDc(D.ang[i], names[i]) + " = " + NRc(D.ang[i], names[i]))
+      EL(L.cosLine()),
+      EL(vA + " = arccos(" + NHc(dpt(L.cos), vHl, "cos") + ") = " + NC2(dp(deg(D.ang[i])) + "°", names[i])),
+      NOTE("arccos returns the angle itself; it can be written in degrees or in radians. Radians are what the arc-length and area formulas need, and 180° = π rad, so degrees × π/180 = radians: " + N(dp(deg(D.ang[i])) + "°") + " × π/180 = " + NRc(D.ang[i], names[i]) + "."),
+      BOXED(vA + " = " + NDcF(D.ang[i], names[i]) + " = " + NRcF(D.ang[i], names[i]))
     ];
     approxS = angSymbolic(D.ang[i]); exactS = angDecimal(D.ang[i]);
   } else if (id === "sum") {
@@ -3282,7 +3304,7 @@ function openExplain(id, live) {
          ncp(pB.x, "B") + "(" + ncp(pC.y, "C") + " − " + ncp(pA.y, "A") + ") + " +
          ncp(pC.x, "C") + "(" + ncp(pA.y, "A") + " − " + ncp(pB.y, "B") + ")|"),
       EL("Area = " + FR("1", "2") + " · |" + NAc(2 * D.area, "area") + "|"),
-      BOXED("Area = " + NAc(D.area, "area"))
+      BOXED("Area = " + NAcF(D.area, "area"))
     ];
     {
       /* the same area the other ways a textbook asks for it */
@@ -3307,7 +3329,7 @@ function openExplain(id, live) {
     lines = [
       EL(V("s", "s") + " = " + FR(V("a", "a") + " + " + V("b", "b") + " + " + V("c", "c"), "2")),
       EL(V("s", "s") + " = " + FR(NLc(D.a, "a") + " + " + NLc(D.b, "b") + " + " + NLc(D.c, "c"), "2")),
-      BOXED(V("s", "s") + " = " + NLc(D.s, "s"))
+      BOXED(V("s", "s") + " = " + NLcF(D.s, "s"))
     ];
     approxS = lenSymbolic(D.s, U); exactS = lenDecimal(D.s, U);
   } else if (id === "R" || id === "Rd") {
@@ -3317,23 +3339,19 @@ function openExplain(id, live) {
       EL(V("R", "R") + " = " + FR(NLc(D.a, "a") + " · " + NLc(D.b, "b") + " · " + NLc(D.c, "c"), "4 · " + NAc(D.area, "area")))
     ];
     if (id === "Rd") {
-      lines.push(BOXED(V("R", "R") + " = " + NLc(D.R, "R")));
+      lines.push(BOXED(V("R", "R") + " = " + NLcF(D.R, "R")));
       lines.push(EL("Diameter = 2 · " + V("R", "R")));
       lines.push(BOXED("Diameter = 2 · " + NLc(D.R, "R") + " = " + NLH(2 * D.R, { kind: "circle", which: "circ", mode: "diameter" })));
     } else {
-      lines.push(BOXED(V("R", "R") + " = " + NLc(D.R, "R")));
+      lines.push(BOXED(V("R", "R") + " = " + NLcF(D.R, "R")));
     }
     /* the same R from the Law of Sines — where the circumradius comes
        from in the first place: every side divided by the sine of its
        opposite angle is the circle's diameter */
     const sinA = lawLines(D, 0).sin, fU = LEN[U].f, symU = LEN[U].sym;
     const twoR = dp(2 * D.R / fU);
-    /* a and sin A printed precisely enough that dividing them by hand
-       prints exactly as the 2R shown */
-    let nS = 15;
-    for (let n = S.prec; n <= 15; n++) if (dp(+(D.a / fU).toFixed(n) / +sinA.toFixed(n)) === twoR) { nS = n; break; }
     lines.push(NOTE("Check with the Law of Sines: " + V("a", "a") + " ÷ sin " + V("A", "A") + " = " + V("b", "b") + " ÷ sin " + V("B", "B") + " = " + V("c", "c") + " ÷ sin " + V("C", "C") + " = 2" + V("R", "R") + ". Here " +
-      V("a", "a") + " ÷ sin " + V("A", "A") + " = " + NC2(fmt(D.a / fU, nS) + " " + symU, "a") + " ÷ " + NH(fmt(sinA, nS), { kind: "vertex", i: 0 }) +
+      V("a", "a") + " ÷ sin " + V("A", "A") + " = " + NC2(dp(D.a / fU) + " " + symU, "a") + " ÷ " + NHc(dpt(sinA), { kind: "vertex", i: 0 }, "sin") +
       " = " + NH(twoR + " " + symU, { kind: "circle", which: "circ", mode: "diameter" }) + " = 2 · " + NLc(D.R, "R") + "."));
     const v = id === "R" ? D.R : 2 * D.R;
     approxS = lenSymbolic(v, U); exactS = lenDecimal(v, U);
@@ -3344,11 +3362,11 @@ function openExplain(id, live) {
       EL(V("r", "r") + " = " + FR(NAc(D.area, "area"), NLc(D.s, "s")))
     ];
     if (id === "rd") {
-      lines.push(BOXED(V("r", "r") + " = " + NLc(D.r, "r")));
+      lines.push(BOXED(V("r", "r") + " = " + NLcF(D.r, "r")));
       lines.push(EL("Diameter = 2 · " + V("r", "r")));
       lines.push(BOXED("Diameter = 2 · " + NLc(D.r, "r") + " = " + NLH(2 * D.r, { kind: "circle", which: "in", mode: "diameter" })));
     } else {
-      lines.push(BOXED(V("r", "r") + " = " + NLc(D.r, "r")));
+      lines.push(BOXED(V("r", "r") + " = " + NLcF(D.r, "r")));
     }
     const v = id === "r" ? D.r : 2 * D.r;
     approxS = lenSymbolic(v, U); exactS = lenDecimal(v, U);
@@ -3482,7 +3500,8 @@ const TRIG_DEF = {
   csc: ["hypotenuse", "opposite"], sec: ["hypotenuse", "adjacent"], cot: ["adjacent", "opposite"]
 };
 
-function openTrigExplain(fn, live) {
+function openTrigExplain(fn, live) { WORK = true; try { return openTrigExplainInner(fn, live); } finally { WORK = false; } }
+function openTrigExplainInner(fn, live) {
   const D = derive();
   const U = S.lenUnit;
   const names = ["A", "B", "C"], lname = ["a", "b", "c"];
@@ -3493,14 +3512,10 @@ function openTrigExplain(fn, live) {
   const tfmt = v => trigSafe(v, true); /* derivation lines are always the decimal; the Approximate box carries the fraction */
   const f = LEN[U].f, sym = LEN[U].sym;
 
-  /* Every number is shown at the Decimals setting — except where the
-     arithmetic, redone by hand from exactly what's printed, wouldn't come
-     out to the printed result. Then (and only then) that line gets the
-     extra decimal(s) it needs, so no step on screen is ever "off by one". */
-  const r = (v, n) => +v.toFixed(n);
-  function digitsFor(test) { for (let n = S.prec; n <= 15; n++) if (test(n)) return n; return 15; }
+  /* Nothing in the working is rounded: each step carries full-precision numbers (dp tokens), and only the final answer, in its box, is
+     rounded to the Decimals setting. */
   const withFrac = (txt, v, unit) => { const fr = fractionStr(v); return txt + (fr ? " (" + fr + (unit ? " " + unit : "") + ")" : ""); };
-  const lenT = (inches, n) => withFrac(fmt(inches / f, n) + " " + sym, inches / f, sym);
+  const lenT = inches => withFrac(dp(inches / f) + " " + sym, inches / f, sym);
 
   const rv = trigRightVertex(D);
   const lines = [];
@@ -3532,8 +3547,7 @@ function openTrigExplain(fn, live) {
          highlights that side */
       const [numWord, denWord] = TRIG_DEF[fn];
       const num = t[numWord], den = t[denWord];
-      const n = digitsFor(n => tfmt(r(num / f, n) / r(den / f, n)) === shown);
-      const leg = word => NC2(lenT(t[word], n), lname[t.sideOf[word]]);
+      const leg = word => NC2(lenT(t[word]), lname[t.sideOf[word]]);
       lines.push(BOXED(fn + "(" + V(nm, nm) + ") = " + FR(V(numWord, lname[t.sideOf[numWord]]), V(denWord, lname[t.sideOf[denWord]])) +
         " = " + FR(leg(numWord), leg(denWord)) + " = " + answer({ kind: "all" })));
       return;
@@ -3546,7 +3560,6 @@ function openTrigExplain(fn, live) {
     const p = lname[j], q = lname[k], o = lname[i];
     const L = lawLines(D, i), sv = L.sin, cv_ = L.cos, sinLine = L.sinLine, cosLine = L.cosLine;
     const vHl = { kind: "vertex", i };
-    const tf = (v, n) => trigSafe(v, true, n);
     const nm2 = V(nm, nm);
 
     /* an obtuse angle's cos/tan/sec/cot are negative — say where that
@@ -3557,21 +3570,17 @@ function openTrigExplain(fn, live) {
         (fn === "cos" ? "." : ", and so is " + fn + "(" + nm2 + "), which divides by or into it.")));
     }
 
-    if (fn === "sin") { lines.push(BOXED(sinLine(S.prec, answer(vHl)))); return; }
-    if (fn === "cos") { lines.push(BOXED(cosLine(S.prec, answer(vHl)))); return; }
+    if (fn === "sin") { lines.push(BOXED(sinLine(answer(vHl)))); return; }
+    if (fn === "cos") { lines.push(BOXED(cosLine(answer(vHl)))); return; }
 
-    /* tan, csc, sec, cot: from sin and cos by definition. sin/cos are
-       shown at however many decimals make the final division, redone by
-       hand, print as the answer. */
+    /* tan, csc, sec, cot: from sin and cos by definition. sin(C) and cos(C) are sub-final answers: each keeps its own colour (violet, orange)
+       from the line that finds it, into the line that uses it, until the final answer arrives in the box. */
     const needS = fn !== "sec", needC = fn !== "csc";
-    const quot = { tan: (s, c) => s / c, csc: s => 1 / s, sec: (s, c) => 1 / c, cot: (s, c) => c / s }[fn];
-    let n = 15;
-    for (let d = S.prec; d <= 15; d++) if (tf(quot(r(sv, d), r(cv_, d)), S.prec) === shown) { n = d; break; }
-    if (needS) lines.push(EL(sinLine(n)));
-    if (needC) lines.push(EL(cosLine(n)));
-    const sN = NH(tf(sv, n), vHl), cN = NH(tf(cv_, n), vHl);
-    const sym2 = { tan: FR("sin(" + nm2 + ")", "cos(" + nm2 + ")"), csc: FR("1", "sin(" + nm2 + ")"),
-                   sec: FR("1", "cos(" + nm2 + ")"), cot: FR("cos(" + nm2 + ")", "sin(" + nm2 + ")") }[fn];
+    if (needS) lines.push(EL(sinLine()));
+    if (needC) lines.push(EL(cosLine()));
+    const sN = NHc(dpt(sv), vHl, "sin"), cN = NHc(dpt(cv_), vHl, "cos");
+    const sL = V("sin(" + nm2 + ")", "sin"), cL = V("cos(" + nm2 + ")", "cos");
+    const sym2 = { tan: FR(sL, cL), csc: FR("1", sL), sec: FR("1", cL), cot: FR(cL, sL) }[fn];
     const num2 = { tan: FR(sN, cN), csc: FR("1", sN), sec: FR("1", cN), cot: FR(cN, sN) }[fn];
     lines.push(BOXED(fn + "(" + nm2 + ") = " + sym2 + " = " + num2 + " = " + answer(vHl)));
   });
@@ -4168,8 +4177,6 @@ function syncChrome() {
   document.getElementById("btnView").classList.toggle("on", S.viewOnly);
   document.getElementById("precVal").textContent = S.prec;
   document.querySelectorAll("#exactToggle button").forEach(b => b.classList.toggle("on", b.dataset.v === (S.exact ? "exact" : "approx")));
-  document.documentElement.setAttribute("data-theme", S.theme);
-  document.getElementById("btnTheme").innerHTML = S.theme === "light" ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
   syncHistoryButtons();
 }
 
@@ -4292,12 +4299,6 @@ document.querySelectorAll("#exactToggle button").forEach(b => b.addEventListener
   S.exact = b.dataset.v === "exact"; syncChrome(); pushHistory(); requestRender();
 }));
 
-document.getElementById("btnTheme").addEventListener("click", () => {
-  S.theme = S.theme === "light" ? "dark" : "light";
-  applyCustomColors();
-  syncChrome(); pushHistory(); requestRender();
-});
-
 document.getElementById("navtoggle").addEventListener("click", () => setSidebarOpen(!sidebarOpen));
 
 /* --- sidebar open/close driven by JS width animation, so the canvas
@@ -4397,13 +4398,11 @@ const COLOR_VARS = [
   ["--bg", "Canvas background"], ["--panel", "Sidebar background"], ["--pill", "Input box background"],
   ["--accent", "Accent / selection"], ["--header", "Header background"], ["--footer", "Footer background"]
 ];
-/* Custom colors belong to the theme they were picked in. They are written as inline styles, which beat the theme's own
-   variables, so one set shared by both themes pinned the panels, header and footer to the first theme's colors and
-   switching themes only changed the canvas. Each theme keeps its own set; switching swaps them (and drops the other's). */
-const customColors = { dark: {}, light: {} };
+/* Custom colors are written as inline styles, which beat the page's own variables. */
+const customColors = { dark: {} };
 function applyCustomColors() {
   COLOR_VARS.forEach(([v]) => document.documentElement.style.removeProperty(v));
-  const mine = customColors[S.theme === "light" ? "light" : "dark"];
+  const mine = customColors.dark;
   Object.keys(mine).forEach(v => document.documentElement.style.setProperty(v, mine[v]));
   invalidateThemeColors();
 }
@@ -4417,12 +4416,12 @@ document.getElementById("btnSettings").addEventListener("click", () => {
   openModal("Appearance", '<div class="card">' + rows + resetRow + '</div>');
   document.querySelectorAll('#mBody input[type=color]').forEach(inp => {
     inp.addEventListener("input", () => {
-      customColors[S.theme === "light" ? "light" : "dark"][inp.dataset.var] = inp.value;
+      customColors.dark[inp.dataset.var] = inp.value;
       applyCustomColors(); requestRender();
     });
   });
   document.getElementById("mResetColors").addEventListener("click", () => {
-    customColors.dark = {}; customColors.light = {};
+    customColors.dark = {};
     applyCustomColors(); requestRender();
     closeModal();
   });
@@ -4491,8 +4490,10 @@ if (window.__mobile) {
 </script>
 <script src="homework.js?v=1"></script>
 <script src="tipfit.js?v=1"></script>
-<script src="version.js?v=5"></script>
-<script src="changelog.js?v=1"></script>
+<script src="version.js?v=6"></script>
+<script src="changelog.js?v=2"></script>
 <script src="devmode.js"></script>
+<script src="dev_math.js?v=2"></script>
+<script src="dev_sight.js?v=2"></script>
 </body>
 </html>

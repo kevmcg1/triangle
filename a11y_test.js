@@ -2,7 +2,7 @@
  * Always checked (no extra packages): every button and text input has an accessible name, every clickable stat row / trig row / section
  * header can be reached with Tab and opened with Enter or Space, nothing focusable hides inside an aria-hidden or inert container, and a closed
  * explanation panel is inert.
- * If the axe-core package is installed (npm i axe-core) it also runs axe on the dark and light themes, desktop and phone, with an explanation
+ * If the axe-core package is installed (npm i axe-core) it also runs axe on desktop and phone, with an explanation
  * panel, Practice, Settings and the Solve section open, and fails on any violation. Exits non-zero on any failure. */
 const path = require('path');
 const { chromium } = require(process.argv[2] || 'playwright');
@@ -13,11 +13,10 @@ let axeSrc = null; try { axeSrc = require('fs').readFileSync(require.resolve('ax
   const states = { 'default': () => {}, 'explanation': () => openExplain('R'), 'trig explanation': () => openTrigExplain('tan'), 'practice': () => window.__hw.setPractice(true),
     'settings': () => document.getElementById('btnSettings').click(), 'solve section': () => { const s = document.querySelector('.sec-hw'); if (s.classList.contains('collapsed')) toggleSection(s); }, 'a lock': () => pills[0].lockBtn.click() };
   let failed = 0;
-  for (const [vname, w, h, mobile] of [['desktop', 1400, 900, 0], ['phone', 390, 844, 1]]) for (const theme of ['dark', 'light']) {
+  for (const [vname, w, h, mobile] of [['desktop', 1400, 900, 0], ['phone', 390, 844, 1]]) for (const theme of ['dark']) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, screen: { width: w, height: h }, isMobile: !!mobile, hasTouch: !!mobile, userAgent: mobile ? phoneUA : undefined });
     const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(String(e)));
     await page.goto('file://' + path.join(__dirname, 'index.html')); await page.waitForTimeout(1500);
-    await page.evaluate(t => { if (S.theme !== t) document.getElementById('btnTheme').click(); }, theme);
     const fails = await page.evaluate(() => {
       const f = [], name = e => (e.getAttribute('aria-label') || e.getAttribute('title') || e.textContent || '').trim() || (e.id && document.querySelector('label[for="' + e.id + '"]') ? 'x' : '');
       document.querySelectorAll('button').forEach(b => { if (!name(b)) f.push('button without a name: ' + b.outerHTML.slice(0, 80)); });
@@ -38,7 +37,6 @@ let axeSrc = null; try { axeSrc = require('fs').readFileSync(require.resolve('ax
     if (axeSrc) for (const [sname, fn] of Object.entries(states)) {
       const c2 = await browser.newContext({ viewport: { width: w, height: h }, screen: { width: w, height: h }, isMobile: !!mobile, hasTouch: !!mobile, userAgent: mobile ? phoneUA : undefined });
       const p2 = await c2.newPage(); await p2.goto('file://' + path.join(__dirname, 'index.html')); await p2.waitForTimeout(1200);
-      await p2.evaluate(t => { if (S.theme !== t) document.getElementById('btnTheme').click(); }, theme);
       await p2.evaluate(fn); await p2.waitForTimeout(700); await p2.addScriptTag({ content: axeSrc });
       const v = await p2.evaluate(async () => (await axe.run(document, { resultTypes: ['violations'] })).violations.map(x => x.id + ' x' + x.nodes.length + ' ' + x.nodes[0].target.join(' ').slice(-60)));
       v.forEach(x => fails.push('axe [' + sname + ']: ' + x)); await c2.close();

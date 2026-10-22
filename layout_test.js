@@ -2,7 +2,7 @@
  * For phone (portrait and landscape), tablet and desktop viewports, over random triangles:
  *   - no horizontal page scroll
  *   - every value label (pill) is fully on the canvas, no two overlap, and none sits under a floating control (undo bar, Transform panel, zoom tag)
- *   - every edge and every vertex handle is actually painted on the canvas, in the dark and the light theme
+ *   - every edge and every vertex handle is actually painted on the canvas, in the dark theme (the app's only theme)
  * Exits non-zero on any failure. */
 const path = require('path');
 const { chromium } = require(process.argv[2] || 'playwright');
@@ -11,19 +11,18 @@ const { chromium } = require(process.argv[2] || 'playwright');
   const phoneUA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148';
   const cfgs = [['phone 280', 280, 653, 1], ['phone 320', 320, 568, 1], ['phone 390', 390, 844, 1], ['phone landscape', 844, 390, 1], ['tablet', 768, 1024, 0], ['desktop 1024', 1024, 700, 0], ['desktop', 1400, 900, 0]];
   let failed = 0;
-  for (const [name, w, h, mobile] of cfgs) for (const theme of ['dark', 'light']) {
+  for (const [name, w, h, mobile] of cfgs) for (const theme of ['dark']) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, screen: { width: w, height: h }, isMobile: !!mobile, hasTouch: !!mobile, deviceScaleFactor: 2, userAgent: mobile ? phoneUA : undefined });
     const page = await ctx.newPage(); const errors = []; page.on('pageerror', e => errors.push(String(e)));
     await page.goto('file://' + path.join(__dirname, 'index.html')); await page.waitForTimeout(1800);
     const r = await page.evaluate(theme => {
-      if (S.theme !== theme) document.getElementById('btnTheme').click();
       const fails = [], cvEl = document.querySelector('canvas'), g = cvEl.getContext('2d');
       const cvr = cvEl.getBoundingClientRect(), dpr = cvEl.width / cvr.width, W0 = cvr.width, H0 = cvr.height;
       if (document.documentElement.scrollWidth > innerWidth) fails.push('horizontal scroll');
       let seed = 5; const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
       const px = (x, y) => { const d = g.getImageData(Math.round(x * dpr), Math.round(y * dpr), 1, 1).data; return [d[0], d[1], d[2]]; };
       const diff = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
-      const blockers = ['grpHist', 'xform', 'zoomtag', 'cornerHints', 'navtoggle'].map(id => document.getElementById(id)).filter(e => e && e.offsetParent);
+      const blockers = ['toolbar', 'grpHist', 'xform', 'zoomtag', 'cornerHints', 'navtoggle'].map(id => document.getElementById(id)).filter(e => e && e.offsetParent);
       let n = 0;
       for (let t = 0; t < 60 && n < 25; t++) {
         S.P = [0, 1, 2].map(() => ({ x: (rnd() - 0.5) * 5, y: (rnd() - 0.5) * 4 }));

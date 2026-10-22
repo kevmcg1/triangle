@@ -51,7 +51,7 @@ const { chromium } = require(process.argv[2] || 'playwright');
           const m = row.match(/^(sin|cos|tan|csc|sec|cot)\(([ABC])\) =/); if (!m || m[1] !== fn) continue;
           const parts = row.split('='), last = parts[parts.length - 1].trim().split(/\s\(|\s{2,}|\s[a-z]+\(/)[0];
           const cell = document.getElementById('tg_' + fn + '_' + 'ABC'.indexOf(m[2])).textContent.trim();
-          if (last !== cell && !(Math.abs(num(last) - num(cell)) <= 1e-12)) fails.push('panel ' + fn + ' ' + m[2] + ': "' + last + '" vs table "' + cell + '"');
+          if (last !== cell && !(Math.abs(num(last) - num(cell)) <= 0.5 * Math.pow(10, -tc.prec) * 1.0001 + 1e-12)) fails.push('panel ' + fn + ' ' + m[2] + ': "' + last + '" vs table "' + cell + '"');
         }
         if (typeof closeModal === 'function') closeModal();
       }
@@ -76,6 +76,40 @@ const { chromium } = require(process.argv[2] || 'playwright');
     if (cl[0].v !== window.__TRIANGLE.version) fails.push('changelog top entry ' + cl[0].v + ' is not the version ' + window.__TRIANGLE.version);
     if (days.some((d, i) => i && d >= days[i - 1])) fails.push('changelog is not newest first');
     for (const e of cl) { if (e.items.length !== 1) fails.push('changelog ' + e.v + ' has ' + e.items.length + ' sentences'); else if (e.items[0].split(/[.!?]\s/).length !== 1 || e.items[0].length > 120) fails.push('changelog ' + e.v + ' is not one short sentence'); }
+    /* the working is abbreviated to at most four decimals, every calculation used the exact values, and the final answer carries the note */
+    S.P = [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 1.3, y: 2.9 }];
+    const NOTE_TXT = 'Please note that the values used in equations are abbreviated, but, the exact value of it was used in the calculation';
+    for (const prec of [0, 2, 4, 8]) {
+      S.prec = prec; renderNow();
+      const ids = ['R', 'r', 'A', 'C', 'area', 'per', 'semi', 'h0', 'm0', 't0', 'inc', 'cir', 'ort', 'slope0', 'line0', 'exr0', 'tl0', 'nine', 'oh', 'class', 'arcC0', 'arcI0', 'seg0', 'ext0'];
+      const open = [...ids.map(id => () => openExplain(id)), ...fns.map(fn => () => openTrigExplain(fn))];
+      open.forEach((go, k) => {
+        go(); const b = document.getElementById('mBody'), name = k < ids.length ? ids[k] : fns[k - ids.length];
+        const work = [...b.querySelectorAll('.eqn-line:not(.eqn-final):not(.eqn-note)')].map(e => e.textContent).join(' ');
+        if (/\d+\.\d{5,}/.test(work)) fails.push('the working of ' + name + ' shows more than four decimals at ' + prec + ' decimals: ' + (work.match(/\d+\.\d{5,}/) || [''])[0]);
+        const notes = [...b.querySelectorAll('.eqn-note')].filter(e => e.textContent.trim() === NOTE_TXT);
+        if (notes.length !== 1) fails.push(name + ': the abbreviation note appears ' + notes.length + ' times, not once');
+        else { const fin = b.querySelector('.eqn-final'), nt = notes[0]; if (fin && !(fin.compareDocumentPosition(nt) & Node.DOCUMENT_POSITION_FOLLOWING)) fails.push(name + ': the note is not after the final answer'); }
+        if (/[\uE000-\uE002]/.test(b.textContent)) fails.push(name + ': an unsettled number token leaked into the explanation');
+      });
+      closeModal();
+    }
+    S.prec = 8; renderNow(); openExplain('R'); const fin8 = document.querySelector('#mBody .eqn-final').textContent;
+    if (!/R = \d+\.\d{8} in/.test(fin8)) fails.push('the final answer of R is not rounded to the 8 decimals set: ' + fin8);
+    if (Math.abs(parseFloat(fin8.match(/= ([\d.]+)/)[1]) - derive().R) > 5e-9) fails.push('the final answer of R is not the exact value: ' + fin8);
+    S.prec = 4; renderNow(); openTrigExplain('cot'); const cb = document.getElementById('mBody');
+    if (!cb.querySelector('.var-sin') || !cb.querySelector('.var-cos')) fails.push('the sin and cos sub-final answers have no colour of their own in the cot working');
+    closeModal();
+    /* one theme: the light theme is gone */
+    if (document.getElementById('btnTheme')) fails.push('the theme button is still there');
+    if (document.documentElement.hasAttribute('data-theme')) fails.push('the page still sets a theme');
+    if ([...document.styleSheets].some(sh => { try { return [...sh.cssRules].some(r => /data-theme|prefers-color-scheme:\s*light/.test(r.cssText)); } catch (e) { return false; } })) fails.push('a stylesheet still has theme rules');
+    /* decisions are never made on rounded values either: a corner that reads 90° at 0 decimals is not a right angle, equal-looking sides are not equal */
+    S.prec = 0; const t = Math.PI / 180 * 89.6; S.P = [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 4 * Math.cos(t), y: 4 * Math.sin(t) }]; renderNow();
+    if (derive().kind === 'Right') fails.push('89.6° was classified Right at 0 decimals');
+    S.P = [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 1.5, y: Math.sqrt(3.0004 * 3.0004 - 2.25) }]; renderNow(); if (derive().shape !== 'Scalene' && derive().shape !== 'Isosceles') fails.push('shape'); 
+    S.P = [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 0, y: 4 }]; for (const pr of [0, 4, 8]) { S.prec = pr; renderNow(); if (derive().kind !== 'Right') fails.push('the 3-4-5 triangle is not Right at ' + pr + ' decimals'); }
+    S.prec = 4;
     return { fails, audits, cells, panels };
   });
   console.log('audit checks ' + r.audits + ', trig cells ' + r.cells + ', explanation panels ' + r.panels + ', page errors ' + errors.length);
