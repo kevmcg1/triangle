@@ -134,16 +134,13 @@ function calcAudit(D) {
       for (const fn of ['sin', 'cos', 'tan', 'csc', 'sec', 'cot']) {
         const got = trigRatio(td[i], fn);
         let want = fn === 'tan' ? Math.tan(ang[i]) : fn === 'csc' ? 1 / ex.sin : fn === 'sec' ? 1 / ex.cos : fn === 'cot' ? ex.cos / ex.sin : ex[fn];
-        /* the app calls an angle right when it READS 90 at the current decimals, and then uses the exact right-triangle ratios: the ratios and
-           the true sin / cos of the angle can differ by up to half a unit of the last printed place */
-        const rightRule = td[i].mode !== 'general';
-        if (rightRule && (!Number.isFinite(got) || Math.abs(want) > 1e3)) continue;
+        /* only a genuinely 90° angle gets the exact right-triangle ratios (trigRightVertex), so every cell must match the true value */
         if (!Number.isFinite(got) || Math.abs(want) > 1e8 || Math.abs(ex.cos) < 1e-9 && (fn === 'tan' || fn === 'sec')) {
           /* only really undefined where the function is: tan / sec at 90° */
           if (Math.abs(ex.cos) < 1e-7 && (fn === 'tan' || fn === 'sec') || !Number.isFinite(want)) continue;
           if (Math.abs(want) > 1e8) continue;
         }
-        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: rightRule ? (Math.PI / 180 * Math.pow(10, -S.prec) + 1e-8) * (fn === 'sin' || fn === 'cos' ? 1 : (1 + want * want) / Math.max(1, Math.abs(want))) : Math.min(1e-2, 1e-9 * cond) });
+        model('Trigonometry', fn + ' ' + names[i], want, got, { abs: Math.max(1, Math.abs(want)), tol: Math.min(1e-2, 1e-9 * cond) });
       }
       ident('Trigonometry', 'sin² + cos² = 1 at ' + names[i], 1, ex.sin ** 2 + ex.cos ** 2, { tol: 1e-12 });
       ident('Trigonometry', 'Law of Sines ' + low[i] + ' / sin ' + names[i] + ' = 2R', 2 * D.R, sides[i] / Math.sin(D.ang[i]), { tol: 1e-8 * cond });
