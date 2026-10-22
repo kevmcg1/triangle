@@ -6,7 +6,7 @@
 
 <meta charset="utf-8">
 <meta name="robots" content="noai, noimageai">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101013">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,7 +39,7 @@
   --bg:#0b0b0d; --header:#101013; --footer:#101013;
   --panel:#0f0f12; --panel-2:#131317; --pill:#111115;
   --line:#232328; --line-2:#2e2e35;
-  --txt:#f2f2f4; --txt-2:#a0a0aa; --txt-3:#6a6a74;
+  --txt:#f2f2f4; --txt-2:#a0a0aa; --txt-3:#868690;
   --accent:#ffffff; --accent-ink:#0b0b0d;
   /* palette restricted to grayscale + the three primaries (red / green / blue) */
   --red:#ff5c5c; --red-dim:#ff8a8a; --green:#46d160; --green-dim:#7ee08a; --blue:#4ea1ff; --blue-dim:#7fb8ff;
@@ -52,9 +52,9 @@
   --bg:#f4f4f6; --header:#ffffff; --footer:#ffffff;
   --panel:#ffffff; --panel-2:#f0f0f3; --pill:#ffffff;
   --line:#e4e4ea; --line-2:#d3d3db;
-  --txt:#17171a; --txt-2:#5c5c66; --txt-3:#8c8c96;
+  --txt:#17171a; --txt-2:#5c5c66; --txt-3:#686872;
   --accent:#17171a; --accent-ink:#ffffff;
-  --red:#c22b2b; --red-dim:#d64545; --green:#158a37; --green-dim:#2f9e46; --blue:#1d4ed8; --blue-dim:#3b82f6;
+  --red:#c22b2b; --red-dim:#c42f2f; --green:#158a37; --green-dim:#1b7a35; --blue:#1d4ed8; --blue-dim:#1f5fd1;
   --lock:var(--red); --lock-ink:#2a0d0d;
   --cat-0:rgba(194,43,43,.06); --cat-1:rgba(21,138,55,.06); --cat-2:rgba(29,78,216,.06);
   --cat-3:rgba(110,110,120,.07); --cat-4:rgba(21,138,55,.1); --cat-5:rgba(29,78,216,.1); --cat-6:rgba(110,110,120,.1);
@@ -77,6 +77,10 @@ input,button,select{font-family:inherit}
              box-shadow .17s var(--ease),opacity .17s var(--ease),transform .12s var(--ease);
 }
 .tbtn:active:not([disabled]),#navtoggle:active,.stepper button:active,.pill .lockbtn:active,.iconbtn:active{transform:scale(.88)}
+/* keyboard focus: anything without a ring of its own gets one, and the clickable rows / headers (now reachable with Tab) and the value boxes show it too */
+:where(button,a,input,select,textarea):focus-visible{outline:2px solid #5b93ea;outline-offset:2px}
+.row.clickable:focus-visible,.trow:focus-visible,.sec-head:focus-visible{outline:2px solid #5b93ea;outline-offset:-2px;border-radius:6px}
+.pill:focus-within{box-shadow:0 0 0 2px #5b93ea}
 .tbtn:focus-visible,#navtoggle:focus-visible,.stepper button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--txt-3)}
 
 /* ---------------- Header / Footer ---------------- */
@@ -125,7 +129,7 @@ input,button,select{font-family:inherit}
 @supports (-webkit-text-stroke:1px black){ .logo-bot{color:transparent;-webkit-text-stroke:.9px #e4e6ea} }
 .logo-brk{display:block;font-size:1.55em;line-height:.78;color:#e8c547;opacity:.85}
 :root[data-theme="light"] .hdr-logo{color:#17171a}
-:root[data-theme="light"] .logo-bot{color:#8c8c96}
+:root[data-theme="light"] .logo-bot{color:#686872}
 @supports (-webkit-text-stroke:1px black){ :root[data-theme="light"] .logo-bot{color:transparent;-webkit-text-stroke:.9px #17171a} }
 :root[data-theme="light"] .logo-brk{color:#c9a227}
 
@@ -300,7 +304,7 @@ body.view-only #exitViewOnly{
 }
 .modal{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .modal-head{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
-.modal-head h3{font-size:13px;font-weight:600;flex:1}
+.modal-head h2{font-size:13px;font-weight:600;flex:1}
 .modal-body{overflow-y:auto;min-height:0}
 .modal-body{padding:14px 16px;font-size:12.5px;line-height:1.7;color:var(--txt-2);user-select:text}
 .modal-body .big{display:flex;gap:14px;margin-bottom:12px}
@@ -662,14 +666,14 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
 .site-head a{display:block;width:100%;padding:6px 14px;box-sizing:border-box;text-align:center;color:var(--sh-ink);text-decoration:none;border:0;transition:color .2s ease,background-color .2s ease}
 .site-head a:hover,.site-head a:focus-visible{color:var(--sh-accent);background:var(--sh-hover);text-decoration:underline;text-underline-offset:3px;outline:none}
 .foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 18px;padding:8px 14px;border-top:1px solid var(--sh-line);font-size:12px;color:var(--sh-muted)}
-.foot a{color:var(--sh-ink);text-decoration:none;border-bottom:1px solid transparent}
+.foot a{color:var(--sh-ink);text-decoration:underline;text-underline-offset:2px;border-bottom:1px solid transparent}
 .foot a:hover,.foot a:focus-visible{color:var(--sh-accent);border-bottom-color:currentColor;outline:none}
 @media (max-width:640px){.foot{padding:8px 10px}}
 :root[data-theme="light"] .site-head,:root[data-theme="light"] .foot{--sh-bar:#ffffff;--sh-line:#d9dce2;--sh-ink:#1a1c21;--sh-muted:#5f6670;--sh-accent:#1f5fd1;--sh-hover:rgba(0,0,0,.05)}
 </style>
 </head>
 <body>
-<header class="site-head" role="banner"><a href="https://kevmcg1.github.io/portfolio" target="_top" aria-label="Back to the portfolio at kevmcg1.github.io">KEVMCG1.GITHUB.IO</a></header>
+<nav class="site-head" aria-label="Portfolio"><a href="https://kevmcg1.github.io/portfolio" target="_top" aria-label="Back to the portfolio at kevmcg1.github.io">KEVMCG1.GITHUB.IO</a></nav>
 
 <header id="appHeader">
   <h1 class="hdr-logo" aria-label="Triangle Thing"><i>[</i> TRIANGLE THING <i>]</i></h1>
@@ -684,14 +688,14 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
 
 <div id="appBody">
   <aside id="sidebar">
-    <header class="side-logo" aria-hidden="true">
-      <div class="logo-mark">
+    <header class="side-logo">
+      <div class="logo-mark" aria-hidden="true">
         <span class="logo-brk">[</span>
         <span class="logo-stack"><span class="logo-top">Triangle</span><span class="logo-bot">Thing</span></span>
         <span class="logo-brk">]</span>
       </div>
       <div class="logo-rule"></div>
-      <div class="logo-foot"><span class="logo-range">3 sides · 3 angles · live math</span></div>
+      <div class="logo-foot" aria-hidden="true"><span class="logo-range">3 sides · 3 angles · live math</span></div>
     </header>
     <span class="sheet-grab" aria-hidden="true"></span>
     <div id="sideSearch" hidden></div>
@@ -700,9 +704,9 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
     <div class="side-foot">
       <div class="pf-group"><span class="pf-lbl">Decimals</span>
         <div class="stepper">
-          <button id="precDown"><i class="fa-solid fa-minus"></i></button>
+          <button id="precDown" aria-label="Fewer decimals"><i class="fa-solid fa-minus"></i></button>
           <div class="val" id="precVal">4</div>
-          <button id="precUp"><i class="fa-solid fa-plus"></i></button>
+          <button id="precUp" aria-label="More decimals"><i class="fa-solid fa-plus"></i></button>
         </div>
       </div>
       <div class="pf-group"><span class="pf-lbl">Display</span>
@@ -750,9 +754,9 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
     </div>
 
     <div id="cornerHints">
-      <span class="h" data-tip-pos="top-end" data-tip="Drag to edit" aria-label="Drag to edit"><i class="fa-solid fa-arrow-pointer"></i></span>
-      <span class="h" data-tip-pos="top-end" data-tip="Right-drag (or middle-drag) to pan" aria-label="Right-drag (or middle-drag) to pan"><i class="fa-solid fa-hand"></i></span>
-      <span class="h" data-tip-pos="top-end" data-tip="Scroll to zoom" aria-label="Scroll to zoom"><i class="fa-solid fa-magnifying-glass"></i></span>
+      <span class="h" role="img" data-tip-pos="top-end" data-tip="Drag to edit" aria-label="Drag to edit"><i class="fa-solid fa-arrow-pointer"></i></span>
+      <span class="h" role="img" data-tip-pos="top-end" data-tip="Right-drag (or middle-drag) to pan" aria-label="Right-drag (or middle-drag) to pan"><i class="fa-solid fa-hand"></i></span>
+      <span class="h" role="img" data-tip-pos="top-end" data-tip="Scroll to zoom" aria-label="Scroll to zoom"><i class="fa-solid fa-magnifying-glass"></i></span>
     </div>
     <div id="xform">
       <span class="sheet-grab" aria-hidden="true"></span>
@@ -778,7 +782,7 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
   </main>
 </div>
 
-<footer id="appFooter">
+<div id="appFooter" role="region" aria-label="Controls">
   <span class="foot-ico"><i class="fa-solid fa-arrow-pointer"></i>drag to edit</span>
   <span class="foot-ico"><i class="fa-solid fa-hand"></i>right-drag to pan</span>
   <span class="foot-ico"><i class="fa-solid fa-magnifying-glass"></i>scroll to zoom</span>
@@ -786,7 +790,7 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
   <div class="fgap"></div>
   <span class="foot-ico"><i class="fa-solid fa-keyboard"></i>Ctrl+Z / Ctrl+Y undo/redo</span>
   <span class="foot-ico"><i class="fa-solid fa-ruler"></i>type "3.4 mm" in any box</span>
-</footer>
+</div>
 
 <div id="scrim"></div>
 <nav id="tabbar" aria-label="Triangle Thing">
@@ -795,7 +799,7 @@ body.view-only #xform{opacity:0;visibility:hidden;pointer-events:none;transition
   <button type="button" data-tab="xform" aria-label="Transform"><i class="fa-solid fa-arrows-up-down-left-right"></i><span>Transform</span></button>
   <button type="button" data-tab="tools" aria-label="Tools"><i class="fa-solid fa-sliders"></i><span>Tools</span></button>
 </nav>
-<footer class="foot"><span>Triangle Thing is released under GitHub’s <a href="https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/cc0-1.0.txt" target="_blank" rel="license noopener noreferrer">Creative Commons Zero v1.0 Universal</a> license. All rights reserved.</span></footer>
+<footer class="foot" aria-label="License"><span>Triangle Thing is released under GitHub’s <a href="https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/cc0-1.0.txt" target="_blank" rel="license noopener noreferrer">Creative Commons Zero v1.0 Universal</a> license. All rights reserved.</span></footer>
 <script src="calc_audit.js"></script>
 <script>
 "use strict";
@@ -983,7 +987,13 @@ const NUM_RE = /^([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\s*(.*)$/;
 const FEET_IN_RE = /^([+-]?(?:\d+\.?\d*|\.\d+))\s*(?:'|′|’|ft|feet|foot)\s*(\d+\.?\d*|\.\d+)\s*(?:"|''|″|”|in|inch|inches)?$/;
 
 function normalizeNumeric(s) {
-  if ((s.match(/,/g) || []).length === 1 && s.indexOf(".") === -1) return s.replace(",", ".");
+  const commas = (s.match(/,/g) || []).length;
+  if (!commas) return s;
+  /* both separators: the last one is the decimal point ("1,500.5" and "1.500,5" are both 1500.5) */
+  if (s.indexOf(".") !== -1) return s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  /* one comma and nothing else: "1,5" is a decimal comma, but "1,500" is a thousands separator (a leading 0 or a comma
+     group of any other size means a decimal comma) */
+  if (commas === 1) return /^[+-]?[1-9]\d{0,2},\d{3}(?!\d)/.test(s) ? s.replace(",", "") : s.replace(",", ".");
   return s.replace(/,/g, "");
 }
 /* typed values past these limits are refused as invalid: squaring a coordinate near 1e154 overflows every formula in the sidebar
@@ -1004,6 +1014,25 @@ function parseMeasureRaw(raw, kind, fallbackUnit) {
       const F = parseFloat(fi[1]), I = parseFloat(fi[2]);
       if (isFinite(F) && isFinite(I)) return { value: F * 12 + Math.sign(F || 1) * I, unit: "ft" };
     }
+  }
+  /* the closed forms the app itself prints in Approx mode: π/4, 3π/4, 0.5π, 2π */
+  if (kind === "angle") {
+    const pm = s.match(/^([+-]?)\s*(\d+\.?\d*|\.\d+)?\s*(?:\/\s*(\d+\.?\d*))?\s*\*?\s*(?:π|pi)\s*(?:\/\s*(\d+\.?\d*))?\s*(rad|radians?)?$/);
+    if (pm && !(pm[3] && pm[4])) {
+      const den = parseFloat(pm[3] || pm[4] || "1"), co = pm[2] === undefined ? 1 : parseFloat(pm[2]);
+      if (den > 0 && isFinite(co)) return { value: (pm[1] === "-" ? -1 : 1) * co * Math.PI / den, unit: "rad" };
+    }
+  }
+  /* fractions, the way the explanations print them: 3/4, 1/2 in, 3 1/2 in */
+  const fm = s.match(/^([+-]?)(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)\s*(.*)$/);
+  if (fm && kind === "side" || fm && kind === "angle" && !/^(π|pi)/.test(fm[5])) {
+    const den = parseFloat(fm[4]);
+    if (den === 0) return null;
+    const n0 = (fm[1] === "-" ? -1 : 1) * ((fm[2] ? parseFloat(fm[2]) : 0) + parseFloat(fm[3]) / den);
+    const tok0 = fm[5].trim().replace(/\.$/, "");
+    const table0 = kind === "side" ? LEN_ALIAS : ANG_ALIAS, defs0 = kind === "side" ? LEN : ANG;
+    if (tok0 === "") return { value: n0 * defs0[fallbackUnit].f, unit: null };
+    return table0[tok0] ? { value: n0 * defs0[table0[tok0]].f, unit: table0[tok0] } : null;
   }
   const m = s.match(NUM_RE);
   if (!m) return null;
@@ -1861,11 +1890,11 @@ function makePill(kind, i) {
     '<div class="pill-body">' +
       '<div class="pill-main">' +
         '<span class="tag">' + tag + '</span>' +
-        '<input type="text" spellcheck="false" autocomplete="off" autocapitalize="off">' +
+        '<input type="text" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="' + (kind === "side" ? "Side " + tag + " length" : "Angle " + tag) + '">' +
         '<span class="warn"><i class="fa-solid fa-triangle-exclamation"></i></span>' +
       '</div>' +
       '<div class="pill-alt"></div>' +
-      (kind === "angle" ? '<div class="pill-coord"><span>x</span><input class="cx" type="text"><span>y</span><input class="cy" type="text"></div>' : '') +
+      (kind === "angle" ? '<div class="pill-coord"><span>x</span><input class="cx" type="text" aria-label="Corner ' + tag + ' x coordinate"><span>y</span><input class="cy" type="text" aria-label="Corner ' + tag + ' y coordinate"></div>' : '') +
     '</div>' +
     '<button class="lockbtn" tabindex="-1"><i class="fa-solid fa-lock-open"></i></button>' +
     '<svg class="lockring" aria-hidden="true"><rect class="draw"/><rect class="draw rot"/></svg>';
@@ -2213,6 +2242,8 @@ function layoutPills(D) {
     rec.el.classList.toggle("ring-full", locked && !rec.lockAnimating);
     rec.el.classList.toggle("selected", rec.kind === "angle" && S.selected.has(i));
     rec.icon.className = locked ? "fa-solid fa-lock" : "fa-solid fa-lock-open";
+    rec.lockBtn.setAttribute("aria-label", (locked ? "Unlock " : "Lock ") + (rec.kind === "side" ? "side " + "abc"[rec.i] : "angle " + "ABC"[rec.i]));
+    rec.lockBtn.setAttribute("aria-pressed", locked ? "true" : "false");
 
     let conflict = false;
     if (locked) {
@@ -2307,9 +2338,15 @@ const rowMeta = {};   // id -> {kind,i,label,formula(D)->text}
 
 /* animates the section open/closed using its real measured height, so
    it's smooth regardless of how much content the section holds */
+/* Enter / Space on a focused row or section header does what a click does */
+document.addEventListener("keydown", e => {
+  const t = e.target;
+  if ((e.key === "Enter" || e.key === " ") && t && t.matches && t.matches(".row.clickable,.trow,.sec-head")) { e.preventDefault(); t.click(); }
+});
 function toggleSection(sec) {
   const wrap = sec.querySelector(".sec-collapse");
   const collapsing = !sec.classList.contains("collapsed");
+  const head = sec.querySelector(".sec-head"); if (head) head.setAttribute("aria-expanded", collapsing ? "false" : "true");
   if (collapsing) {
     wrap.style.transition = "none";
     wrap.style.maxHeight = wrap.scrollHeight + "px";
@@ -2341,7 +2378,9 @@ function section(title, icon, cat) {
   sec.innerHTML =
     '<div class="sec-head"><i class="ico fa-solid ' + icon + '"></i><span>' + title +
     '</span><i class="chev fa-solid fa-chevron-down"></i></div><div class="sec-collapse"><div class="sec-body"></div></div>';
-  sec.querySelector(".sec-head").addEventListener("click", () => toggleSection(sec));
+  const head = sec.querySelector(".sec-head");
+  head.tabIndex = 0; head.setAttribute("role", "button"); head.setAttribute("aria-expanded", "true");
+  head.addEventListener("click", () => toggleSection(sec));
   statsEl.appendChild(sec);
   const body = sec.querySelector(".sec-body");
   body.parentSec = sec;
@@ -2354,7 +2393,7 @@ function addRow(body, key, id, opts) {
   row.innerHTML = (opts.icon ? opts.icon : "") + '<span class="k">' + key + '</span><span class="v"></span>';
   body.appendChild(row);
   refs[id] = row.querySelector(".v");
-  if (opts.info) { rowMeta[id] = opts.info; row.addEventListener("click", () => openExplain(id)); }
+  if (opts.info) { rowMeta[id] = opts.info; row.tabIndex = 0; row.setAttribute("role", "button"); row.addEventListener("click", () => openExplain(id)); }
   return row;
 }
 const gap = body => { const s = document.createElement("div"); s.style.height = "6px"; body.appendChild(s); };
@@ -2468,6 +2507,7 @@ function rowIcon(kind) { return ROW_ICONS[kind] ? ROW_ICONS[kind]() : ""; }
   for (const f of fns) {
     const tr = document.createElement("div"); tr.className = "trow";
     tr.innerHTML = '<span class="fn">' + f + '</span>' + [0,1,2].map(i => '<span class="c" id="tg_' + f + '_' + i + '"></span>').join("");
+    tr.tabIndex = 0; tr.setAttribute("role", "button");
     tr.addEventListener("click", () => openTrigExplain(f));
     wrap.appendChild(tr);
     for (let i = 0; i < 3; i++) refs["tg_" + f + "_" + i] = tr.querySelector("#tg_" + f + "_" + i);
@@ -2772,7 +2812,8 @@ function updateStats(D) {
    ======================================================================= */
 const modalRoot = document.createElement("div");
 modalRoot.className = "modal-backdrop";
-modalRoot.innerHTML = '<div class="modal"><div class="modal-head"><h3 id="mTitle"></h3><button class="iconbtn" id="mClose"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body" id="mBody"></div></div>';
+modalRoot.inert = true; /* closed: its (empty) heading and buttons stay out of the accessibility tree and the tab order */
+modalRoot.innerHTML = '<div class="modal"><div class="modal-head"><h2 id="mTitle"></h2><button class="iconbtn" id="mClose" aria-label="Close explanation"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body" id="mBody"></div></div>';
 stage.appendChild(modalRoot); /* a sibling of #viewport, not a child of it — a real panel below the grid, not an overlay on top of it */
 document.getElementById("mClose").addEventListener("click", closeModal);
 /* turns "6.123e-17" into the full, non-scientific decimal string it
@@ -2868,6 +2909,7 @@ function markActiveHighlight() {
 let panelAnim = null;
 function setPanelOpen(open, targetPx, ms, keepState) {
   if (panelAnim) cancelAnimationFrame(panelAnim);
+  if (open) modalRoot.inert = false;
   const from = modalRoot.getBoundingClientRect().height;
   const to = open ? targetPx : 0;
   const t0 = performance.now(), dur = ms === undefined ? 260 : ms;
@@ -2884,7 +2926,7 @@ function setPanelOpen(open, targetPx, ms, keepState) {
       /* keepState: only tucked away for view-only, not closed — the open
          explanation (and its highlight) comes back when view-only ends */
       if (!open && keepState) { requestRender(); }
-      else if (!open) { modalRoot.classList.remove("show"); S.highlight = null; S.highlightKey = null; S.activeExplain = null; modalPainted = null; requestRender(); }
+      else if (!open) { modalRoot.inert = true; modalRoot.classList.remove("show"); S.highlight = null; S.highlightKey = null; S.activeExplain = null; modalPainted = null; requestRender(); }
       else if (!keepState) { modalRoot.classList.add("show"); fitView(150, 420); }
     }
   };
@@ -3113,7 +3155,7 @@ const EXTRA_EXPLAIN = {};
         EL("Slope = " + FR(H.ncp(w.y, n2) + " − " + H.ncp(u.y, n1), H.ncp(w.x, n2) + " − " + H.ncp(u.x, n1)))];
       if (ln.vertical) { lines.push(BOXED("The run is 0, so the line is vertical: it has no slope, and its equation is x = " + dp(ln.x0))); return lines; }
       lines.push(BOXED("Slope = " + NF(ln.m)));
-      if (withLine) { lines.push(EL("Point-slope form through " + V(n1, n1) + ":  y − y₁ = m(x − x₁)"), EL("y = m·x + b  with  b = y₁ − m·x₁ = " + H.ncp(u.y, n1) + " − " + NF(ln.m) + " · " + H.ncp(u.x, n1) + " = " + NF(ln.b)), BOXED("Line " + ends[i] + ":  " + ln.eqText), NOTE("Two lines are perpendicular when their slopes multiply to −1, and parallel when they are equal.")); }
+      if (withLine) { lines.push(EL("Point-slope form through " + V(n1, n1) + ":  y − y₁ = m(x − x₁)"), EL("y = m·x + b  with  b = y₁ − m·x₁ = " + H.ncp(u.y, n1) + " − " + (ln.m < 0 ? "(" + NF(ln.m) + ")" : NF(ln.m)) + " · " + H.ncp(u.x, n1) + " = " + NF(ln.b)), BOXED("Line " + ends[i] + ":  " + ln.eqText), NOTE("Two lines are perpendicular when their slopes multiply to −1, and parallel when they are equal.")); }
       return lines; };
     EXTRA_EXPLAIN["slope" + i] = H => ({ title: "Slope of side " + lw[i] + " (" + ends[i] + ")", lines: slopeLines(H, false), approxS: "", exactS: sideLine(H.D, i).slopeText });
     EXTRA_EXPLAIN["line" + i] = H => ({ title: "Line through " + ends[i][0] + " and " + ends[i][1], lines: slopeLines(H, true), approxS: "", exactS: sideLine(H.D, i).eqText });
@@ -3126,7 +3168,8 @@ const EXTRA_EXPLAIN = {};
   EXTRA_EXPLAIN.oh = H => ({ title: "Distance between orthocenter and circumcenter (OH)",
     lines: [EL("The orthocenter H, centroid G and circumcenter O lie on one straight line, the Euler line, and the centroid divides O to H in the ratio OG : GH = 1 : 2."),
       EL("Euler: OH² = 9" + V("R", "R") + "² − (" + V("a", "a") + "² + " + V("b", "b") + "² + " + V("c", "c") + "²)"),
-      EL("OH² = 9 · " + H.NLc(H.D.R, "R") + "² − (" + H.NLc(H.D.a, "a") + "² + " + H.NLc(H.D.b, "b") + "² + " + H.NLc(H.D.c, "c") + "²)"),
+      EL("OH² = 9 · " + H.NLQc(H.D.R, "R") + " − (" + H.NLQc(H.D.a, "a") + " + " + H.NLQc(H.D.b, "b") + " + " + H.NLQc(H.D.c, "c") + ")"),
+      EL("OH² = " + H.NLQc(H.D.oh, "R")),
       BOXED("OH = " + H.NLc(H.D.oh, "R")), NOTE("In a right triangle the orthocenter is the right-angle corner and the circumcenter is the midpoint of the hypotenuse.")],
     approxS: lenSymbolic(H.D.oh, H.U), exactS: lenDecimal(H.D.oh, H.U) });
   EXTRA_EXPLAIN.class = H => { const D = H.D, f = LEN[H.U].f, so = D.sides.map(v => v / f).sort((x, y) => x - y), sp = specialFlags(D), mx = Math.max(D.A, D.B, D.C);
@@ -3178,7 +3221,7 @@ function openExplain(id, live) {
   let title = "", lines = [], approxS = "", exactS = "";
 
   if (EXTRA_EXPLAIN[id]) {
-    const x = EXTRA_EXPLAIN[id]({ D, U, NLc, NAc, NDc, NC, ncp: (inches, letter) => ncpFmt(inches, U, letter) });
+    const x = EXTRA_EXPLAIN[id]({ D, U, NLc, NLQc, NAc, NDc, NC, ncp: (inches, letter) => ncpFmt(inches, U, letter) });
     title = x.title; lines = x.lines; approxS = x.approxS; exactS = x.exactS;
   } else if (id === "a" || id === "b" || id === "c") {
     const i = { a: 0, b: 1, c: 2 }[id];
@@ -3593,7 +3636,7 @@ function renderNow() {
       const f = LEN[S.lenUnit].f, g = gridStep();
       const zt = document.getElementById("zoomtag");
       if (zt) zt.innerHTML = Math.round(S.view.z / 74 * 100) + "%  ·  grid " + trim(g / f) + " " + LEN[S.lenUnit].sym +
-        " <span style='opacity:.6'>(" + trim(g / LEN[altLenUnit(g, S.lenUnit)].f) + " " + LEN[altLenUnit(g, S.lenUnit)].sym + ")</span>";
+        " <span style='opacity:.9'>(" + trim(g / LEN[altLenUnit(g, S.lenUnit)].f) + " " + LEN[altLenUnit(g, S.lenUnit)].sym + ")</span>";
     });
     /* the explanation panel, if one is open, tracks the triangle live —
        dragging a handle or typing a new value updates its numbers in
@@ -4366,7 +4409,7 @@ document.getElementById("btnSettings").addEventListener("click", () => {
   const rows = COLOR_VARS.map(([v, label]) => {
     const cur = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
     const hex = cur.startsWith("#") ? cur : "#101012";
-    return '<div class="settings-row"><span class="lbl">' + label + '</span><input type="color" data-var="' + v + '" value="' + hex + '"></div>';
+    return '<div class="settings-row"><span class="lbl">' + label + '</span><input type="color" data-var="' + v + '" value="' + hex + '" aria-label="' + label + '"></div>';
   }).join("");
   const resetRow = '<div class="settings-row"><span class="lbl">Reset all custom colors</span><button class="tbtn" id="mResetColors">Reset</button></div>';
   openModal("Appearance", '<div class="card">' + rows + resetRow + '</div>');

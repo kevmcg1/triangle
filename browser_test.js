@@ -64,6 +64,12 @@ const { chromium } = require(process.argv[2] || 'playwright');
     if (e.tan !== 'undefined' || e.sec !== 'undefined') fails.push('3-4-5: tan/sec of 90° should be undefined, got ' + e.tan + ' / ' + e.sec);
     e = edge([[0, 0], [2, 0], [1, 0]], 4);
     if (e.D.kind !== 'Degenerate') fails.push('flat triangle classified ' + e.D.kind);
+    /* typed values: units, fractions, thousands separators and the π forms the app prints in Approx mode */
+    const near = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(y));
+    const cases = [['side', '3 1/2 in', 3.5], ['side', '1/2', 0.5], ['side', '5\'6"', 66], ['side', '1,500', 1500], ['side', '1,5', 1.5], ['side', '1,500.5', 1500.5], ['side', '1.500,5', 1500.5], ['side', '2 cm', 2 / 2.54],
+      ['side', '25.4 mm', 1], ['side', '1 ft', 12], ['angle', 'π/2', Math.PI / 2], ['angle', '0.5 pi', Math.PI / 2], ['angle', '3π/4 rad', 3 * Math.PI / 4], ['angle', '100 gon', Math.PI / 2], ['angle', '45', Math.PI / 4]];
+    for (const [k, txt, want] of cases) { const r = parseMeasure(txt, k, k === 'side' ? 'in' : 'deg'); if (!r || !near(r.value, want)) fails.push('parseMeasure(' + JSON.stringify(txt) + ') = ' + (r && r.value) + ', want ' + want); }
+    for (const [k, txt] of [['side', '3 apples'], ['side', '1/0'], ['side', 'abc'], ['angle', 'π/0'], ['side', '--3']]) if (parseMeasure(txt, k, 'in')) fails.push('parseMeasure(' + JSON.stringify(txt) + ') should be refused');
     return { fails, audits, cells, panels };
   });
   console.log('audit checks ' + r.audits + ', trig cells ' + r.cells + ', explanation panels ' + r.panels + ', page errors ' + errors.length);
