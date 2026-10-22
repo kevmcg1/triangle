@@ -19,7 +19,7 @@
 .shop-cl-sub{margin:2px 0 14px;color:var(--txt-2,#8a8f97);font-size:12.5px}
 .shop-cl-card h4{margin:16px 0 2px;font-size:14px;font-weight:600;display:flex;align-items:baseline;gap:8px}
 .shop-cl-card h4 small{font-size:11.5px;font-weight:500;color:var(--txt-2,#8a8f97)}
-.shop-cl-card h4 em{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:999px;background:color-mix(in srgb,var(--c0,#5b93ea) 22%,transparent);color:var(--c0,#5b93ea)}
+.shop-cl-card h4 em{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:999px;background:color-mix(in srgb,var(--c0,#5b93ea) 22%,transparent);color:color-mix(in srgb,var(--c0,#5b93ea) 45%,#fff)}
 .shop-cl-card .t{margin:0 0 4px;color:var(--txt-2,#8a8f97);font-size:12.5px}
 .shop-cl-card ul{margin:0;padding-left:18px}
 .shop-cl-card li{margin:0 0 4px;color:var(--txt-2,#c9ccd1)}
