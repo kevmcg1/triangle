@@ -70,6 +70,12 @@ const { chromium } = require(process.argv[2] || 'playwright');
       ['side', '25.4 mm', 1], ['side', '1 ft', 12], ['angle', 'π/2', Math.PI / 2], ['angle', '0.5 pi', Math.PI / 2], ['angle', '3π/4 rad', 3 * Math.PI / 4], ['angle', '100 gon', Math.PI / 2], ['angle', '45', Math.PI / 4]];
     for (const [k, txt, want] of cases) { const r = parseMeasure(txt, k, k === 'side' ? 'in' : 'deg'); if (!r || !near(r.value, want)) fails.push('parseMeasure(' + JSON.stringify(txt) + ') = ' + (r && r.value) + ', want ' + want); }
     for (const [k, txt] of [['side', '3 apples'], ['side', '1/0'], ['side', 'abc'], ['angle', 'π/0'], ['side', '--3']]) if (parseMeasure(txt, k, 'in')) fails.push('parseMeasure(' + JSON.stringify(txt) + ') should be refused');
+    /* the changelog: one entry per day, each a single short sentence, newest first, top entry = the version shown */
+    const cl = window.__TRIANGLE.changelog, days = cl.map(e => e.date);
+    if (new Set(days).size !== days.length) fails.push('changelog has more than one entry on a day');
+    if (cl[0].v !== window.__TRIANGLE.version) fails.push('changelog top entry ' + cl[0].v + ' is not the version ' + window.__TRIANGLE.version);
+    if (days.some((d, i) => i && d >= days[i - 1])) fails.push('changelog is not newest first');
+    for (const e of cl) { if (e.items.length !== 1) fails.push('changelog ' + e.v + ' has ' + e.items.length + ' sentences'); else if (e.items[0].split(/[.!?]\s/).length !== 1 || e.items[0].length > 120) fails.push('changelog ' + e.v + ' is not one short sentence'); }
     return { fails, audits, cells, panels };
   });
   console.log('audit checks ' + r.audits + ', trig cells ' + r.cells + ', explanation panels ' + r.panels + ', page errors ' + errors.length);
