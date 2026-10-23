@@ -22,12 +22,26 @@
 
   /* ------------------------------------------------------------------ the solver (inches and radians inside) */
   const EPS = 1e-9;
+  /* what is still missing, worded for the values typed so far (used by the solver and by the live hint) */
+  function needText(sIdx, aIdx) {
+    const ns = sIdx.length, na = aIdx.length, have = sIdx.map(i => 'side ' + low[i]).concat(aIdx.map(i => 'angle ' + names[i]));
+    const head = have.length ? 'You have ' + have.join(' and ') + '. ' : 'Nothing entered yet. ';
+    if (ns + na >= 3 && ns === 0) return head + 'Three angles only give the shape, not the size: add at least one side (replace an angle with a side, or enter a side with just two angles).';
+    if (ns + na === 0) return head + 'Any ONE of these sets solves a triangle: three sides, two sides + an angle, or one side + two angles. At least one value must be a side.';
+    if (ns === 0 && na === 1) return head + 'Add a side and one more value (another angle, or a second side): at least one side is always needed.';
+    if (ns === 0) return head + 'Two angles give the third automatically, but a side is needed for the size. Add one side.';
+    if (ns === 1 && na === 0) return head + 'Add two more: another side + an angle, or two angles (any combination that makes three values).';
+    if (ns === 2 && na === 0) return head + 'Add one more: the third side, or an angle (the one between them, or one opposite a given side).';
+    if (ns === 1 && na === 1) return head + 'Add one more value: another angle (the third is automatic) or another side.';
+    return head + 'Add one more value.';
+  }
   function solveTriangle(k) {
     const sd = [k.a, k.b, k.c], an = [k.A, k.B, k.C];
     const sIdx = [0, 1, 2].filter(i => sd[i] !== undefined), aIdx = [0, 1, 2].filter(i => an[i] !== undefined);
     const ns = sIdx.length, na = aIdx.length;
     const out = { kind: '', title: '', sols: [], notes: [], error: '' };
-    if (ns + na !== 3) { out.error = ns + na < 3 ? 'Enter three values, at least one of them a side.' : 'Enter exactly three values: a fourth would either be redundant or contradict the others.'; return out; }
+    if (ns + na < 3) { out.need = needText(sIdx, aIdx); out.error = out.need; return out; }
+    if (ns + na > 3) { out.error = 'Enter exactly three values: a fourth would either be redundant or contradict the others.'; return out; }
     for (const i of sIdx) if (!(sd[i] > 0)) { out.error = 'Side ' + low[i] + ' must be positive.'; return out; }
     for (const i of aIdx) if (!(an[i] > 0 && an[i] < Math.PI)) { out.error = 'Angle ' + names[i] + ' must be between 0° and 180°.'; return out; }
     const mk = (a, b, c, A, B, C, steps) => ({ a, b, c, A, B, C, steps });
@@ -276,9 +290,10 @@ body.hw-hide #stats .sec:not(.sec-hw) .v,body.hw-hide #stats .sec:not(.sec-hw) .
   const openSec = () => { if (sec.classList.contains('collapsed')) toggleSection(sec); };
   const root = document.createElement('div'); root.className = 'hw'; body.appendChild(root);
   root.innerHTML = `
-    <div class="hw-note">Enter any three values (at least one side) and solve the triangle, ambiguous case included. Units can be typed: <i>3.4 mm</i>, <i>1.2 rad</i>.</div>
+    <div class="hw-note">Enter as few values as you have (any three, at least one a side) and solve the triangle; it tells you what is still missing, ambiguous case included. Units can be typed: <i>3.4 mm</i>, <i>1.2 rad</i>.</div>
     <div class="hw-grid" id="hwIn">${low.map(l => `<label>side ${l}<input type="text" data-k="${l}" placeholder="—" autocomplete="off" spellcheck="false"></label>`).join('')}${names.map(l => `<label>angle ${l}<input type="text" data-k="${l}" placeholder="—" autocomplete="off" spellcheck="false"></label>`).join('')}</div>
     <div class="hw-row"><button class="go" id="hwSolve">Solve</button><button id="hwUse" title="Fill the six boxes with the triangle on screen">Use this triangle</button><button id="hwClear">Clear</button></div>
+    <div class="hw-note" id="hwNeed"></div>
     <div id="hwOut"></div>
     <div class="hw-row" style="border-top:1px solid var(--side-line);padding-top:8px"><button id="hwPrac">Practice</button><button id="hwExam" title="Ten problems, no feedback until the end">Exam</button><span class="hw-score" id="hwScore"></span></div>
     <div id="hwPracBox" hidden></div>`;
@@ -314,9 +329,16 @@ body.hw-hide #stats .sec:not(.sec-hw) .v,body.hw-hide #stats .sec:not(.sec-hw) .
     const res = solveTriangle(k); showSolution(res); return res;
   }
   $('#hwSolve').addEventListener('click', solveNow);
+  /* live guide: says what is still needed while typing, so a short entry is never a dead end */
+  function updateNeed() {
+    const el = $('#hwNeed'), idx = (up) => inputs.filter(i => i.value.trim() && (i.dataset.k === i.dataset.k.toUpperCase()) === up).map(i => (up ? names : low).indexOf(i.dataset.k));
+    const sI = idx(false), aI = idx(true), n = sI.length + aI.length;
+    el.textContent = n >= 3 && sI.length ? '' : needText(sI, aI); el.hidden = !el.textContent;
+  }
+  inputs.forEach(inp => inp.addEventListener('input', updateNeed)); updateNeed();
   inputs.forEach(inp => inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') solveNow(); }));
-  $('#hwClear').addEventListener('click', () => { inputs.forEach(i => { i.value = ''; i.classList.remove('bad'); }); $('#hwOut').innerHTML = ''; });
-  $('#hwUse').addEventListener('click', () => { const D = derive(); inputs.forEach(inp => { const l = inp.dataset.k, isA = l === l.toUpperCase(), i = (isA ? names : low).indexOf(l); inp.value = isA ? fmt(deg(D.ang[i]), S.prec) + '°' : fmt(D.sides[i] / U().f, S.prec) + ' ' + U().sym; }); });
+  $('#hwClear').addEventListener('click', () => { inputs.forEach(i => { i.value = ''; i.classList.remove('bad'); }); $('#hwOut').innerHTML = ''; updateNeed(); });
+  $('#hwUse').addEventListener('click', () => { const D = derive(); inputs.forEach(inp => { const l = inp.dataset.k, isA = l === l.toUpperCase(), i = (isA ? names : low).indexOf(l); inp.value = isA ? fmt(deg(D.ang[i]), S.prec) + '°' : fmt(D.sides[i] / U().f, S.prec) + ' ' + U().sym; });  updateNeed(); });
 
   /* ---- practice ---- */
   const PR = { on: false, exam: false, topic: 'all', cur: null, tried: 0, right: 0, streak: 0, done: false, list: [], n: 0 };
