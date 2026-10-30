@@ -570,13 +570,15 @@ html.mobile body.view-only #tabbar,html.mobile body.view-only #grpHist{opacity:0
 html.mobile #exitViewOnly{top:calc(10px);right:10px;height:44px;border-radius:14px}
 /* the canvas labels: roomier touch targets, and nothing that needs a hover */
 html.touch .pill{box-shadow:0 3px 10px rgba(0,0,0,.4)}
-html.mobile .pill input{font-size:13px;width:60px}
+/* 16px: iOS Safari zooms the whole page in when an input under 16px gets focus, and the zoomed-in page is what scrambled the layout while typing */
+html.mobile .pill input{font-size:16px;width:60px}
 html.mobile .pill .tag{padding:0 3px 0 8px}
 html.mobile .pill-alt{display:none}
 html.mobile .pill .lockbtn{width:34px}
 html.mobile .pill-body{min-height:40px}
 html.mobile .pill:not(.active):not(.selected) .pill-coord{display:none}
-html.mobile .pill-coord input{width:44px;font-size:11px}
+html.mobile .pill-coord input{width:44px;font-size:16px}
+html.mobile .pill.active{z-index:6} /* the box being typed in is never covered by a neighbouring label */
 @media (max-width:380px){ html.mobile .side-foot{flex-wrap:wrap} }
 /* explanation panel sits above the tab bar */
 html.mobile .modal-head{padding:12px 16px}
@@ -1848,7 +1850,7 @@ const pills = [];
    (which measures under 0.05ms). canvas measureText has no layout
    dependency at all, so this can never force a reflow. */
 const measureCtx = document.createElement("canvas").getContext("2d");
-measureCtx.font = "500 12px Inter, sans-serif";
+measureCtx.font = "500 " + (window.__mobile ? 16 : 12) + "px Inter, sans-serif"; /* matches the pill input's CSS size */
 if ("letterSpacing" in measureCtx) measureCtx.letterSpacing = "-0.01em";
 function autoWidth(input) {
   const w = measureCtx.measureText(input.value || " ").width;
@@ -1858,7 +1860,7 @@ function autoWidth(input) {
    numbers ("-1.3325" cut to "-1.332") as soon as a value had a couple of
    integer digits or more decimals — sized to their text the same way */
 const coordMeasureCtx = document.createElement("canvas").getContext("2d");
-coordMeasureCtx.font = "500 10px Inter, sans-serif";
+coordMeasureCtx.font = "500 " + (window.__mobile ? 16 : 10) + "px Inter, sans-serif";
 function autoWidthCoord(input) {
   const w = coordMeasureCtx.measureText(input.value || " ").width;
   const px = Math.max(30, Math.ceil(w) + 4) + "px";
@@ -4514,7 +4516,7 @@ if (window.__mobile) {
   (portrait.addEventListener ? portrait.addEventListener.bind(portrait, "change") : portrait.addListener.bind(portrait))(() => setTimeout(() => fitView(undefined, 300), 250));
 }
 </script>
-<script src="homework.js?v=1"></script>
+<script src="homework.js?v=2"></script>
 <script src="tipfit.js?v=1"></script>
 <script src="version.js?v=6"></script>
 <script src="changelog.js?v=2"></script>

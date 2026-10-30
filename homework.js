@@ -263,6 +263,7 @@
 .hw label{display:grid;gap:2px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--txt-3)}
 .hw input[type=text]{width:100%;height:30px;background:var(--raise);border:1px solid transparent;border-radius:6px;color:var(--side-ink);padding:0 8px;font:500 12px 'Inter',sans-serif;outline:0;user-select:text}
 .hw input[type=text]:focus{border-color:var(--txt-3)}
+html.mobile .hw input[type=text]{height:40px;font-size:16px} /* 16px: iOS Safari zooms the page in on focus below that */
 .hw input.bad{border-color:var(--lock)}
 .hw button{height:30px;padding:0 11px;border:0;border-radius:6px;background:var(--raise);color:var(--side-ink);font:600 11px 'Inter',sans-serif;cursor:pointer}
 .hw button:hover{background:var(--raise-2)}
