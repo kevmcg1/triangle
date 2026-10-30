@@ -216,6 +216,11 @@ body.view-only #exitViewOnly{
 /* ---------------- Pills ---------------- */
 .pill{position:absolute;pointer-events:auto;display:flex;align-items:stretch;background:var(--pill);border:1px solid var(--line-2);border-radius:8px;transform:translate(-50%,-50%);box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .pill:hover{border-color:var(--txt-3)}
+.pill{touch-action:none;cursor:grab}
+.pill input{cursor:text}
+.pill .lockbtn{cursor:pointer}
+.pill.dragging,.pill.dragging input{cursor:grabbing;user-select:none;-webkit-user-select:none}
+.pill.dragging{z-index:7;border-color:var(--txt);box-shadow:0 8px 24px rgba(0,0,0,.55)}
 .pill-body{display:flex;flex-direction:column;justify-content:center;padding:4px 0 5px;min-height:36px}
 .pill-main{display:flex;align-items:center;height:16px}
 .pill .tag{padding:0 5px 0 9px;font-size:10.5px;font-weight:600;color:var(--txt-3);font-style:italic;display:flex;align-items:center;height:100%}
@@ -1952,7 +1957,7 @@ function makePill(kind, i) {
     if (commitValue(kind, i, next)) { rec.input.value = pillText(rec, next); autoWidth(rec.input); pushHistorySoon(); }
   });
   rec.input.addEventListener("focus", () => { el.classList.add("active"); rec.input.select(); base = null; });
-  rec.input.addEventListener("blur",  e => { el.classList.remove("active"); base = null; flushHistory(); if (!(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pill"))) reframeIfPoor(); requestRender(); });
+  rec.input.addEventListener("blur",  e => { el.classList.remove("active"); base = null; flushHistory(); if (!labelDragging && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pill"))) reframeIfPoor(); requestRender(); });
   rec.lockBtn.addEventListener("click", () => toggleLock(kind, i));
 
   if (kind === "angle") {
@@ -2003,13 +2008,57 @@ function makePill(kind, i) {
     rec.cy.addEventListener("input", () => { autoWidthCoord(rec.cy); commitCoord(); });
     rec.cx.addEventListener("focus", () => { el.classList.add("active"); rec.cx.select(); base = null; });
     rec.cy.addEventListener("focus", () => { el.classList.add("active"); rec.cy.select(); base = null; });
-    rec.cx.addEventListener("blur", e => { base = null; flushHistory(); if (!(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pill"))) reframeIfPoor(); requestRender(); });
-    rec.cy.addEventListener("blur", e => { base = null; flushHistory(); if (!(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pill"))) reframeIfPoor(); requestRender(); });
+    rec.cx.addEventListener("blur", e => { base = null; flushHistory(); if (!labelDragging && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pill"))) reframeIfPoor(); requestRender(); });
+    rec.cy.addEventListener("blur", e => { base = null; flushHistory(); if (!labelDragging && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".pill"))) reframeIfPoor(); requestRender(); });
     [rec.cx, rec.cy].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Escape") inp.blur(); }));
   }
 
+  /* Drag a label anywhere to get it out of the way: grab it by its letter, its box or its edge (the lock button and a plain tap
+     still do what they always did). It then stays put relative to its corner / side, with an arrow pointing back, until you
+     double-click / double-tap the letter, or reset the triangle. */
+  let drag = null, justDragged = false;
+  el.addEventListener("pointerdown", e => {
+    if (e.button !== undefined && e.button !== 0 && e.pointerType === "mouse") return;
+    if (e.target.closest(".lockbtn") || !rec.pos) return;
+    const r = el.getBoundingClientRect();
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, gx: e.clientX - (r.left + r.width / 2), gy: e.clientY - (r.top + r.height / 2), on: false };
+    /* listened for on the window, not the label: a quick flick can leave the label before the first move arrives */
+    window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", endDrag); window.addEventListener("pointercancel", endDrag);
+  });
+  const onMove = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.on) {
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < (e.pointerType === "mouse" ? 4 : 8)) return;
+      drag.on = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+      el.classList.add("dragging");
+      const a = document.activeElement;
+      if (a && el.contains(a)) { labelDragging = true; a.blur(); labelDragging = false; } /* typing stops: this gesture is a move */
+    }
+    e.preventDefault();
+    const c = cv.getBoundingClientRect(), P = rec.pos;
+    const hw = P.hw, hh = P.hh;
+    let x = e.clientX - c.left - drag.gx, y = e.clientY - c.top - drag.gy;
+    if (W > 2 * hw + 12) x = clamp(x, hw + 6, W - hw - 6);
+    if (HH > 2 * hh + 12) y = clamp(y, hh + 6, HH - hh - 6);
+    rec.off = { x: x - P.tx, y: y - P.ty };
+    requestRender();
+  };
+  const endDrag = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", endDrag); window.removeEventListener("pointercancel", endDrag);
+    const was = drag.on; drag = null;
+    el.classList.remove("dragging");
+    if (was) { justDragged = true; setTimeout(() => { justDragged = false; }, 350); requestRender(); }
+  };
+  /* the click that follows a drag must not focus the box or flip the lock */
+  el.addEventListener("click", e => { if (justDragged) { e.preventDefault(); e.stopPropagation(); } }, true);
+  el.querySelector(".tag").addEventListener("dblclick", () => { if (rec.off) { rec.off = null; requestRender(); } });
+  rec.resetLabel = () => { rec.off = null; };
+
   pills.push(rec);
 }
+let labelDragging = false; /* true while a label drag is taking focus away from a box, so that blur doesn't reframe the view */
 for (let i = 0; i < 3; i++) makePill("angle", i);
 for (let i = 0; i < 3; i++) makePill("side", i);
 
@@ -2257,6 +2306,13 @@ function layoutPills(D) {
     if (HH > 2 * hh + 12) py = clamp(py, hh + 6, HH - hh - 6);
     /* positions are applied in pass 4, after overlapping labels have been pulled apart */
     rec.pos = { x: px, y: py, ix: px, iy: py, hw, hh, tx, ty };
+    /* a label the user dragged away keeps its place relative to the corner / side it describes, wherever the triangle goes, and
+       the other labels make room for it instead of the other way round */
+    if (rec.off) {
+      rec.pos.fixed = true;
+      rec.pos.x = W > 2 * hw + 12 ? clamp(tx + rec.off.x, hw + 6, W - hw - 6) : tx + rec.off.x;
+      rec.pos.y = HH > 2 * hh + 12 ? clamp(ty + rec.off.y, hh + 6, HH - hh - 6) : ty + rec.off.y;
+    }
 
     const locked = S.lock[rec.kind][i];
     rec.el.classList.toggle("locked", locked || rec.forceLockedVisual);
@@ -2284,20 +2340,24 @@ function layoutPills(D) {
      vertex or side it describes, so it is still clear which label belongs to what */
   const GAP = 6, crowded = new Set();
   /* separating two labels must not push one back off the screen: the same clamp as pass 3, after every move */
-  const keepOn = P => { if (W > 2 * P.hw + 12) P.x = clamp(P.x, P.hw + 6, W - P.hw - 6); if (HH > 2 * P.hh + 12) P.y = clamp(P.y, P.hh + 6, HH - P.hh - 6); };
+  const keepOn = P => { if (P.fixed) return; if (W > 2 * P.hw + 12) P.x = clamp(P.x, P.hw + 6, W - P.hw - 6); if (HH > 2 * P.hh + 12) P.y = clamp(P.y, P.hh + 6, HH - P.hh - 6); };
   for (let it = 0; it < 40; it++) {
     let moved = false;
     for (let m = 0; m < pills.length; m++) for (let n = m + 1; n < pills.length; n++) {
       const A = pills[m].pos, B = pills[n].pos;
       const ox = A.hw + B.hw + GAP - Math.abs(A.x - B.x), oy = A.hh + B.hh + GAP - Math.abs(A.y - B.y);
       if (ox <= 0 || oy <= 0) continue;
+      if (A.fixed && B.fixed) continue; /* both placed by hand: that is the user's call */
       crowded.add(m); crowded.add(n); moved = true;
+      /* a label placed by hand never moves: the other one takes the whole shift (otherwise each takes half) */
+      const wa = A.fixed ? 0 : 1, wb = B.fixed ? 0 : 1, ws = wa + wb;
       /* separate along the axis with the least overlap */
-      const dx = (A.x === B.x ? (m < n ? -1 : 1) : Math.sign(A.x - B.x)) * ox / 2;
+      const sgn = (A.x === B.x ? (m < n ? -1 : 1) : Math.sign(A.x - B.x));
+      const dxA = sgn * ox * wa / ws, dxB = -sgn * ox * wb / ws;
       /* sideways is only an option while neither label would be driven into the screen edge: otherwise they stack instead */
       const wall = P => W > 2 * P.hw + 12 && (P.x < P.hw + 6 || P.x > W - P.hw - 6);
-      if (ox < oy && !wall({ hw: A.hw, x: A.x + dx }) && !wall({ hw: B.hw, x: B.x - dx })) { A.x += dx; B.x -= dx; }
-      else { const d = (A.y === B.y ? (m < n ? -1 : 1) : Math.sign(A.y - B.y)) * oy / 2; A.y += d; B.y -= d; }
+      if (ox < oy && !wall({ hw: A.hw, x: A.x + dxA }) && !wall({ hw: B.hw, x: B.x + dxB })) { A.x += dxA; B.x += dxB; }
+      else { const sg = (A.y === B.y ? (m < n ? -1 : 1) : Math.sign(A.y - B.y)); A.y += sg * oy * wa / ws; B.y -= sg * oy * wb / ws; }
       keepOn(A); keepOn(B);
     }
     /* then out from under any floating control: to the nearest side of it that still fits on screen */
@@ -2323,7 +2383,7 @@ function layoutPills(D) {
   for (let pass = 0; pass < 3; pass++) {
     let changed = false;
     for (let m = 0; m < pills.length; m++) {
-      const P = pills[m].pos, cur = hitsAt(m, P.x, P.y); if (!cur) continue;
+      const P = pills[m].pos; if (P.fixed) continue; const cur = hitsAt(m, P.x, P.y); if (!cur) continue;
       const x0 = W > 2 * P.hw + 12 ? P.hw + 6 : W / 2, x1 = W > 2 * P.hw + 12 ? W - P.hw - 6 : W / 2, y0 = HH > 2 * P.hh + 12 ? P.hh + 6 : HH / 2, y1 = HH > 2 * P.hh + 12 ? HH - P.hh - 6 : HH / 2;
       let best = { x: P.x, y: P.y, h: cur, d: Math.hypot(P.x - P.ix, P.y - P.iy) };
       const sx = Math.max(10, (x1 - x0) / 60), sy = Math.max(10, (y1 - y0) / 30);
@@ -2338,7 +2398,7 @@ function layoutPills(D) {
   pills.forEach((rec, idx) => {
     rec.el.style.left = rec.pos.x.toFixed(1) + "px";
     rec.el.style.top  = rec.pos.y.toFixed(1) + "px";
-    drawLeader(rec, idx, crowded.has(idx));
+    drawLeader(rec, idx, crowded.has(idx) || (rec.pos.fixed && Math.hypot(rec.pos.x - rec.pos.tx, rec.pos.y - rec.pos.ty) > 30));
   });
 }
 
@@ -4314,6 +4374,7 @@ document.getElementById("btnReset").addEventListener("click", () => {
   S.units.angle = [S.angUnit, S.angUnit, S.angUnit];
   S.selected.clear();
   seedTriangle();
+  pills.forEach(r => { r.off = null; });
   S.pivot = { mode: "centroid", bary: [1 / 3, 1 / 3, 1 / 3] };
   /* frame the fresh triangle straight away — the same fit as the Fit
      button (or, with an explanation open, the tighter fit that keeps it
