@@ -1903,12 +1903,28 @@ function makePill(kind, i) {
     forceLockedVisual: false
   };
 
+  /* Typing walks through half-finished numbers ("1", then "12", then "12.5"), and every one of them is applied live.
+     Each keystroke used to be solved from the triangle the LAST keystroke left behind, so "3" on the way to "30" bent
+     the shape and the "30" that followed built on that bent shape — the end result depended on the path typed, and the
+     triangle drifted, shrank or flipped away from where a direct "30" would put it. So the triangle is captured when
+     typing starts and every keystroke is solved fresh from that, exactly as if the final number had been entered at once.
+     If something else moves the triangle mid-edit (drag, undo, a toolbar button) the capture is retaken. */
+  let base = null, seen = "";
+  const stamp = () => JSON.stringify([S.P, S.target]);
+  const rebase = () => { base = { P: S.P.map(p => ({ x: p.x, y: p.y })), target: { side: S.target.side.slice(), angle: S.target.angle.slice() } }; seen = stamp(); };
+  const rewind = () => {
+    if (!base || stamp() !== seen) rebase();
+    S.P = base.P.map(p => ({ x: p.x, y: p.y }));
+    S.target = { side: base.target.side.slice(), angle: base.target.angle.slice() };
+  };
+  const commitFromBase = fn => { rewind(); const ok = fn(); seen = stamp(); return ok; };
+
   rec.input.addEventListener("input", () => {
     autoWidth(rec.input);
     const r = parseMeasure(rec.input.value, kind, pillUnit(rec));
     if (!r) return;
     if (r.unit) S.units[kind][i] = r.unit;
-    if (commitValue(kind, i, r.value)) pushHistorySoon();
+    if (commitFromBase(() => commitValue(kind, i, r.value))) pushHistorySoon();
   });
   rec.input.addEventListener("keydown", e => {
     if (e.key === "Enter" || e.key === "Escape") { rec.input.blur(); return; }
@@ -1920,10 +1936,11 @@ function makePill(kind, i) {
     const u = pillUnit(rec), f = (kind === "side" ? LEN : ANG)[u].f;
     const stepDisp = (e.shiftKey ? 10 : e.altKey ? 0.1 : 1) * (e.key === "ArrowUp" ? 1 : -1);
     const next = r.value + stepDisp * f;
+    base = null; /* a step is a real edit: it becomes the new starting point */
     if (commitValue(kind, i, next)) { rec.input.value = pillText(rec, next); autoWidth(rec.input); pushHistorySoon(); }
   });
-  rec.input.addEventListener("focus", () => { el.classList.add("active"); rec.input.select(); });
-  rec.input.addEventListener("blur",  () => { el.classList.remove("active"); flushHistory(); requestRender(); });
+  rec.input.addEventListener("focus", () => { el.classList.add("active"); rec.input.select(); base = null; });
+  rec.input.addEventListener("blur",  () => { el.classList.remove("active"); base = null; flushHistory(); requestRender(); });
   rec.lockBtn.addEventListener("click", () => toggleLock(kind, i));
 
   if (kind === "angle") {
@@ -1940,8 +1957,9 @@ function makePill(kind, i) {
       return r ? r.value : null;
     };
     const commitCoord = () => {
+      rewind(); /* the untouched box's full-precision value must come from the true starting triangle */
       const x = readAxis(rec.cx, "x"), y = readAxis(rec.cy, "y");
-      if (x === null || y === null) return;
+      if (x === null || y === null) { seen = stamp(); return; }
       const old = S.P.map(v => ({ x: v.x, y: v.y }));
       const prop = old.map(v => ({ x: v.x, y: v.y }));
       prop[i] = { x, y };
@@ -1966,14 +1984,15 @@ function makePill(kind, i) {
           if (Math.abs(S.P[j].y - old[j].y) < eps) S.P[j].y = old[j].y;
         }
       }
+      seen = stamp();
       ensureVisible(); requestRender(); pushHistorySoon();
     };
     rec.cx.addEventListener("input", () => { autoWidthCoord(rec.cx); commitCoord(); });
     rec.cy.addEventListener("input", () => { autoWidthCoord(rec.cy); commitCoord(); });
-    rec.cx.addEventListener("focus", () => { el.classList.add("active"); rec.cx.select(); });
-    rec.cy.addEventListener("focus", () => { el.classList.add("active"); rec.cy.select(); });
-    rec.cx.addEventListener("blur", () => { flushHistory(); requestRender(); });
-    rec.cy.addEventListener("blur", () => { flushHistory(); requestRender(); });
+    rec.cx.addEventListener("focus", () => { el.classList.add("active"); rec.cx.select(); base = null; });
+    rec.cy.addEventListener("focus", () => { el.classList.add("active"); rec.cy.select(); base = null; });
+    rec.cx.addEventListener("blur", () => { base = null; flushHistory(); requestRender(); });
+    rec.cy.addEventListener("blur", () => { base = null; flushHistory(); requestRender(); });
     [rec.cx, rec.cy].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "Escape") inp.blur(); }));
   }
 
