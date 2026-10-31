@@ -496,6 +496,9 @@ body.view-only #exitViewOnly{
 html.touch,html.touch body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;touch-action:manipulation}
 html.touch [data-tip]::after{display:none!important}
 @supports (height:100dvh){ html.mobile,html.mobile body{height:100dvh} }
+/* iOS Safari: the keyboard does not shrink the layout viewport, it pans the page and scrolls overflow:hidden boxes to reveal the focused
+   box, which dragged the canvas and the labels apart. Pin the app to the visual viewport instead (--app-h / translateY set from JS). */
+html.mobile.vvpin body{position:fixed;left:0;right:0;top:0;height:var(--app-h,100dvh);overflow:hidden;will-change:transform}
 html.mobile{--tab-h:58px;--hdr-h:50px;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);--sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px)}
 html.mobile body{padding-left:var(--sl);padding-right:var(--sr);background:var(--header)}
 html.mobile .site-head,html.mobile .foot,html.mobile #appFooter,html.mobile #cornerHints,html.mobile #navtoggle,html.mobile #zoomtag{display:none}
@@ -1389,7 +1392,35 @@ function settleFit() {
   lastFitW = W; lastFitH = HH;
   fitView(undefined, 280);
 }
-window.addEventListener("resize", () => { resize(); if (window.__mobile) { clearTimeout(settleFitT); settleFitT = setTimeout(settleFit, 220); } });
+let lastSizeW = -1, lastSizeH = -1;
+function onSize() {
+  if (viewport.clientWidth === lastSizeW && viewport.clientHeight === lastSizeH) return;
+  lastSizeW = viewport.clientWidth; lastSizeH = viewport.clientHeight;
+  resize();
+  if (window.__mobile) { clearTimeout(settleFitT); settleFitT = setTimeout(settleFit, 220); }
+}
+window.addEventListener("resize", onSize);
+/* phone: follow the visual viewport (iOS keyboard / pan) and undo any scrolling the browser does to reveal a focused box */
+if (window.__mobile && window.visualViewport) {
+  const root = document.documentElement, vv = window.visualViewport, stageEl = document.getElementById("stage");
+  root.classList.add("vvpin");
+  let vvRaf = 0;
+  const pin = () => {
+    vvRaf = 0;
+    root.style.setProperty("--app-h", Math.round(vv.height) + "px");
+    document.body.style.transform = vv.offsetTop ? "translate3d(0," + Math.round(vv.offsetTop) + "px,0)" : "";
+    if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    [root, document.body, stageEl, viewport].forEach(e => { if (e && (e.scrollTop || e.scrollLeft)) { e.scrollTop = 0; e.scrollLeft = 0; } });
+    onSize();
+  };
+  const sched = () => { if (!vvRaf) vvRaf = requestAnimationFrame(pin); };
+  vv.addEventListener("resize", sched); vv.addEventListener("scroll", sched);
+  window.addEventListener("scroll", sched, { passive: true });
+  [stageEl, viewport].forEach(e => e && e.addEventListener("scroll", sched, { passive: true }));
+  document.addEventListener("focusin", () => { sched(); setTimeout(sched, 120); setTimeout(sched, 350); });
+  document.addEventListener("focusout", () => { setTimeout(sched, 120); setTimeout(sched, 400); });
+  sched();
+}
 
 const sx = wx => (wx - S.view.cx) * S.view.z + W / 2;
 const sy = wy => HH / 2 - (wy - S.view.cy) * S.view.z;
