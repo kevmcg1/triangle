@@ -1378,7 +1378,18 @@ function resize() {
      what gets painted. */
   renderNow();
 }
-window.addEventListener("resize", resize);
+/* on a phone the on-screen keyboard resizes the canvas every time a side or angle is tapped (and again when it closes).
+   The camera keeps its zoom and centre, so the triangle ends up clipped or off to one side. Once the size has settled,
+   glide the camera so the whole triangle is framed in whatever room is left. */
+let settleFitT = 0, lastFitW = 0, lastFitH = 0;
+function settleFit() {
+  settleFitT = 0;
+  if (!window.__mobile || (typeof labelDragging !== "undefined" && labelDragging)) return;
+  if (Math.abs(W - lastFitW) < 2 && Math.abs(HH - lastFitH) < 2) return;
+  lastFitW = W; lastFitH = HH;
+  fitView(undefined, 280);
+}
+window.addEventListener("resize", () => { resize(); if (window.__mobile) { clearTimeout(settleFitT); settleFitT = setTimeout(settleFit, 220); } });
 
 const sx = wx => (wx - S.view.cx) * S.view.z + W / 2;
 const sy = wy => HH / 2 - (wy - S.view.cy) * S.view.z;
@@ -1443,7 +1454,7 @@ function reframeIfPoor() {
   const t = fitTarget();
   const dz = Math.abs(Math.log(t.z / S.view.z));
   const off = Math.hypot((t.cx - S.view.cx) * S.view.z, (t.cy - S.view.cy) * S.view.z);
-  if (dz > 0.3 || off > 0.12 * Math.min(W, HH)) fitView(undefined, 350);
+  if (dz > 0.12 || off > 0.06 * Math.min(W, HH)) fitView(undefined, 350);
 }
 function ensureVisible() {
   const p = S.P.map(toScreen);
@@ -2170,8 +2181,11 @@ function commitValue(kind, i, value) {
   if (S.lock[kind][i]) S.target[kind][i] = value;
   applyConstraints(S.P, [1, 1, 1], [{ type: kind, i, value, w: 4 }]);
   ensureVisible(); requestRender();
+  /* phone: keep the triangle framed while a number is being typed, not only after the box loses focus */
+  if (window.__mobile) { clearTimeout(commitFitT); commitFitT = setTimeout(reframeIfPoor, 320); }
   return true;
 }
+let commitFitT = 0;
 
 /* radius, around each vertex on screen, that no pill is ever allowed to
    intrude into — covers the vertex dot, the angle arc (max ~34px) and
